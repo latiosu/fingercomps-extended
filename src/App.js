@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
+const baseUrl = 'https://firestore.googleapis.com/v1/projects/fingercomps-lite-au/databases/(default)/documents';
+
 function App() {
-  const baseUrl = 'https://firestore.googleapis.com/v1/projects/fingercomps-lite-au/databases/(default)/documents';
   const [comps, setComps] = useState([]);
   const [categories, setCategories] = useState({});
   const [scores, setScores] = useState({});
@@ -12,267 +13,157 @@ function App() {
   const [selectedCompId, setSelectedCompId] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [tableData, setTableData] = useState([]);
-  const [expandedRows, setExpandedRows] = useState(new Set()); // Track expanded rows
-  const [limitScores, setLimitScores] = useState(false); // State for the checkbox
-  const [loading, setLoading] = useState(true); // State for loading
+  const [expandedRows, setExpandedRows] = useState(new Set());
+  const [limitScores, setLimitScores] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  function twoMonthsAgoISOString() {
+  const twoMonthsAgoISOString = () => {
     const now = new Date();
     now.setMonth(now.getMonth() - 2);
-    const isoString = now.toISOString();
-    return isoString;
-  }
+    return now.toISOString();
+  };
 
-  const fetchAllCategories = async (compId, pageSize = 300) => {
+  const fetchPaginatedData = async (url, processData) => {
     let token = null;
     let allDocuments = [];
     try {
       while (true) {
-        // Construct URL with the optional `pageToken`
-        const url = `${baseUrl}/competitions/${compId}/categories?pageSize=${pageSize}${token ? `&pageToken=${token}` : ''}`;
-
-        const response = await axios.get(url);
+        const response = await axios.get(`${url}${token ? `&pageToken=${token}` : ''}`);
         const { documents, nextPageToken } = response.data;
 
-        // Check if `documents` is an array before spreading it into `allDocuments`
-        if (Array.isArray(documents)) {
-          allDocuments = [...allDocuments, ...documents];
-        } else {
-          console.warn("Expected 'documents' to be an array but received:", documents);
-        }
+        if (Array.isArray(documents)) allDocuments = [...allDocuments, ...documents];
+        else console.warn("Expected 'documents' to be an array but received:", documents);
 
-        // If there's no `nextPageToken`, we've fetched all pages
         if (!nextPageToken) break;
-
-        // Update token for next iteration
         token = nextPageToken;
       }
-
-      // Clean up retrieved data
-      const cleanedCategories = allDocuments.reduce((acc, item) => {
-        acc[item.fields?.code?.stringValue] = {
-        name: item.fields?.name?.stringValue,
-        code: item.fields?.code?.stringValue,
-        disableFlash: item.fields?.disableFlash?.booleanValue,
-        flashExtraPoints: item.fields?.flashExtraPoints?.integerValue,
-        scalePoints: item.fields?.scalePoints?.booleanValue,
-        pumpfestTopScores: item.fields?.pumpfestTopScores?.integerValue,
-      };
-      return acc;
-    }, {});
-
-    setCategories(cleanedCategories);
+      await processData(allDocuments);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
   };
 
-  const fetchAllCompetitors = async (compId, pageSize = 300) => {
-    let token = null;
-    let allDocuments = [];
-    try {
-      while (true) {
-        // Construct URL with the optional `pageToken`
-        const url = `${baseUrl}/competitions/${compId}/competitors?pageSize=${pageSize}${token ? `&pageToken=${token}` : ''}`;
-
-        const response = await axios.get(url);
-        const { documents, nextPageToken } = response.data;
-
-        // Check if `documents` is an array before spreading it into `allDocuments`
-        if (Array.isArray(documents)) {
-          allDocuments = [...allDocuments, ...documents];
-        } else {
-          console.warn("Expected 'documents' to be an array but received:", documents);
-        }
-
-        // If there's no `nextPageToken`, we've fetched all pages
-        if (!nextPageToken) break;
-
-        // Update token for next iteration
-        token = nextPageToken;
-      }
-
-      // Clean up retrieved data
-      const cleanedCompetitors = allDocuments.reduce((acc, item) => {
-        acc[item.fields?.competitorNo?.integerValue] = {
-          name: `${item.fields?.firstName?.stringValue.trim()} ${item.fields?.lastName?.stringValue.trim()}`,
-          category: item.fields?.category?.stringValue,
-          competitorNo: item.fields?.competitorNo?.integerValue,
-        };
-        return acc;
-      }, {});
-
-      setCompetitors(cleanedCompetitors);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  };
-
-  const fetchAllScores = async (compId, pageSize = 300) => {
-    let token = null;
-    let allDocuments = [];
-    try {
-      while (true) {
-        // Construct URL with the optional `pageToken`
-        const url = `${baseUrl}/competitions/${compId}/qualificationScores?pageSize=${pageSize}${token ? `&pageToken=${token}` : ''}`;
-
-        const response = await axios.get(url);
-        const { documents, nextPageToken } = response.data;
-
-        // Check if `documents` is an array before spreading it into `allDocuments`
-        if (Array.isArray(documents)) {
-          allDocuments = [...allDocuments, ...documents];
-        } else {
-          console.warn("Expected 'documents' to be an array but received:", documents);
-        }
-
-        // If there's no `nextPageToken`, we've fetched all pages
-        if (!nextPageToken) break;
-
-        // Update token for next iteration
-        token = nextPageToken;
-      }
-
-      // Clean up retrieved data
-      const cleanedScores = allDocuments.reduce((acc, item) => {
-        const competitorNo = item.fields?.competitorNo?.integerValue;
-        if (!acc[competitorNo]) {
-          acc[competitorNo] = [];
-        }
-        acc[item.fields?.competitorNo?.integerValue].push({
-          climbNo: item.fields?.climbNo?.integerValue,
-          // competitorNo: item.fields?.competitorNo?.integerValue,
-          category: item.fields?.category?.stringValue,
-          flashed: item.fields?.flash?.booleanValue,
-          topped: item.fields?.topped?.booleanValue,
-          // attemps: item.fields?.attempts?.integerValue,
-        });
-        return acc;
-      }, {});
-
-      setScores(cleanedScores);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  };
-
-  const fetchAllProblems = async (compId, pageSize = 300) => {
-    let token = null;
-    let allDocuments = [];
-    try {
-      while (true) {
-        // Construct URL with the optional `pageToken`
-        const url = `${baseUrl}/competitions/${compId}/climbs?pageSize=${pageSize}${token ? `&pageToken=${token}` : ''}`;
-
-        const response = await axios.get(url);
-        const { documents, nextPageToken } = response.data;
-
-        // Check if `documents` is an array before spreading it into `allDocuments`
-        if (Array.isArray(documents)) {
-          allDocuments = [...allDocuments, ...documents];
-        } else {
-          console.warn("Expected 'documents' to be an array but received:", documents);
-        }
-
-        // If there's no `nextPageToken`, we've fetched all pages
-        if (!nextPageToken) break;
-
-        // Update token for next iteration
-        token = nextPageToken;
-      }
-
-      // Clean up retrieved data
-      const cleanedProblems = allDocuments.reduce((acc, item) => {
-        acc[item.fields?.climbNo?.integerValue] = {
-          score: item.fields?.score?.integerValue,
-          station: item.fields?.station?.stringValue,
-          marking: item.fields?.marking?.stringValue,
-          climbNo: item.fields?.climbNo?.integerValue,
-          // categories: item.fields?.categories?.stringValue,
-          // notes: item.fields?.notes?.stringValue,
-        };
-        return acc;
-      }, {});
-
-      setProblems(cleanedProblems);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  };
-
-  function computeScore(sortedScores, flashPoints, limit) {
-    let tops = 0;
-    let flashes = 0;
-
-    const total = sortedScores
-      .slice(0, limit)
-      .reduce((sum, s) => {
-          if (!s) return sum; // If s is undefined, skip it
-
-          tops += 1; // Increment tops for every valid score
-          const scoreValue = parseInt(s.score) + (s.flashed ? flashPoints : 0);
-          if (s.flashed) flashes += 1; // Increment flashes if s.flashed is true
-
-          return sum + scoreValue; // Accumulate the score
-      }, 0);
-
+  const computeScore = (sortedScores, flashPoints, limit) => {
+    let tops = 0, flashes = 0;
+    const total = sortedScores.slice(0, limit).reduce((sum, s) => {
+      if (!s) return sum;
+      tops += 1;
+      if (s.flashed) flashes += 1;
+      return sum + (parseInt(s.score) + (s.flashed ? flashPoints : 0));
+    }, 0);
     return { tops, flashes, total };
-}
+  };
 
   useEffect(() => {
-    const requestBody = {
-      "structuredQuery": {
-        "from": [
-          {
-            "collectionId": "competitions"
-          }
-        ],
-        "where": {
-          "fieldFilter": {
-            "field": {
-              "fieldPath": "modified"
-            },
-            "op": "GREATER_THAN_OR_EQUAL",
-            "value": {
-              "timestampValue": twoMonthsAgoISOString()
+    const fetchCompetitions = async () => {
+      setLoading(true);
+      const requestBody = {
+        "structuredQuery": {
+          "from": [{ "collectionId": "competitions" }],
+          "where": {
+            "fieldFilter": {
+              "field": { "fieldPath": "modified" },
+              "op": "GREATER_THAN_OR_EQUAL",
+              "value": { "timestampValue": twoMonthsAgoISOString() }
             }
-          }
-        },
-        "orderBy": [
-          {
-            "field": {
-              "fieldPath": "modified"
-            },
-            "direction": "DESCENDING"
           },
-          {
-            "field": {
-              "fieldPath": "__name__"
-            },
-            "direction": "DESCENDING"
-          }
-        ]
+          "orderBy": [
+            { "field": { "fieldPath": "modified" }, "direction": "DESCENDING" },
+            { "field": { "fieldPath": "__name__" }, "direction": "DESCENDING" }
+          ]
+        }
+      };
+      try {
+        const response = await axios.post(`${baseUrl}:runQuery`, requestBody)?.data;
+        setComps(response.filter((item) => item.document.fields?.trash?.booleanValue !== true) || []);
+        setSelectedCategory("");
+      } catch (error) {
+        console.error("Error fetching competitions:", error);
+      } finally {
+        setLoading(false);
       }
     };
-
-    setLoading(true);
-    axios.post(`${baseUrl}:runQuery`, requestBody)  // Second argument is the request body
-      .then((response) => {
-        console.log(response);  // Log the response to check the structure
-        setComps(response.data.filter((item) => item.document.fields?.trash?.booleanValue !== true) || []);  // Safely handle missing documents
-        setSelectedCategory(""); // Set to "All" category by default once data is loaded
-      })
-      .catch((error) => {
-        console.error("There was an error fetching the data!", error);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [baseUrl]);
+    fetchCompetitions();
+  }, []);
 
   useEffect(() => {
-    // Skip if compId not known yet
-    if (selectedCompId.length === 0) return;
+    if (!selectedCompId) return;
+
+    const fetchAllCategories = async (compId) => {
+      await fetchPaginatedData(
+        `${baseUrl}/competitions/${compId}/categories?pageSize=300`,
+        (documents) => {
+          const cleanedCategories = documents.reduce((acc, item) => {
+            acc[item.fields?.code?.stringValue] = {
+              name: item.fields?.name?.stringValue,
+              code: item.fields?.code?.stringValue,
+              disableFlash: item.fields?.disableFlash?.booleanValue,
+              flashExtraPoints: item.fields?.flashExtraPoints?.integerValue,
+              scalePoints: item.fields?.scalePoints?.booleanValue,
+              pumpfestTopScores: item.fields?.pumpfestTopScores?.integerValue,
+            };
+            return acc;
+          }, {});
+          setCategories(cleanedCategories);
+        }
+      );
+    };
+
+    const fetchAllCompetitors = async (compId) => {
+      await fetchPaginatedData(
+        `${baseUrl}/competitions/${compId}/competitors?pageSize=300`,
+        (documents) => {
+          const cleanedCompetitors = documents.reduce((acc, item) => {
+            const c = item.fields;
+            acc[c?.competitorNo?.integerValue] = {
+              name: `${c?.firstName?.stringValue.trim()} ${c?.lastName?.stringValue.trim()}`,
+              category: c?.category?.stringValue,
+              competitorNo: c?.competitorNo?.integerValue,
+            };
+            return acc;
+          }, {});
+          setCompetitors(cleanedCompetitors);
+        }
+      );
+    };
+
+    const fetchAllScores = async (compId) => {
+      await fetchPaginatedData(
+        `${baseUrl}/competitions/${compId}/qualificationScores?pageSize=300`,
+        (documents) => {
+          const cleanedScores = documents.reduce((acc, item) => {
+            const competitorNo = item.fields?.competitorNo?.integerValue;
+            acc[competitorNo] = acc[competitorNo] || [];
+            acc[competitorNo].push({
+              climbNo: item.fields?.climbNo?.integerValue,
+              category: item.fields?.category?.stringValue,
+              flashed: item.fields?.flash?.booleanValue,
+              topped: item.fields?.topped?.booleanValue,
+            });
+            return acc;
+          }, {});
+          setScores(cleanedScores);
+        }
+      );
+    };
+
+    const fetchAllProblems = async (compId) => {
+      await fetchPaginatedData(
+        `${baseUrl}/competitions/${compId}/climbs?pageSize=300`,
+        (documents) => {
+          const cleanedProblems = documents.reduce((acc, item) => {
+            acc[item.fields?.climbNo?.integerValue] = {
+              score: item.fields?.score?.integerValue,
+              station: item.fields?.station?.stringValue,
+              marking: item.fields?.marking?.stringValue,
+              climbNo: item.fields?.climbNo?.integerValue,
+            };
+            return acc;
+          }, {});
+          setProblems(cleanedProblems);
+        }
+      );
+    };
 
     setLoading(true);
     Promise.all([
@@ -280,60 +171,46 @@ function App() {
       fetchAllCompetitors(selectedCompId),
       fetchAllScores(selectedCompId),
       fetchAllProblems(selectedCompId),
-    ])
-    .finally(() => {
-      setLoading(false);
-    });
+    ]).finally(() => setLoading(false));
   }, [selectedCompId]);
 
   useEffect(() => {
-    function computeTableData() {
-      const table = [];
-      for (const [uid, user] of Object.entries(competitors)) {
-        const row = {
+    const computeTableData = () => {
+      const table = Object.entries(competitors).map(([uid, user]) => {
+        const row = { 
           ...user,
           scores: (scores[uid] || [])
-          .map(s => ({ ...s, ...problems[s?.climbNo] }))
-          .sort((a, b) => parseInt(b.score) - parseInt(a.score)),
+            .map(s => ({ ...s, ...problems[s?.climbNo] }))
+            .sort((a, b) => b.score - a.score)
         };
-
-        // Compute tops, flashes and score based on category rules
         const cat = categories[row.category];
         const { tops, flashes, total } = computeScore(
           row.scores,
           parseInt(cat?.flashExtraPoints || 0),
           parseInt(cat?.pumpfestTopScores || 0)
         );
-        row['tops'] = tops;
-        row['flashes'] = flashes;
-        row['total'] = total;
-        row['categoryFullName'] = cat?.name;
-
-        table.push(row);
-      }
-
-      // Sort table by descending total score
-      table.sort((a, b) => b.total - a.total);
-      setTableData(table);
-    }
-
+        return { ...row, tops, flashes, total, categoryFullName: cat?.name };
+      });
+      setTableData(table.sort((a, b) => b.total - a.total));
+    };
     computeTableData();
   }, [categories, competitors, problems, scores]);
 
   const handleRowClick = (index) => {
-    const newExpandedRows = new Set(expandedRows);
-    if (newExpandedRows.has(index)) {
-      newExpandedRows.delete(index); // Collapse if already expanded
-    } else {
-      newExpandedRows.add(index); // Expand if not already expanded
-    }
-    setExpandedRows(newExpandedRows);
+    setExpandedRows((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
   };
 
   return (
     <div className="App">
       <h1>FingerComps Expanded</h1>
-      {/* Dropdown to select a competition */}
       <div>
         <label htmlFor="selectComp">Select Competition:</label>
         <select
@@ -343,7 +220,7 @@ function App() {
             setSelectedComp(e.target.value);
             setSelectedCompId(comps[e.target.selectedIndex].document.name.split('/').pop());
           }}
-          disabled={loading} // Disable while loading
+          disabled={loading}
         >
           {comps.map((item, index) => (
             <option key={index} value={item.document.fields?.name?.stringValue}>
@@ -352,16 +229,15 @@ function App() {
           ))}
         </select>
       </div>
-      {/* Dropdown to select a category */}
       <div>
         <label htmlFor="selectCategory">Select Category:</label>
         <select
           id="selectCategory"
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
-          disabled={loading} // Disable while loading
+          disabled={loading}
         >
-          <option value="">All</option> {/* Option to show all data */}
+          <option value="">All</option>
           {Object.values(categories).map((item, index) => (
             <option key={index} value={item.name}>
               {item.name}
@@ -411,7 +287,7 @@ function App() {
                 return (
                   <React.Fragment key={index}>
                     <tr onClick={() => handleRowClick(index)} style={{ cursor: 'pointer' }}>
-                      <td>{index + 1}</td>
+                      <td>{isNaN(index) ? "N/A" : index + 1}</td>
                       <td>{item.categoryFullName}</td>
                       <td>{item.name}</td>
                       <td>{item.tops}</td>
@@ -421,7 +297,7 @@ function App() {
                     {isExpanded && (
                       <tr>
                         <td colSpan="5">
-                          {/* Subtable goes here */}
+                          {/* Subtable */}
                           <table border="1" style={{ width: '100%' }}>
                             <thead>
                               <tr>
