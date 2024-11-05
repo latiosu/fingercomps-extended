@@ -16,6 +16,7 @@ function App() {
   const [expandedRows, setExpandedRows] = useState(new Set());
   const [limitScores, setLimitScores] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [sortDirection, setSortDirection] = useState('desc');
 
   const twoMonthsAgoISOString = () => {
     const now = new Date();
@@ -179,7 +180,7 @@ function App() {
       const table = Object.entries(competitors).map(([uid, user]) => {
         const cat = categories[user.category];
         const flashExtraPoints = parseInt(cat?.flashExtraPoints || 0);
-        const row = { 
+        const row = {
           ...user,
           scores: (scores[uid] || [])
             .map(s => ({ ...s, ...problems[s?.climbNo] }))
@@ -194,20 +195,54 @@ function App() {
           flashExtraPoints,
           parseInt(cat?.pumpfestTopScores || 0)
         );
-        return { ...row, tops, flashes, total, bonus: flashExtraPoints * flashes, flashExtraPoints: flashExtraPoints, categoryFullName: cat?.name };
+        return {
+          ...row,
+          tops,
+          flashes,
+          total,
+          bonus: flashExtraPoints * flashes,
+          flashExtraPoints: flashExtraPoints,
+          categoryFullName: cat?.name
+        };
       });
-      setTableData(table.sort((a, b) => b.total - a.total));
+
+      // Rank Assignment in descending order by default
+      let currentRank = 0;
+      let lastScore = null;
+      table.sort((a, b) => b.total - a.total).forEach((item, index) => {
+        if (lastScore === null || item.total !== lastScore) {
+          currentRank = index + 1;
+          lastScore = item.total;
+        }
+        item.rank = currentRank;
+      });
+
+      return table;
     };
-    computeTableData();
+    setTableData(computeTableData());
   }, [categories, competitors, problems, scores]);
 
-  const handleRowClick = (index) => {
+  const handleScoreHeaderClick = () => {
+    // Toggle sort direction
+    const newSortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    setSortDirection(newSortDirection);
+
+    // Sort the tableData immediately based on the new sort direction
+    const sortedTableData = [...tableData].sort((a, b) =>
+      newSortDirection === 'asc' ? a.total - b.total : b.total - a.total
+    );
+
+    // Update tableData directly with sorted data
+    setTableData(sortedTableData);
+  };
+
+  const handleRowClick = (uid) => {
     setExpandedRows((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(index)) {
-        newSet.delete(index);
+      if (newSet.has(uid)) {
+        newSet.delete(uid);
       } else {
-        newSet.add(index);
+        newSet.add(uid);
       }
       return newSet;
     });
@@ -268,12 +303,15 @@ function App() {
       <table border="1">
         <thead>
           <tr>
-            <th>Rank</th>
+            <th>Row</th>
+            <th>Overall Rank</th>
             {!selectedCategory ? (<th>Category</th>) : null}
             <th>Name</th>
             <th>Tops</th>
             <th>Flashes</th>
-            <th>Score (+ Flash Bonus)</th>
+            <th onClick={handleScoreHeaderClick} style={{ cursor: 'pointer' }}>
+              Score (+ Flash Bonus) {sortDirection === 'asc' ? '🔼' : '🔽'}
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -288,11 +326,12 @@ function App() {
                 return item.categoryFullName === selectedCategory;
               })
               .map((item, index) => {
-                const isExpanded = expandedRows.has(index);
+                const isExpanded = expandedRows.has(item.competitorNo);
                 return (
                   <React.Fragment key={index}>
-                    <tr onClick={() => handleRowClick(index)} style={{ cursor: 'pointer' }}>
-                      <td>{isNaN(index) ? "N/A" : index + 1}</td>
+                    <tr onClick={() => handleRowClick(item.competitorNo)} style={{ cursor: 'pointer' }}>
+                      <td>{isNaN(index) ? 'N/A' : index + 1}</td>
+                      <td>{item.rank}</td>
                       {!selectedCategory ? (<td>{item.categoryFullName}</td>) : null}
                       <td>{item.name}</td>
                       <td>{item.tops}</td>
