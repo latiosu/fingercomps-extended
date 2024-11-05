@@ -184,12 +184,13 @@ function App() {
             .sort((a, b) => b.score - a.score)
         };
         const cat = categories[row.category];
+        const flashExtraPoints = parseInt(cat?.flashExtraPoints || 0);
         const { tops, flashes, total } = computeScore(
           row.scores,
-          parseInt(cat?.flashExtraPoints || 0),
+          flashExtraPoints,
           parseInt(cat?.pumpfestTopScores || 0)
         );
-        return { ...row, tops, flashes, total, categoryFullName: cat?.name };
+        return { ...row, tops, flashes, total, bonus: flashExtraPoints * flashes, flashExtraPoints: flashExtraPoints, categoryFullName: cat?.name };
       });
       setTableData(table.sort((a, b) => b.total - a.total));
     };
@@ -292,7 +293,7 @@ function App() {
                       <td>{item.name}</td>
                       <td>{item.tops}</td>
                       <td>{item.flashes}</td>
-                      <td>{item.total}</td>
+                      <td>{item.total - item.bonus} {item.bonus > 0 ? `(+${item.bonus})` : ''}</td>
                     </tr>
                     {isExpanded && (
                       <tr>
@@ -304,7 +305,7 @@ function App() {
                                 <th>Problem No.</th>
                                 <th>Name/Grade</th>
                                 <th>Flashed?</th>
-                                <th>Points</th>
+                                <th>Points (+ Flash Bonus)</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -317,7 +318,7 @@ function App() {
                                   <td>{score.climbNo}</td>
                                   <td>{score.marking}</td>
                                   <td>{score.flashed ? 'Y' : ''}</td>
-                                  <td>{score.score}</td>
+                                  <td>{score.score} {score.flashed ? `(+${item.flashExtraPoints})` : ''}</td>
                                 </tr>
                               ))}
                             </tbody>
