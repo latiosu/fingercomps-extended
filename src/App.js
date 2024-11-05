@@ -210,7 +210,7 @@ function App() {
 
   return (
     <div className="App">
-      <h1>FingerComps Expanded</h1>
+      <h1>FingerComps Extended</h1>
       <div>
         <label htmlFor="selectComp">Select Competition:</label>
         <select
