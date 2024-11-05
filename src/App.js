@@ -177,14 +177,18 @@ function App() {
   useEffect(() => {
     const computeTableData = () => {
       const table = Object.entries(competitors).map(([uid, user]) => {
+        const cat = categories[user.category];
+        const flashExtraPoints = parseInt(cat?.flashExtraPoints || 0);
         const row = { 
           ...user,
           scores: (scores[uid] || [])
             .map(s => ({ ...s, ...problems[s?.climbNo] }))
-            .sort((a, b) => b.score - a.score)
+            .sort((a, b) => {
+              const aTotal = a.score + (a.flashed ? flashExtraPoints : 0);
+              const bTotal = b.score + (b.flashed ? flashExtraPoints : 0);
+              return bTotal - aTotal;
+            })
         };
-        const cat = categories[row.category];
-        const flashExtraPoints = parseInt(cat?.flashExtraPoints || 0);
         const { tops, flashes, total } = computeScore(
           row.scores,
           flashExtraPoints,
