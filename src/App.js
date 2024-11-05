@@ -343,7 +343,7 @@ function App() {
       <table border="1">
         <thead>
           <tr>
-            <th>Row</th>
+            <th>#</th>
             <th>Overall Rank</th>
             {!selectedCategory ? (<th>Category</th>) : null}
             <th>Name</th>
