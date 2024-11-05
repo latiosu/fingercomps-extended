@@ -1,8 +1,8 @@
 {
-  "name": "fingercomps-expanded",
+  "name": "fingercomps-extended",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://latiosu.github.io/fingercomps-expanded",
+  "homepage": "https://latiosu.github.io/fingercomps-extended",
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
