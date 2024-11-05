@@ -74,8 +74,8 @@ function App() {
         }
       };
       try {
-        const response = await axios.post(`${baseUrl}:runQuery`, requestBody)?.data;
-        setComps(response.filter((item) => item.document.fields?.trash?.booleanValue !== true) || []);
+        const response = await axios.post(`${baseUrl}:runQuery`, requestBody);
+        setComps(response.data.filter((item) => item.document.fields?.trash?.booleanValue !== true) || []);
         setSelectedCategory("");
       } catch (error) {
         console.error("Error fetching competitions:", error);
