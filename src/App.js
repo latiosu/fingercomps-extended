@@ -283,6 +283,7 @@ function App() {
       return filteredScores.length > 0 ? filteredScores[0] : null;
     };
     setLastSubmittedScore(getLastSubmittedScoreForCategory());
+    setExpandedRows(new Set()); // Collapse expanded rows when changing category
   }, [scores, selectedCategoryCode]);
 
   return (
