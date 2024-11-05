@@ -269,7 +269,7 @@ function App() {
         <thead>
           <tr>
             <th>Rank</th>
-            <th>Category</th>
+            {!selectedCategory ? (<th>Category</th>) : null}
             <th>Name</th>
             <th>Tops</th>
             <th>Flashes</th>
@@ -293,7 +293,7 @@ function App() {
                   <React.Fragment key={index}>
                     <tr onClick={() => handleRowClick(index)} style={{ cursor: 'pointer' }}>
                       <td>{isNaN(index) ? "N/A" : index + 1}</td>
-                      <td>{item.categoryFullName}</td>
+                      {!selectedCategory ? (<td>{item.categoryFullName}</td>) : null}
                       <td>{item.name}</td>
                       <td>{item.tops}</td>
                       <td>{item.flashes}</td>
