@@ -12,17 +12,41 @@ function App() {
   const [selectedComp, setSelectedComp] = useState("");
   const [selectedCompId, setSelectedCompId] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCategoryCode, setSelectedCategoryCode] = useState("");
   const [tableData, setTableData] = useState([]);
   const [expandedRows, setExpandedRows] = useState(new Set());
   const [limitScores, setLimitScores] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sortDirection, setSortDirection] = useState('desc');
+  const [lastSubmittedScore, setLastSubmittedScore] = useState(null);
 
   const twoMonthsAgoISOString = () => {
     const now = new Date();
     now.setMonth(now.getMonth() - 2);
     return now.toISOString();
   };
+
+  function toTimeAgoString(timestamp) {
+    const now = new Date();
+    const past = new Date(timestamp);
+    const diffMs = now - past; // Difference in milliseconds
+
+    // Calculate time components
+    // const seconds = Math.floor(diffMs / 1000) % 60;
+    const minutes = Math.floor(diffMs / (1000 * 60)) % 60;
+    const hours = Math.floor(diffMs / (1000 * 60 * 60)) % 24;
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    // Construct the human-readable time difference
+    const parts = [];
+    if (days > 0) parts.push(`${days} day${days > 1 ? 's' : ''}`);
+    if (hours > 0) parts.push(`${hours} hr${hours > 1 ? 's' : ''}`);
+    if (minutes > 0) parts.push(`${minutes} min${minutes > 1 ? 's' : ''}`);
+    // if (seconds > 0) parts.push(`${seconds} second${seconds > 1 ? 's' : ''}`);
+
+    // Join parts with commas and add "ago"
+    return parts.length > 0 ? parts.join(' ') + ' ago' : 'just now';
+  }
 
   const fetchPaginatedData = async (url, processData) => {
     let token = null;
@@ -140,6 +164,8 @@ function App() {
               category: item.fields?.category?.stringValue,
               flashed: item.fields?.flash?.booleanValue,
               topped: item.fields?.topped?.booleanValue,
+              competitorNo: competitorNo,
+              createdAt: item.fields?.created?.timestampValue,
             });
             return acc;
           }, {});
@@ -248,6 +274,17 @@ function App() {
     });
   };
 
+  // Function to compute last score date for a selected category
+  useEffect(() => {
+    const getLastSubmittedScoreForCategory = () => {
+      const filteredScores = Object.values(scores).flat()
+        .filter(score => selectedCategoryCode ? score.category === selectedCategoryCode : true)
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sort in descending order
+      return filteredScores.length > 0 ? filteredScores[0] : null;
+    };
+    setLastSubmittedScore(getLastSubmittedScoreForCategory());
+  }, [scores, selectedCategoryCode]);
+
   return (
     <div className="App">
       <h1>FingerComps Extended</h1>
@@ -274,12 +311,15 @@ function App() {
         <select
           id="selectCategory"
           value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
+          onChange={(e) => {
+            setSelectedCategory(e.target.value);  // Directly set category from value
+            setSelectedCategoryCode(e.target.selectedOptions[0].dataset.code);  // Get data-code from selected option
+          }}
           disabled={loading}
         >
           <option value="">All</option>
           {Object.values(categories).map((item, index) => (
-            <option key={index} value={item.name}>
+            <option key={index} value={item.name} data-code={item.code}>
               {item.name}
             </option>
           ))}
@@ -340,7 +380,7 @@ function App() {
                     </tr>
                     {isExpanded && (
                       <tr>
-                        <td colSpan="5">
+                        <td colSpan="7">
                           {/* Subtable */}
                           <table border="1" style={{ width: '100%' }}>
                             <thead>
@@ -349,6 +389,7 @@ function App() {
                                 <th>Name/Grade</th>
                                 <th>Flashed?</th>
                                 <th>Points (+ Flash Bonus)</th>
+                                <th>Sent</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -362,6 +403,7 @@ function App() {
                                   <td>{score.marking}</td>
                                   <td>{score.flashed ? 'Y' : ''}</td>
                                   <td>{score.score} {score.flashed ? `(+${item.flashExtraPoints})` : ''}</td>
+                                  <td>{toTimeAgoString(score.createdAt)}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -379,6 +421,14 @@ function App() {
           )}
         </tbody>
       </table>
+      {/* Last score date display */}
+      <div style={{ marginTop: '20px' }}>
+        {lastSubmittedScore ? (
+          <p>Last score in this category was submitted at: {toTimeAgoString(lastSubmittedScore.createdAt)} by {competitors[lastSubmittedScore.competitorNo].name}</p>
+        ) : (
+          <p>No scores available for the selected category.</p>
+        )}
+      </div>
     </div>
   );
 }
