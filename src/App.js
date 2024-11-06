@@ -287,7 +287,7 @@ function App() {
   }, [scores, selectedCategoryCode]);
 
   return (
-    <div className="App">
+    <div className="app">
       <h1>FingerComps Extended</h1>
       <div>
         <label htmlFor="selectComp">Select Competition:</label>
@@ -341,7 +341,7 @@ function App() {
       {/* Loading message */}
       {loading && <p>Loading data, please wait...</p>}
       {/* Table of competitors and scores */}
-      <table className="StyledTable">
+      <table className="mainTable">
         <thead>
           <tr>
             <th>#</th>
@@ -370,7 +370,7 @@ function App() {
                 const isExpanded = expandedRows.has(item.competitorNo);
                 return (
                   <React.Fragment key={index}>
-                    <tr onClick={() => handleRowClick(item.competitorNo)} style={{ cursor: 'pointer' }} className={isExpanded ? 'ActiveRow' : ''}>
+                    <tr onClick={() => handleRowClick(item.competitorNo)} style={{ cursor: 'pointer' }} className={isExpanded ? 'expandedRow' : ''}>
                       <td>{isNaN(index) ? 'N/A' : index + 1}</td>
                       <td>{item.rank}</td>
                       {!selectedCategory ? (<td>{item.categoryFullName}</td>) : null}
