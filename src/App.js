@@ -341,7 +341,7 @@ function App() {
       {/* Loading message */}
       {loading && <p>Loading data, please wait...</p>}
       {/* Table of competitors and scores */}
-      <table border="1">
+      <table className="styled-table">
         <thead>
           <tr>
             <th>#</th>
@@ -370,7 +370,7 @@ function App() {
                 const isExpanded = expandedRows.has(item.competitorNo);
                 return (
                   <React.Fragment key={index}>
-                    <tr onClick={() => handleRowClick(item.competitorNo)} style={{ cursor: 'pointer' }}>
+                    <tr onClick={() => handleRowClick(item.competitorNo)} style={{ cursor: 'pointer' }} className={isExpanded ? 'activeRow' : ''}>
                       <td>{isNaN(index) ? 'N/A' : index + 1}</td>
                       <td>{item.rank}</td>
                       {!selectedCategory ? (<td>{item.categoryFullName}</td>) : null}
@@ -383,7 +383,7 @@ function App() {
                       <tr>
                         <td colSpan="7">
                           {/* Subtable */}
-                          <table border="1" style={{ width: '100%' }}>
+                          <table style={{ width: '100%' }}>
                             <thead>
                               <tr>
                                 <th>Problem No.</th>
