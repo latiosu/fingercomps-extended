@@ -12,7 +12,7 @@ code {
     monospace;
 }
 
-.styled-table {
+.StyledTable {
     border-collapse: collapse;
     margin: 25px 0;
     font-size: 0.9em;
@@ -21,7 +21,7 @@ code {
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
 }
 
-.styled-table thead tr {
+.StyledTable thead tr {
     background-color: #009879;
     color: #ffffff;
     text-align: left;
@@ -29,25 +29,25 @@ code {
 }
 
 
-.styled-table th,
-.styled-table > td {
+.StyledTable th,
+.StyledTable > td {
     padding: 12px 10px;
 }
 
 
-.styled-table tbody tr {
+.StyledTable tbody tr {
     border-bottom: 1px solid #dddddd;
 }
 
-.styled-table tbody tr:nth-of-type(even) {
+.StyledTable tbody tr:nth-of-type(even) {
     background-color: #f3f3f3;
 }
 
-.styled-table tbody tr:last-of-type {
+.StyledTable tbody tr:last-of-type {
     border-bottom: 2px solid #009879;
 }
 
-.styled-table tbody tr.activeRow {
+.StyledTable tbody tr.ActiveRow {
   font-weight: bold;
   color: #009879;
 }
