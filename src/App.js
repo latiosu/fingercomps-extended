@@ -425,7 +425,7 @@ function App() {
       {/* Last score date display */}
       <div style={{ marginTop: '20px' }}>
         {lastSubmittedScore ? (
-          <p>Last score in this category was submitted at: {toTimeAgoString(lastSubmittedScore.createdAt)} by {competitors[lastSubmittedScore.competitorNo].name}</p>
+          <p>Last score in this category was submitted at: {toTimeAgoString(lastSubmittedScore.createdAt)} by {competitors[lastSubmittedScore.competitorNo]?.name}</p>
         ) : (
           <p>No scores available for the selected category.</p>
         )}
