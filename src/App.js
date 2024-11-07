@@ -289,57 +289,59 @@ function App() {
   return (
     <div className="app">
       <h1>FingerComps Extended</h1>
-      <div>
-        <label htmlFor="selectComp">Select Competition:</label>
-        <select
-          id="selectComp"
-          value={selectedComp}
-          onChange={(e) => {
-            setSelectedComp(e.target.value);
-            setSelectedCompId(comps[e.target.selectedIndex].document.name.split('/').pop());
-          }}
-          disabled={loading}
-        >
-          {comps.map((item, index) => (
-            <option key={index} value={item.document.fields?.name?.stringValue}>
-              {item.document.fields?.name?.stringValue}
-            </option>
-          ))}
-        </select>
+      <div className="filters">
+        <div>
+          <label htmlFor="selectComp">Select Competition:</label>
+          <select
+            id="selectComp"
+            value={selectedComp}
+            onChange={(e) => {
+              setSelectedComp(e.target.value);
+              setSelectedCompId(comps[e.target.selectedIndex].document.name.split('/').pop());
+            }}
+            disabled={loading}
+          >
+            {comps.map((item, index) => (
+              <option key={index} value={item.document.fields?.name?.stringValue}>
+                {item.document.fields?.name?.stringValue}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="selectCategory">Select Category:</label>
+          <select
+            id="selectCategory"
+            value={selectedCategory}
+            onChange={(e) => {
+              setSelectedCategory(e.target.value);  // Directly set category from value
+              setSelectedCategoryCode(e.target.selectedOptions[0].dataset.code);  // Get data-code from selected option
+            }}
+            disabled={loading}
+          >
+            <option value="">All</option>
+            {Object.values(categories).map((item, index) => (
+              <option key={index} value={item.name} data-code={item.code}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        {/* Checkbox to limit the number of sub-scores */}
+        <div>
+          <label>
+            <input
+              type="checkbox"
+              checked={limitScores}
+              onChange={(e) => setLimitScores(e.target.checked)}
+              disabled={loading} // Disable while loading
+            />
+            Hide scores that don't affect total
+          </label>
+        </div>
+        {/* Loading message */}
+        {loading && <p>Loading data, please wait...</p>}
       </div>
-      <div>
-        <label htmlFor="selectCategory">Select Category:</label>
-        <select
-          id="selectCategory"
-          value={selectedCategory}
-          onChange={(e) => {
-            setSelectedCategory(e.target.value);  // Directly set category from value
-            setSelectedCategoryCode(e.target.selectedOptions[0].dataset.code);  // Get data-code from selected option
-          }}
-          disabled={loading}
-        >
-          <option value="">All</option>
-          {Object.values(categories).map((item, index) => (
-            <option key={index} value={item.name} data-code={item.code}>
-              {item.name}
-            </option>
-          ))}
-        </select>
-      </div>
-      {/* Checkbox to limit the number of sub-scores */}
-      <div>
-        <label>
-          <input
-            type="checkbox"
-            checked={limitScores}
-            onChange={(e) => setLimitScores(e.target.checked)}
-            disabled={loading} // Disable while loading
-          />
-          Hide scores that don't affect total
-        </label>
-      </div>
-      {/* Loading message */}
-      {loading && <p>Loading data, please wait...</p>}
       {/* Table of competitors and scores */}
       <table className="mainTable">
         <thead>
@@ -380,12 +382,12 @@ function App() {
                       <td>{item.total - item.bonus} {item.bonus > 0 ? `(+${item.bonus})` : ''}</td>
                     </tr>
                     {isExpanded && (
-                      <tr>
+                      <tr className="subTableContainer">
                         <td colSpan="7">
                           {/* Subtable */}
-                          <table style={{ width: '100%' }}>
+                          <table className="subTable" style={{ width: '100%' }}>
                             <thead>
-                              <tr>
+                              <tr className="subTableHeader">
                                 <th>Problem No.</th>
                                 <th>Name/Grade</th>
                                 <th>Flashed?</th>
