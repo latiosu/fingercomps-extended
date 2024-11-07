@@ -15,7 +15,7 @@ function App() {
   const [selectedCategoryCode, setSelectedCategoryCode] = useState("");
   const [tableData, setTableData] = useState([]);
   const [expandedRows, setExpandedRows] = useState(new Set());
-  const [limitScores, setLimitScores] = useState(false);
+  const [limitScores, setLimitScores] = useState(true);
   const [loading, setLoading] = useState(true);
   const [sortDirection, setSortDirection] = useState('desc');
   const [lastSubmittedScore, setLastSubmittedScore] = useState(null);
