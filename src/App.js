@@ -21,7 +21,7 @@ function App() {
   const [sortDirection, setSortDirection] = useState('desc');
   const [lastSubmittedScore, setLastSubmittedScore] = useState(null);
   const [focusView, setFocusView] = useState('user');
-  const [minScoresToCount, setMinScoresToCount] = useState(1); // TODO initialise to 50% pumpfestTopScores
+  const [minScoresToCount] = useState(1); // TODO initialise to 50% pumpfestTopScores
 
   const twoMonthsAgoISOString = () => {
     const now = new Date();
