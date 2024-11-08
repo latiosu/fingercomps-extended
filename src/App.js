@@ -430,7 +430,7 @@ function App() {
             </div>
           </div>
           <table border="1" className="mainTable">
-            <thead>
+            <thead className="tableHeader">
               <tr>
                 <th>#</th>
                 <th>Overall Rank</th>
