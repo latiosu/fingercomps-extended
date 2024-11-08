@@ -44,16 +44,20 @@ function ProblemsTable({ categories, categoryTops, problems, loading, countCompe
   };
 
   return (
-    <div>
-      <label>
-        <input
-          type="checkbox"
-          checked={showRawCounts}
-          onChange={() => setShowRawCounts(!showRawCounts)}
-        />
-        Show raw counts for tops and flashes
-      </label>
-      <table border="1">
+    <React.Fragment>
+      <div className="filters">
+        <div>
+          <label>
+            <input
+              type="checkbox"
+              checked={showRawCounts}
+              onChange={() => setShowRawCounts(!showRawCounts)}
+            />
+            Show raw counts for tops and flashes
+          </label>
+        </div>
+      </div>
+      <table border="1" className="mainTable">
         <thead>
           <tr>
             <th onClick={() => requestSort('climbNo')}>Problem No.</th>
@@ -64,7 +68,7 @@ function ProblemsTable({ categories, categoryTops, problems, loading, countCompe
               .filter((item) => categoryTops[item.code].length > 0)
               .map((item, index) => (
                 <React.Fragment key={index}>
-                  <th onClick={() => requestSort(`stat-${item.code}`)}>{`${item.code} T(F)${showRawCounts ? '' : '%'}`}</th>
+                  <th onClick={() => requestSort(`stat-${item.code}`)}>{item.name ? item.name : 'TBC'}</th>
                 </React.Fragment>
               ))}
           </tr>
@@ -98,7 +102,7 @@ function ProblemsTable({ categories, categoryTops, problems, loading, countCompe
           )}
         </tbody>
       </table>
-    </div>
+    </React.Fragment>
   );
 }
 
