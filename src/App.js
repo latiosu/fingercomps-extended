@@ -16,7 +16,7 @@ function App() {
   const [selectedCategoryCode, setSelectedCategoryCode] = useState("");
   const [userTableData, setUserTableData] = useState([]);
   const [expandedRows, setExpandedRows] = useState(new Set());
-  const [limitScores, setLimitScores] = useState(false);
+  const [limitScores, setLimitScores] = useState(true);
   const [loading, setLoading] = useState(true);
   const [sortDirection, setSortDirection] = useState('desc');
   const [lastSubmittedScore, setLastSubmittedScore] = useState(null);
@@ -35,17 +35,26 @@ function App() {
     const diffMs = now - past; // Difference in milliseconds
 
     // Calculate time components
-    // const seconds = Math.floor(diffMs / 1000) % 60;
+    const seconds = Math.floor(diffMs / 1000) % 60;
     const minutes = Math.floor(diffMs / (1000 * 60)) % 60;
     const hours = Math.floor(diffMs / (1000 * 60 * 60)) % 24;
     const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
     // Construct the human-readable time difference
     const parts = [];
-    if (days > 0) parts.push(`${days} day${days > 1 ? 's' : ''}`);
-    if (hours > 0) parts.push(`${hours} hr${hours > 1 ? 's' : ''}`);
-    if (minutes > 0) parts.push(`${minutes} min${minutes > 1 ? 's' : ''}`);
-    // if (seconds > 0) parts.push(`${seconds} second${seconds > 1 ? 's' : ''}`);
+    if (days > 0) {
+      parts.push(`${days} day${days > 1 ? 's' : ''}`);
+    } else {
+      if (hours > 0) {
+        parts.push(`${hours} hr${hours > 1 ? 's' : ''}`);
+      } else {
+        if (minutes > 0) {
+          parts.push(`${minutes} min${minutes > 1 ? 's' : ''}`);
+        } else {
+          if (seconds > 0) parts.push(`${seconds} second${seconds > 1 ? 's' : ''}`);
+        }
+      }
+    }
 
     // Join parts with commas and add "ago"
     return parts.length > 0 ? parts.join(' ') + ' ago' : 'just now';
@@ -343,174 +352,181 @@ function App() {
   };
 
   return (
-    <div className="App">
+    <div className="app">
       <h1>FingerComps Extended</h1>
-      <div>
-        <label htmlFor="selectComp">Select Competition:</label>
-        <select
-          id="selectComp"
-          value={selectedComp}
-          onChange={(e) => {
-            setSelectedComp(e.target.value);
-            setSelectedCompId(comps[e.target.selectedIndex].document.name.split('/').pop());
-          }}
-          disabled={loading}
-        >
-          {comps.map((item, index) => (
-            <option key={index} value={item.document.fields?.name?.stringValue}>
-              {item.document.fields?.name?.stringValue}
+      <div className="filters">
+        <div>
+          <label htmlFor="selectComp">Select Competition:</label>
+          <select
+            id="selectComp"
+            value={selectedComp}
+            onChange={(e) => {
+              setSelectedComp(e.target.value);
+              setSelectedCompId(comps[e.target.selectedIndex].document.name.split('/').pop());
+            }}
+            disabled={loading}
+          >
+            {comps.map((item, index) => (
+              <option key={index} value={item.document.fields?.name?.stringValue}>
+                {item.document.fields?.name?.stringValue}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="focusView">Focus on:</label>
+          <select
+            id="focusView"
+            value={focusView}
+            onChange={(e) => {
+              setFocusView(e.target.value);
+            }}
+            disabled={loading}
+          >
+            <option value="user">
+              Users
             </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label htmlFor="focusView">Focus on:</label>
-        <select
-          id="focusView"
-          value={focusView}
-          onChange={(e) => {
-            setFocusView(e.target.value);
-          }}
-          disabled={loading}
-        >
-          <option value="user">
-            Users
-          </option>
-          <option value="problems">
-            Problems
-          </option>
-        </select>
-      </div>
-      <div>
-        <label htmlFor="selectCategory">Select Category:</label>
-        <select
-          id="selectCategory"
-          value={selectedCategory}
-          onChange={(e) => {
-            setSelectedCategory(e.target.value);  // Directly set category from value
-            setSelectedCategoryCode(e.target.selectedOptions[0].dataset.code);  // Get data-code from selected option
-          }}
-          disabled={loading}
-        >
-          <option value="">All</option>
-          {Object.values(categories).map((item, index) => (
-            <option key={index} value={item.name} data-code={item.code}>
-              {item.name}
+            <option value="problems">
+              Problems
             </option>
-          ))}
-        </select>
+          </select>
+        </div>
+        <div>
+          <label htmlFor="filterCategory">Show Category:</label>
+          <select
+            id="filterCategory"
+            value={selectedCategory}
+            onChange={(e) => {
+              setSelectedCategory(e.target.value);
+              setSelectedCategoryCode(e.target.selectedOptions[0].dataset.code);
+            }}
+            disabled={loading}
+          >
+            <option value="">All</option>
+            {Object.values(categories).map((item, index) => (
+              <option key={index} value={item.name} data-code={item.code}>
+                {item.name || 'TBC'}
+              </option>
+            ))}
+          </select>
+        </div>
+        {/* Loading message */}
+        {loading && <p>Loading data, please wait...</p>}
       </div>
-      {/* Checkbox to limit the number of sub-scores */}
-      <div>
-        <label>
-          <input
-            type="checkbox"
-            checked={limitScores}
-            onChange={(e) => setLimitScores(e.target.checked)}
-            disabled={loading} // Disable while loading
-          />
-          Hide scores that don't affect total
-        </label>
-      </div>
-      {/* Loading message */}
-      {loading && <p>Loading data, please wait...</p>}
       {/* Table of competitors and scores */}
       {focusView === 'user' ? (
-        <table border="1">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Overall Rank</th>
-              {!selectedCategory ? (<th>Category</th>) : null}
-              <th>Name</th>
-              <th>Tops</th>
-              <th>Flashes</th>
-              <th onClick={handleScoreHeaderClick} style={{ cursor: 'pointer' }}>
-                Score (+ Flash Bonus) {sortDirection === 'asc' ? '🔼' : '🔽'}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
+        <React.Fragment>
+          <div className="filters">
+            <div>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={limitScores}
+                  onChange={(e) => setLimitScores(e.target.checked)}
+                  disabled={loading} // Disable while loading
+                />
+                Hide scores that don't affect total
+              </label>
+            </div>
+          </div>
+          <table border="1" className="mainTable">
+            <thead className="tableHeader">
               <tr>
-                <td colSpan="10">Loading...</td>
+                <th>#</th>
+                <th>Overall Rank</th>
+                {!selectedCategory ? (<th>Category</th>) : null}
+                <th>Name</th>
+                <th>Tops</th>
+                <th>Flashes</th>
+                <th onClick={handleScoreHeaderClick} style={{ cursor: 'pointer' }}>
+                  Score (+ Flash Bonus) {sortDirection === 'asc' ? '🔼' : '🔽'}
+                </th>
               </tr>
-            ) : Array.isArray(userTableData) && userTableData.length > 0 ? (
-              userTableData
-                .filter(item => {
-                  if (!selectedCategory) return true;
-                  return item.categoryFullName === selectedCategory;
-                })
-                .map((item, index) => {
-                  const isExpanded = expandedRows.has(item.competitorNo);
-                  return (
-                    <React.Fragment key={index}>
-                      <tr onClick={() => handleRowClick(item.competitorNo)} style={{ cursor: 'pointer' }}>
-                        <td>{isNaN(index) ? 'N/A' : index + 1}</td>
-                        <td>{item.rank}</td>
-                        {!selectedCategory ? (<td>{item.categoryFullName}</td>) : null}
-                        <td>{item.name}</td>
-                        <td>{item.tops}</td>
-                        <td>{item.flashes}</td>
-                        <td>{item.total - item.bonus} {item.bonus > 0 ? `(+${item.bonus})` : ''}</td>
-                      </tr>
-                      {isExpanded && (
-                        <tr>
-                          <td colSpan="7">
-                            {/* Subtable */}
-                            <table border="1" style={{ width: '100%' }}>
-                              <thead>
-                                <tr>
-                                  <th>Problem No.</th>
-                                  <th>Name/Grade</th>
-                                  <th>Flashed?</th>
-                                  <th>Points (+ Flash Bonus)</th>
-                                  <th>Sent</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {/* Limit the number of scores based on the checkbox state */}
-                                {item.scores && item.scores
-                                  .slice(0, limitScores ? categories[item.category].pumpfestTopScores : item.scores.length)
-                                  .map((score, subIndex) =>
-                                (
-                                  <tr key={subIndex}>
-                                    <td>{score.climbNo}</td>
-                                    <td>{score.marking}</td>
-                                    <td>{score.flashed ? 'Y' : ''}</td>
-                                    <td>{score.score} {score.flashed ? `(+${item.flashExtraPoints})` : ''}</td>
-                                    <td>{toTimeAgoString(score.createdAt)}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </td>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan="10">Loading...</td>
+                </tr>
+              ) : Array.isArray(userTableData) && userTableData.length > 0 ? (
+                userTableData
+                  .filter(item => {
+                    if (!selectedCategory) return true;
+                    return item.categoryFullName === selectedCategory;
+                  })
+                  .map((item, index) => {
+                    const isExpanded = expandedRows.has(item.competitorNo);
+                    return (
+                      <React.Fragment key={index}>
+                        <tr onClick={() => handleRowClick(item.competitorNo)} style={{ cursor: 'pointer' }}>
+                          <td>{isNaN(index) ? 'N/A' : index + 1}</td>
+                          <td>{item.rank}</td>
+                          {!selectedCategory ? (<td>{item.categoryFullName}</td>) : null}
+                          <td>{item.name}</td>
+                          <td>{item.tops}</td>
+                          <td>{item.flashes}</td>
+                          <td>{item.total - item.bonus} {item.bonus > 0 ? `(+${item.bonus})` : ''}</td>
                         </tr>
-                      )}
-                    </React.Fragment>
-                  );
-                })
-            ) : (
-              <tr>
-                <td colSpan="10">No data available</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                        {isExpanded && (
+                          <tr className="subTableContainer">
+                            <td colSpan="7">
+                              {/* Subtable */}
+                              <table border="1" className="subTable" style={{ width: '100%' }}>
+                                <thead>
+                                  <tr className="subTableHeader">
+                                    <th>Problem No.</th>
+                                    <th>Name/Grade</th>
+                                    <th>Flashed?</th>
+                                    <th>Points (+ Flash Bonus)</th>
+                                    <th>Sent</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {/* Limit the number of scores based on the checkbox state */}
+                                  {item.scores && item.scores
+                                    .slice(0, limitScores ? categories[item.category].pumpfestTopScores : item.scores.length)
+                                    .map((score, subIndex) =>
+                                  (
+                                    <tr key={subIndex}>
+                                      <td>{score.climbNo}</td>
+                                      <td>{score.marking}</td>
+                                      <td>{score.flashed ? 'Y' : ''}</td>
+                                      <td>{score.score} {score.flashed ? `(+${item.flashExtraPoints})` : ''}</td>
+                                      <td>{toTimeAgoString(score.createdAt)}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })
+              ) : (
+                <tr>
+                  <td colSpan="10">No data available</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </React.Fragment>
       ) : (
-        <ProblemsTable 
-          categories={categories} 
-          categoryTops={categoryTops} 
-          problems={problems} 
-          loading={loading} 
-          countCompetitors={countCompetitors} 
-          toTimeAgoString={toTimeAgoString} 
+        <ProblemsTable
+          categories={categories}
+          categoryTops={categoryTops}
+          problems={problems}
+          loading={loading}
+          countCompetitors={countCompetitors}
+          toTimeAgoString={toTimeAgoString}
+          selectedCategory={selectedCategory}
+          selectedCategoryCode={selectedCategoryCode}
         />
       )}
       {/* Last score date display */}
       <div style={{ marginTop: '20px' }}>
         {lastSubmittedScore ? (
-          <p>Last score in this category was submitted at: {toTimeAgoString(lastSubmittedScore.createdAt)} by {competitors[lastSubmittedScore.competitorNo].name}</p>
+          <p>Last score in this category was submitted at: {toTimeAgoString(lastSubmittedScore.createdAt)} by {competitors[lastSubmittedScore.competitorNo]?.name}</p>
         ) : (
           <p>No scores available for the selected category.</p>
         )}

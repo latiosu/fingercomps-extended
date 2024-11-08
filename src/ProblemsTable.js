@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 
-function ProblemsTable({ categories, categoryTops, problems, loading, countCompetitors, toTimeAgoString }) {
+function ProblemsTable({
+  categories, categoryTops, problems, loading, countCompetitors, toTimeAgoString, selectedCategory, selectedCategoryCode
+}) {
   // State to track sorting
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
-  const [showRawCounts, setShowRawCounts] = useState(false); // State for toggle
+  const [sortConfig, setSortConfig] = useState({ key: 'climbNo', direction: 'asc' });
+  const [showRawCounts, setShowRawCounts] = useState(false);
 
   // Sorting function
   const sortedProblems = React.useMemo(() => {
@@ -25,8 +27,8 @@ function ProblemsTable({ categories, categoryTops, problems, loading, countCompe
           bValue = b[sortConfig.key];
         }
 
-        if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
-        if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
         return 0;
       });
     }
@@ -36,35 +38,41 @@ function ProblemsTable({ categories, categoryTops, problems, loading, countCompe
 
   // Function to handle column click and update sort configuration
   const requestSort = (key) => {
-    let direction = 'ascending';
-    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
-      direction = 'descending';
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
     }
     setSortConfig({ key, direction });
   };
 
   return (
-    <div>
-      <label>
-        <input
-          type="checkbox"
-          checked={showRawCounts}
-          onChange={() => setShowRawCounts(!showRawCounts)}
-        />
-        Show raw counts for tops and flashes
-      </label>
-      <table border="1">
+    <React.Fragment>
+      <div className="filters">
+        <div>
+          <label>
+            <input
+              type="checkbox"
+              checked={showRawCounts}
+              onChange={() => setShowRawCounts(!showRawCounts)}
+            />
+            Show raw counts for tops and flashes
+          </label>
+        </div>
+      </div>
+      <table border="1" className="mainTable">
         <thead>
-          <tr>
-            <th onClick={() => requestSort('climbNo')}>Problem No.</th>
-            <th onClick={() => requestSort('marking')}>Name/Grade</th>
-            <th onClick={() => requestSort('score')}>Points</th>
-            <th onClick={() => requestSort('createdAt')}>Date Set</th>
+          <tr className="tableHeader">
+            <th style={{ cursor: 'pointer' }} onClick={() => requestSort('climbNo')}>Problem No.{sortConfig.key === 'climbNo' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</th>
+            <th style={{ cursor: 'pointer' }} onClick={() => requestSort('marking')}>Name/Grade{sortConfig.key === 'marking' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</th>
+            <th style={{ cursor: 'pointer' }} onClick={() => requestSort('score')}>Points{sortConfig.key === 'score' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</th>
+            <th style={{ cursor: 'pointer' }} onClick={() => requestSort('createdAt')}>Date Set{sortConfig.key === 'createdAt' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</th>
             {Object.values(categories)
-              .filter((item) => categoryTops[item.code].length > 0)
+              .filter((item) => categoryTops[item.code].length > 0 && (selectedCategoryCode ? item.code === selectedCategoryCode : true))
               .map((item, index) => (
                 <React.Fragment key={index}>
-                  <th onClick={() => requestSort(`stat-${item.code}`)}>{`${item.code} T(F)${showRawCounts ? '' : '%'}`}</th>
+                  <th style={{ cursor: 'pointer' }} onClick={() => requestSort(`stat-${item.code}`)}>
+                    {item.name || 'TBC'}{sortConfig.key === `stat-${item.code}` ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}
+                  </th>
                 </React.Fragment>
               ))}
           </tr>
@@ -81,14 +89,17 @@ function ProblemsTable({ categories, categoryTops, problems, loading, countCompe
                 <td>{item.marking}</td>
                 <td>{item.score}</td>
                 <td>{toTimeAgoString(item.createdAt)}</td>
-                {item.stats && Object.entries(item.stats).map(([k, v], idx) => (
-                  <td key={idx}>
-                    {showRawCounts
-                      ? `${v.tops} (${v.flashes})`
-                      : `${(v.tops / countCompetitors(k)).toFixed(0)}% (${(v.flashes / countCompetitors(k)).toFixed(0)}%)`
-                    }
-                  </td>
-                ))}
+                {item.stats && Object.entries(item.stats)
+                  .filter(([k, _]) => selectedCategoryCode ? k === selectedCategoryCode : true)
+                  .map(([k, v], idx) => (
+                    <td key={idx}>
+                      {showRawCounts
+                        ? `${v.tops} (${v.flashes})`
+                        : `${(v.tops / countCompetitors(k)).toFixed(0)}% (${(v.flashes / countCompetitors(k)).toFixed(0)}%)`
+                      }
+                    </td>
+                  ))
+                }
               </tr>
             ))
           ) : (
@@ -98,7 +109,7 @@ function ProblemsTable({ categories, categoryTops, problems, loading, countCompe
           )}
         </tbody>
       </table>
-    </div>
+    </React.Fragment>
   );
 }
 
