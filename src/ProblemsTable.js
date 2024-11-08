@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 
-function ProblemsTable({ categories, categoryTops, problems, loading, countCompetitors, toTimeAgoString }) {
+function ProblemsTable({
+  categories, categoryTops, problems, loading, countCompetitors, toTimeAgoString, selectedCategory, selectedCategoryCode
+}) {
   // State to track sorting
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
   const [showRawCounts, setShowRawCounts] = useState(false); // State for toggle
@@ -65,10 +67,10 @@ function ProblemsTable({ categories, categoryTops, problems, loading, countCompe
             <th onClick={() => requestSort('score')}>Points</th>
             <th onClick={() => requestSort('createdAt')}>Date Set</th>
             {Object.values(categories)
-              .filter((item) => categoryTops[item.code].length > 0)
+              .filter((item) => categoryTops[item.code].length > 0 && (selectedCategoryCode ? item.code === selectedCategoryCode : true))
               .map((item, index) => (
                 <React.Fragment key={index}>
-                  <th onClick={() => requestSort(`stat-${item.code}`)}>{item.name ? item.name : 'TBC'}</th>
+                  <th onClick={() => requestSort(`stat-${item.code}`)}>{item.name || 'TBC'}</th>
                 </React.Fragment>
               ))}
           </tr>
@@ -85,14 +87,17 @@ function ProblemsTable({ categories, categoryTops, problems, loading, countCompe
                 <td>{item.marking}</td>
                 <td>{item.score}</td>
                 <td>{toTimeAgoString(item.createdAt)}</td>
-                {item.stats && Object.entries(item.stats).map(([k, v], idx) => (
-                  <td key={idx}>
-                    {showRawCounts
-                      ? `${v.tops} (${v.flashes})`
-                      : `${(v.tops / countCompetitors(k)).toFixed(0)}% (${(v.flashes / countCompetitors(k)).toFixed(0)}%)`
-                    }
-                  </td>
-                ))}
+                {item.stats && Object.entries(item.stats)
+                  .filter(([k, _]) => selectedCategoryCode ? k === selectedCategoryCode : true)
+                  .map(([k, v], idx) => (
+                    <td key={idx}>
+                      {showRawCounts
+                        ? `${v.tops} (${v.flashes})`
+                        : `${(v.tops / countCompetitors(k)).toFixed(0)}% (${(v.flashes / countCompetitors(k)).toFixed(0)}%)`
+                      }
+                    </td>
+                  ))
+                }
               </tr>
             ))
           ) : (

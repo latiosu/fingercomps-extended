@@ -392,20 +392,20 @@ function App() {
           </select>
         </div>
         <div>
-          <label htmlFor="filterCategory">Filter by Category:</label>
+          <label htmlFor="filterCategory">Show Category:</label>
           <select
             id="filterCategory"
             value={selectedCategory}
             onChange={(e) => {
-              setSelectedCategory(e.target.value);  // Directly set category from value
-              setSelectedCategoryCode(e.target.selectedOptions[0].dataset.code);  // Get data-code from selected option
+              setSelectedCategory(e.target.value);
+              setSelectedCategoryCode(e.target.selectedOptions[0].dataset.code);
             }}
             disabled={loading}
           >
             <option value="">All</option>
             {Object.values(categories).map((item, index) => (
               <option key={index} value={item.name} data-code={item.code}>
-                {item.name}
+                {item.name || 'TBC'}
               </option>
             ))}
           </select>
@@ -512,13 +512,15 @@ function App() {
           </table>
         </React.Fragment>
       ) : (
-        <ProblemsTable 
-          categories={categories} 
-          categoryTops={categoryTops} 
-          problems={problems} 
-          loading={loading} 
-          countCompetitors={countCompetitors} 
-          toTimeAgoString={toTimeAgoString} 
+        <ProblemsTable
+          categories={categories}
+          categoryTops={categoryTops}
+          problems={problems}
+          loading={loading}
+          countCompetitors={countCompetitors}
+          toTimeAgoString={toTimeAgoString}
+          selectedCategory={selectedCategory}
+          selectedCategoryCode={selectedCategoryCode}
         />
       )}
       {/* Last score date display */}
