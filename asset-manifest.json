@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/fingercomps-extended/static/css/main.94d13b92.css",
-    "main.js": "/fingercomps-extended/static/js/main.a591cdc6.js",
+    "main.js": "/fingercomps-extended/static/js/main.a8ce5b20.js",
     "static/js/453.6bd6aeb1.chunk.js": "/fingercomps-extended/static/js/453.6bd6aeb1.chunk.js",
     "index.html": "/fingercomps-extended/index.html",
     "main.94d13b92.css.map": "/fingercomps-extended/static/css/main.94d13b92.css.map",
-    "main.a591cdc6.js.map": "/fingercomps-extended/static/js/main.a591cdc6.js.map",
+    "main.a8ce5b20.js.map": "/fingercomps-extended/static/js/main.a8ce5b20.js.map",
     "453.6bd6aeb1.chunk.js.map": "/fingercomps-extended/static/js/453.6bd6aeb1.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.94d13b92.css",
-    "static/js/main.a591cdc6.js"
+    "static/js/main.a8ce5b20.js"
   ]
 }
