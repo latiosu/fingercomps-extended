@@ -32,6 +32,9 @@ code {
 
 .tableHeader {
   background-color: #FFD68A; /* Orange */
+  position: sticky;
+  top: 0;
+  z-index: 1; /* Ensure header stays on top */
 }
 
 .subTableHeader {
@@ -67,7 +70,7 @@ code {
 
 /* Gentle highlight effect on hover */
 .mainTable tbody tr:hover:not(.subTableContainer, .subTableHeader) {
-  background-color: rgba(253, 253, 150, 0.3); /* Pastel Yellow */
+  background-color: rgb(254, 254, 224); /* Pastel Yellow */
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Soft shadow to add depth */
 }
 
@@ -94,6 +97,13 @@ code {
 }
 
 .mainTable .subTable tbody tr:hover {
-  background-color: rgba(253, 253, 150, 0.3); /* Pastel Yellow */
+  background-color: rgb(254, 254, 224); /* Pastel Yellow */
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Soft shadow to add depth */
+}
+
+.mainTable th,
+.mainTable td,
+.subTable th,
+.subTable td {
+  text-align: center;
 }
