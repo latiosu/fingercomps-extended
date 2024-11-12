@@ -169,7 +169,7 @@ function App() {
         `${baseUrl}/competitions/${compId}/qualificationScores?pageSize=300`,
         (documents) => {
           const cleanedScores = documents.reduce((acc, item) => {
-            const competitorNo = item.fields?.competitorNo?.integerValue;
+            const competitorNo = parseInt(item.fields?.competitorNo?.integerValue);
             acc[competitorNo] = acc[competitorNo] || [];
             acc[competitorNo].push({
               climbNo: parseInt(item.fields?.climbNo?.integerValue),
@@ -214,8 +214,8 @@ function App() {
     ]).finally(() => setLoading(false));
   }, [selectedCompId]);
 
-  useEffect(() => {
-    const computeUserTableData = () => {
+  const computeUserTableData = useMemo(() => {
+    return () => {
       const table = Object.entries(competitors).map(([uid, user]) => {
         const cat = categories[user.category];
         const flashExtraPoints = cat?.flashExtraPoints || 0;
@@ -254,11 +254,15 @@ function App() {
           lastScore = item.total;
         }
         item.rank = currentRank;
+        competitors[item.competitorNo].rank = currentRank;
       });
 
       return table;
-    }
-    const computeProblemStats = () => {
+    };
+  }, [categories, competitors, problems, scores]);
+
+  const computeProblemStats = useMemo(() => {
+    return () => {
       const seen = new Set();
       Object.entries(scores).forEach(([cptNo, cptScores]) => {
         cptScores.forEach((score) => {
@@ -280,18 +284,33 @@ function App() {
               }
             });
           }
+          if (!climb.sends) {
+            climb['sends'] = [];
+          }
           if (score.flashed) {
             climb.stats[score.category].flashes += 1;
           }
           if (score.topped) {
             climb.stats[score.category].tops += 1;
+            climb.sends.push({
+              competitorNo: score.competitorNo,
+              rank: competitors[score.competitorNo]?.rank,
+              category: categories[score.category]?.name,
+              categoryCode: score.category,
+              name: competitors[score.competitorNo]?.name,
+              flashed: score.flashed,
+              createdAt: score.createdAt,
+            });
           }
         });
       });
     };
+  }, [scores, problems, categories, competitors]);
+
+  useEffect(() => {
     setUserTableData(computeUserTableData());
     computeProblemStats();
-  }, [categories, competitors, problems, scores]);
+  }, [computeUserTableData, computeProblemStats]);
 
   const computeCategoryTops = () => {
     const categoryTops = {};
@@ -322,13 +341,13 @@ function App() {
     setUserTableData(sortedUserTableData);
   };
 
-  const handleRowClick = (uid) => {
+  const handleRowClick = (id) => {
     setExpandedRows((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(uid)) {
-        newSet.delete(uid);
+      if (newSet.has(id)) {
+        newSet.delete(id);
       } else {
-        newSet.add(uid);
+        newSet.add(id);
       }
       return newSet;
     });
@@ -519,7 +538,6 @@ function App() {
           loading={loading}
           countCompetitors={countCompetitors}
           toTimeAgoString={toTimeAgoString}
-          selectedCategory={selectedCategory}
           selectedCategoryCode={selectedCategoryCode}
         />
       )}

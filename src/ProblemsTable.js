@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 
 function ProblemsTable({
-  categories, categoryTops, problems, loading, countCompetitors, toTimeAgoString, selectedCategory, selectedCategoryCode
+  categories, categoryTops, problems, loading, countCompetitors, toTimeAgoString, selectedCategoryCode
 }) {
   // State to track sorting
   const [sortConfig, setSortConfig] = useState({ key: 'climbNo', direction: 'asc' });
-  const [showRawCounts, setShowRawCounts] = useState(false);
+  const [showRawCounts, setShowRawCounts] = useState(true);
+  const [expandedRows, setExpandedRows] = useState(new Set());
 
   // Sorting function
   const sortedProblems = React.useMemo(() => {
     const sortedData = [...Object.values(problems)];
-    
+
     if (sortConfig.key) {
       sortedData.sort((a, b) => {
         let aValue, bValue;
@@ -32,7 +33,7 @@ function ProblemsTable({
         return 0;
       });
     }
-    
+
     return sortedData;
   }, [problems, sortConfig, countCompetitors, showRawCounts]);
 
@@ -43,6 +44,18 @@ function ProblemsTable({
       direction = 'desc';
     }
     setSortConfig({ key, direction });
+  };
+
+  const handleRowClick = (id) => {
+    setExpandedRows((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
   };
 
   return (
@@ -68,8 +81,8 @@ function ProblemsTable({
             <th style={{ cursor: 'pointer' }} onClick={() => requestSort('createdAt')}>Date Set{sortConfig.key === 'createdAt' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</th>
             {Object.values(categories)
               .filter((item) => categoryTops[item.code].length > 0 && (selectedCategoryCode ? item.code === selectedCategoryCode : true))
-              .map((item, index) => (
-                <React.Fragment key={index}>
+              .map((item) => (
+                <React.Fragment key={item.code}>
                   <th style={{ cursor: 'pointer' }} onClick={() => requestSort(`stat-${item.code}`)}>
                     {item.name || 'TBC'}{sortConfig.key === `stat-${item.code}` ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}
                   </th>
@@ -83,25 +96,63 @@ function ProblemsTable({
               <td colSpan="10">Loading...</td>
             </tr>
           ) : sortedProblems.length > 0 ? (
-            sortedProblems.map((item, index) => (
-              <tr key={index}>
-                <td>{item.climbNo}</td>
-                <td>{item.marking}</td>
-                <td>{item.score}</td>
-                <td>{toTimeAgoString(item.createdAt)}</td>
-                {item.stats && Object.entries(item.stats)
-                  .filter(([k, _]) => selectedCategoryCode ? k === selectedCategoryCode : true)
-                  .map(([k, v], idx) => (
-                    <td key={idx}>
-                      {showRawCounts
-                        ? `${v.tops} (${v.flashes})`
-                        : `${(v.tops / countCompetitors(k)).toFixed(0)}% (${(v.flashes / countCompetitors(k)).toFixed(0)}%)`
-                      }
-                    </td>
-                  ))
-                }
-              </tr>
-            ))
+            sortedProblems.map((item) => {
+              const isExpanded = expandedRows.has(item.climbNo);
+              return (
+                <React.Fragment key={item.climbNo}>
+                  <tr onClick={() => handleRowClick(item.climbNo)} style={{ cursor: 'pointer' }}>
+                    <td>{item.climbNo}</td>
+                    <td>{item.marking}</td>
+                    <td>{item.score}</td>
+                    <td>{toTimeAgoString(item.createdAt)}</td>
+                    {item.stats && Object.entries(item.stats)
+                      .filter(([k, _]) => selectedCategoryCode ? k === selectedCategoryCode : true)
+                      .map(([k, v], idx) => (
+                        <td key={`${item.climbNo}-${idx}`}>
+                          {showRawCounts
+                            ? `${v.tops} (${v.flashes})`
+                            : `${(v.tops / countCompetitors(k)).toFixed(0)}% (${(v.flashes / countCompetitors(k)).toFixed(0)}%)`
+                          }
+                        </td>
+                      ))
+                    }
+                  </tr>
+                  {isExpanded && (
+                    <tr className="subTableContainer">
+                      <td colSpan="7">
+                        {/* Subtable */}
+                        <table border="1" className="subTable" style={{ width: '100%' }}>
+                          <thead>
+                            <tr className="subTableHeader">
+                              <th>Overall Rank</th>
+                              <th>Category</th>
+                              <th>Name</th>
+                              <th>Flashed?</th>
+                              <th>Sent</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {item.sends && item.sends
+                              .filter((send) => selectedCategoryCode ? send.categoryCode === selectedCategoryCode : true)
+                              .sort((a, b) => a.rank - b.rank)
+                              .map((send, subIndex) =>
+                            (
+                              <tr key={`${item.climbNo}-${subIndex}`}>
+                                <td>{send.rank}</td>
+                                <td>{send.category || 'TBC'}</td>
+                                <td>{send.name}</td>
+                                <td>{send.flashed ? 'Y' : ''}</td>
+                                <td>{toTimeAgoString(send.createdAt)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              )
+            })
           ) : (
             <tr>
               <td colSpan="10">No data available</td>
