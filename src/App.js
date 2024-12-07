@@ -483,7 +483,7 @@ function App() {
                           {!selectedCategory ? (<td>{item.categoryFullName}</td>) : null}
                           <td>{item.name}</td>
                           <td>{item.tops}</td>
-                          <td>{item.flashes}</td>
+                          <td>{item?.flashes}</td>
                           <td>{item.total - item.bonus} {item.bonus > 0 ? `(+${item.bonus})` : ''}</td>
                         </tr>
                         {isExpanded && (
@@ -524,7 +524,7 @@ function App() {
                   })
               ) : (
                 <tr>
-                  <td colSpan="10">No data available</td>
+                  <td colSpan="10">No data available or scores are hidden</td>
                 </tr>
               )}
             </tbody>
