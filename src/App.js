@@ -440,11 +440,15 @@ function App() {
             }}
             disabled={loading}
           >
-            {comps.map((item, index) => (
-              <option key={index} value={item.document.fields?.name?.stringValue}>
-                {item.document.fields?.name?.stringValue}
-              </option>
-            ))}
+            {[...comps]
+              .sort((a, b) =>
+                (a.document.fields?.name?.stringValue || '').localeCompare(b.document.fields?.name?.stringValue || '')
+              )
+              .map((item, index) => (
+                <option key={index} value={item.document.fields?.name?.stringValue}>
+                  {item.document.fields?.name?.stringValue}
+                </option>
+              ))}
           </select>
         </div>
         <div>
