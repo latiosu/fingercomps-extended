@@ -98,7 +98,10 @@ function App() {
         const { documents, nextPageToken } = response.data;
 
         if (Array.isArray(documents)) allDocuments = [...allDocuments, ...documents];
-        else console.warn("Expected 'documents' to be an array but received:", documents);
+        else {
+          console.warn("No data found for current competition");
+          break;
+        }
 
         if (!nextPageToken) break;
         token = nextPageToken;
@@ -141,13 +144,26 @@ function App() {
       };
       try {
         const response = await axios.post(`${baseUrl}:runQuery`, requestBody);
-        const availableComps = response.data.filter((item) => item.document.fields?.trash?.booleanValue !== true) || [];
+        const compsAndLinks = await Promise.all(response.data.map(async item => {
+          const compId = item.document.name.split('/').pop();
+          const response = await axios.get(`${baseUrl}/competitions/${compId}/links`);
+          const { documents } = response.data;
+          if (Array.isArray(documents)) {
+            item.document.links = documents;
+          }
+          return item;
+        }));
+        const availableComps = compsAndLinks.filter(item => {
+          if (item.document?.links)
+            return true; // Keep comps with sharing links created
+          return false;
+        }) || [];
         setComps(availableComps);
 
         // Check if previously selected competition still exists
         if (selectedCompId) {
           const compExists = availableComps.some(comp =>
-            comp.document.name.split('/').pop() === selectedCompId
+            comp.document?.name.split('/').pop() === selectedCompId
           );
 
           if (!compExists) {
@@ -173,6 +189,12 @@ function App() {
 
   useEffect(() => {
     if (!selectedCompId) return;
+
+    // Clear state to avoid mixing data between competitions
+    setCategories({});
+    setCompetitors({});
+    setScores({});
+    setProblems({});
 
     const fetchAllCategories = async (compId) => {
       await fetchPaginatedData(
@@ -325,6 +347,10 @@ function App() {
             seen.add(tmpId);
           }
           const climb = problems[score.climbNo];
+          if (!climb) {
+            // Skip processing if data is missing
+            return;
+          }
           if (!climb.stats) {
             climb['stats'] = {};
             Object.keys(categories).forEach((category) => {
@@ -338,9 +364,17 @@ function App() {
             climb['sends'] = [];
           }
           if (score.flashed) {
+            if (!climb.stats.hasOwnProperty(score.category)) {
+              console.warn(`Unrecognised category (${score.category}) in categories set (${categories})`);
+              return;
+            }
             climb.stats[score.category].flashes += 1;
           }
           if (score.topped) {
+            if (!climb.stats.hasOwnProperty(score.category)) {
+              console.warn(`Unrecognised category (${score.category}) in categories set (${Object.keys(categories)})`);
+              return;
+            }
             climb.stats[score.category].tops += 1;
             climb.sends.push({
               competitorNo: score.competitorNo,
@@ -431,7 +465,7 @@ function App() {
             value={selectedComp}
             onChange={(e) => {
               const newComp = e.target.value;
-              const newCompId = comps[e.target.selectedIndex].document.name.split('/').pop();
+              const newCompId = comps[e.target.selectedIndex].document?.name.split('/').pop();
               setSelectedComp(newComp);
               setSelectedCompId(newCompId);
               localStorage.setItem('lastSelectedComp', newComp);
@@ -440,15 +474,15 @@ function App() {
             }}
             disabled={loading}
           >
-            {[...comps]
-              .sort((a, b) =>
-                (a.document.fields?.name?.stringValue || '').localeCompare(b.document.fields?.name?.stringValue || '')
+            {comps.sort((a, b) =>
+                (a.document?.fields?.name?.stringValue || '').localeCompare(b.document?.fields?.name?.stringValue || '')
               )
               .map((item, index) => (
-                <option key={index} value={item.document.fields?.name?.stringValue}>
-                  {item.document.fields?.name?.stringValue}
+                <option key={index} value={item.document?.fields?.name?.stringValue}>
+                  {item.document?.fields?.name?.stringValue}
                 </option>
-              ))}
+              )
+            )}
           </select>
         </div>
         <div>
