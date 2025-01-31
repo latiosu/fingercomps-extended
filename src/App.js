@@ -488,8 +488,6 @@ function App() {
             ))}
           </select>
         </div>
-        {/* Loading message */}
-        {loading && <p>Loading data, please wait...</p>}
       </div>
       {/* Competition not found message */}
       {compNotFoundMessage && (
@@ -530,7 +528,7 @@ function App() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="10">Loading...</td>
+                  <td colSpan="10"><span className="loading-dots">Loading</span></td>
                 </tr>
               ) : Array.isArray(userTableData) && userTableData.length > 0 ? (
                 userTableData
