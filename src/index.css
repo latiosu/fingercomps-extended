@@ -86,14 +86,20 @@ select {
 
   .mainTable th,
   .mainTable td {
-    padding: 4px;
+    padding: 5px;
     word-wrap: break-word;
   }
 
   /* Subtable styles */
   .subTable {
-    font-size: 11px;
+    font-size: 12px;
     margin-top: 0px;
+  }
+
+  .mainTable .subTable th,
+  .mainTable .subTable td {
+    padding: 5px !important;
+    border: 1px solid #ccc;
   }
 }
 

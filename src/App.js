@@ -10,6 +10,17 @@ function App() {
   const [scores, setScores] = useState({});
   const [competitors, setCompetitors] = useState({});
   const [problems, setProblems] = useState({});
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [selectedComp, setSelectedComp] = useState(() => {
     return localStorage.getItem('lastSelectedComp') || "";
   });
@@ -501,14 +512,14 @@ function App() {
           <table border="1" className="mainTable">
             <thead className="tableHeader">
               <tr>
-                <th>#</th>
-                <th>Overall Rank</th>
+                {!isMobile && <th>#</th>}
+                <th>{!isMobile && "Overall"} Rank</th>
                 {!selectedCategory ? (<th>Category</th>) : null}
                 <th>Name</th>
                 <th>Tops</th>
                 <th>Flashes</th>
                 <th onClick={handleScoreHeaderClick} style={{ cursor: 'pointer' }}>
-                  Score (+ Flash Bonus) {sortDirection === 'asc' ? '🔼' : '🔽'}
+                  Score{!isMobile && "(+ Flash Bonus)"} {sortDirection === 'asc' ? '🔼' : '🔽'}
                 </th>
               </tr>
             </thead>
@@ -528,7 +539,7 @@ function App() {
                     return (
                       <React.Fragment key={index}>
                         <tr onClick={() => handleRowClick(item.competitorNo)} style={{ cursor: 'pointer' }}>
-                          <td>{isNaN(index) ? 'N/A' : index + 1}</td>
+                          {!isMobile && <td>{isNaN(index) ? 'N/A' : index + 1}</td>}
                           <td>{item.rank}</td>
                           {!selectedCategory ? (<td>{item.categoryFullName}</td>) : null}
                           <td>{item.name}</td>
@@ -543,10 +554,10 @@ function App() {
                               <table border="1" className="subTable" style={{ width: '100%' }}>
                                 <thead>
                                   <tr className="subTableHeader">
-                                    <th>Problem No.</th>
-                                    <th>Name/Grade</th>
+                                    <th>Problem{!isMobile && " No."}</th>
+                                    <th>Name{!isMobile && "/Grade"}</th>
                                     <th>Flashed?</th>
-                                    <th>Points (+ Flash Bonus)</th>
+                                    <th>Points{!isMobile && " (+ Flash Bonus)"}</th>
                                     <th>Sent</th>
                                   </tr>
                                 </thead>
@@ -590,6 +601,7 @@ function App() {
           toTimeAgoString={toTimeAgoString}
           formatDateForHover={formatDateForHover}
           selectedCategoryCode={selectedCategoryCode}
+          isMobile={isMobile}
         />
       )}
       {/* Last score date display */}

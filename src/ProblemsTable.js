@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 function ProblemsTable({
-  categories, categoryTops, problems, loading, countCompetitors, toTimeAgoString, formatDateForHover, selectedCategoryCode
+  categories, categoryTops, problems, loading, countCompetitors, toTimeAgoString, formatDateForHover, selectedCategoryCode, isMobile
 }) {
   // State to track sorting
   const [sortConfig, setSortConfig] = useState({ key: 'climbNo', direction: 'asc' });
@@ -75,8 +75,8 @@ function ProblemsTable({
           <table border="1" className="mainTable">
             <thead>
               <tr className="tableHeader">
-                <th style={{ cursor: 'pointer' }} onClick={() => requestSort('climbNo')}>Problem No.{sortConfig.key === 'climbNo' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</th>
-                <th style={{ cursor: 'pointer' }} onClick={() => requestSort('marking')}>Name/Grade{sortConfig.key === 'marking' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</th>
+                <th style={{ cursor: 'pointer' }} onClick={() => requestSort('climbNo')}>Problem{!isMobile && " No."}{sortConfig.key === 'climbNo' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</th>
+                <th style={{ cursor: 'pointer' }} onClick={() => requestSort('marking')}>Name{!isMobile && "/Grade"}{sortConfig.key === 'marking' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</th>
                 <th style={{ cursor: 'pointer' }} onClick={() => requestSort('score')}>Points{sortConfig.key === 'score' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</th>
                 <th style={{ cursor: 'pointer' }} onClick={() => requestSort('createdAt')}>Date Set{sortConfig.key === 'createdAt' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</th>
                 {Object.values(categories)
@@ -126,7 +126,7 @@ function ProblemsTable({
                             <table border="1" className="subTable" style={{ width: '100%' }}>
                               <thead>
                                 <tr className="subTableHeader">
-                                  <th>Overall Rank</th>
+                                  <th>{!isMobile && "Overall "}Rank</th>
                                   <th>Category</th>
                                   <th>Name</th>
                                   <th>Flashed?</th>
