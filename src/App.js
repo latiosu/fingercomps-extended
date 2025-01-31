@@ -28,6 +28,19 @@ function App() {
   const [focusView, setFocusView] = useState('user');
   const [minScoresToCount] = useState(1); // TODO initialise to 50% pumpfestTopScores
 
+  const formatDateForHover = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleString(undefined, {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
+
   const twoMonthsAgoISOString = () => {
     const now = new Date();
     now.setMonth(now.getMonth() - 2);
@@ -548,7 +561,7 @@ function App() {
                                       <td>{score.marking}</td>
                                       <td>{score.flashed ? 'Y' : ''}</td>
                                       <td>{score.score} {score.flashed ? `(+${item.flashExtraPoints})` : ''}</td>
-                                      <td title={new Date(score.createdAt).toLocaleString()}>{toTimeAgoString(score.createdAt)}</td>
+                                      <td title={formatDateForHover(score.createdAt)}>{toTimeAgoString(score.createdAt)}</td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -575,6 +588,7 @@ function App() {
           loading={loading}
           countCompetitors={countCompetitors}
           toTimeAgoString={toTimeAgoString}
+          formatDateForHover={formatDateForHover}
           selectedCategoryCode={selectedCategoryCode}
         />
       )}
