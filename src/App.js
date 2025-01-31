@@ -10,8 +10,13 @@ function App() {
   const [scores, setScores] = useState({});
   const [competitors, setCompetitors] = useState({});
   const [problems, setProblems] = useState({});
-  const [selectedComp, setSelectedComp] = useState("");
-  const [selectedCompId, setSelectedCompId] = useState("");
+  const [selectedComp, setSelectedComp] = useState(() => {
+    return localStorage.getItem('lastSelectedComp') || "";
+  });
+  const [selectedCompId, setSelectedCompId] = useState(() => {
+    return localStorage.getItem('lastSelectedCompId') || "";
+  });
+  const [compNotFoundMessage, setCompNotFoundMessage] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedCategoryCode, setSelectedCategoryCode] = useState("");
   const [userTableData, setUserTableData] = useState([]);
@@ -112,16 +117,35 @@ function App() {
       };
       try {
         const response = await axios.post(`${baseUrl}:runQuery`, requestBody);
-        setComps(response.data.filter((item) => item.document.fields?.trash?.booleanValue !== true) || []);
+        const availableComps = response.data.filter((item) => item.document.fields?.trash?.booleanValue !== true) || [];
+        setComps(availableComps);
+
+        // Check if previously selected competition still exists
+        if (selectedCompId) {
+          const compExists = availableComps.some(comp =>
+            comp.document.name.split('/').pop() === selectedCompId
+          );
+
+          if (!compExists) {
+            setCompNotFoundMessage(`The competition "${selectedComp}" is no longer available for viewing as it has been archived.`);
+            setSelectedComp("");
+            setSelectedCompId("");
+            localStorage.removeItem('lastSelectedComp');
+            localStorage.removeItem('lastSelectedCompId');
+            setLoading(false); // Only set loading to false if no competition is selected
+          }
+        } else {
+          setLoading(false); // Only set loading to false if no competition is selected
+        }
+
         setSelectedCategory("");
       } catch (error) {
         console.error("Error fetching competitions:", error);
-      } finally {
-        setLoading(false);
+        setLoading(false); // Set loading to false on error
       }
     };
     fetchCompetitions();
-  }, []);
+  }, [selectedComp, selectedCompId]);
 
   useEffect(() => {
     if (!selectedCompId) return;
@@ -382,8 +406,13 @@ function App() {
             id="selectComp"
             value={selectedComp}
             onChange={(e) => {
-              setSelectedComp(e.target.value);
-              setSelectedCompId(comps[e.target.selectedIndex].document.name.split('/').pop());
+              const newComp = e.target.value;
+              const newCompId = comps[e.target.selectedIndex].document.name.split('/').pop();
+              setSelectedComp(newComp);
+              setSelectedCompId(newCompId);
+              localStorage.setItem('lastSelectedComp', newComp);
+              localStorage.setItem('lastSelectedCompId', newCompId);
+              setCompNotFoundMessage(""); // Clear any error message
             }}
             disabled={loading}
           >
@@ -434,6 +463,12 @@ function App() {
         {/* Loading message */}
         {loading && <p>Loading data, please wait...</p>}
       </div>
+      {/* Competition not found message */}
+      {compNotFoundMessage && (
+        <div style={{ margin: '20px 0', padding: '10px', backgroundColor: '#fff3cd', color: '#856404', borderRadius: '4px' }}>
+          {compNotFoundMessage}
+        </div>
+      )}
       {/* Table of competitors and scores */}
       {focusView === 'user' ? (
         <React.Fragment>
