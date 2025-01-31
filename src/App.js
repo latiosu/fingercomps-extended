@@ -222,7 +222,9 @@ function App() {
         const row = {
           ...user,
           scores: (scores[uid] || [])
-            .map(s => ({ ...s, ...problems[s?.climbNo] }))
+            // Spread order matters so createdAt date is not overwritten
+            // TODO: rename keys to avoid conflict when merging
+            .map(s => ({ ...problems[s?.climbNo], ...s }))
             .sort((a, b) => {
               const aTotal = a.score + (a.flashed ? flashExtraPoints : 0);
               const bTotal = b.score + (b.flashed ? flashExtraPoints : 0);
@@ -511,7 +513,7 @@ function App() {
                                       <td>{score.marking}</td>
                                       <td>{score.flashed ? 'Y' : ''}</td>
                                       <td>{score.score} {score.flashed ? `(+${item.flashExtraPoints})` : ''}</td>
-                                      <td>{toTimeAgoString(score.createdAt)}</td>
+                                      <td title={new Date(score.createdAt).toLocaleString()}>{toTimeAgoString(score.createdAt)}</td>
                                     </tr>
                                   ))}
                                 </tbody>

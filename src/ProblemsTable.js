@@ -104,7 +104,7 @@ function ProblemsTable({
                     <td>{item.climbNo}</td>
                     <td>{item.marking}</td>
                     <td>{item.score}</td>
-                    <td>{toTimeAgoString(item.createdAt)}</td>
+                    <td title={new Date(item.createdAt).toLocaleString()}>{toTimeAgoString(item.createdAt)}</td>
                     {item.stats && Object.entries(item.stats)
                       .filter(([k, _]) => selectedCategoryCode ? k === selectedCategoryCode : true)
                       .map(([k, v], idx) => (
@@ -142,7 +142,7 @@ function ProblemsTable({
                                 <td>{send.category || 'TBC'}</td>
                                 <td>{send.name}</td>
                                 <td>{send.flashed ? 'Y' : ''}</td>
-                                <td>{toTimeAgoString(send.createdAt)}</td>
+                                <td title={new Date(send.createdAt).toLocaleString()}>{toTimeAgoString(send.createdAt)}</td>
                               </tr>
                             ))}
                           </tbody>
