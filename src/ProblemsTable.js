@@ -60,108 +60,106 @@ function ProblemsTable({
 
   return (
     <React.Fragment>
-      <div className="table-section">
-        <div className="filters">
-          <label>
-            <input
-              type="checkbox"
-              checked={showRawCounts}
-              onChange={() => setShowRawCounts(!showRawCounts)}
-            />
-            Show raw counts for tops and flashes
-          </label>
-        </div>
-        <div className="mainTable-container">
-          <table border="1" className="mainTable">
-            <thead>
-              <tr className="tableHeader">
-                <th style={{ cursor: 'pointer' }} onClick={() => requestSort('climbNo')}>Problem{!isMobile && " No."}{sortConfig.key === 'climbNo' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</th>
-                <th style={{ cursor: 'pointer' }} onClick={() => requestSort('marking')}>Name{!isMobile && "/Grade"}{sortConfig.key === 'marking' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</th>
-                <th style={{ cursor: 'pointer' }} onClick={() => requestSort('score')}>Points{sortConfig.key === 'score' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</th>
-                <th style={{ cursor: 'pointer' }} onClick={() => requestSort('createdAt')}>Date Set{sortConfig.key === 'createdAt' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</th>
-                {Object.values(categories)
-                  .filter((item) => categoryTops[item.code].length > 0 && (selectedCategoryCode ? item.code === selectedCategoryCode : true))
-                  .map((item) => (
-                    <React.Fragment key={item.code}>
-                      <th style={{ cursor: 'pointer' }} onClick={() => requestSort(`stat-${item.code}`)}>
-                        {item.name || 'TBC'}{sortConfig.key === `stat-${item.code}` ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}
-                      </th>
-                    </React.Fragment>
-                  ))}
+      <div className="filters">
+        <label>
+          <input
+            type="checkbox"
+            checked={showRawCounts}
+            onChange={() => setShowRawCounts(!showRawCounts)}
+          />
+          Show raw counts for tops and flashes
+        </label>
+      </div>
+      <div className="mainTable-container">
+        <table border="1" className="mainTable">
+          <thead>
+            <tr className="tableHeader">
+              <th style={{ cursor: 'pointer' }} onClick={() => requestSort('climbNo')}>Problem{!isMobile && " No."}{sortConfig.key === 'climbNo' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</th>
+              <th style={{ cursor: 'pointer' }} onClick={() => requestSort('marking')}>Name{!isMobile && "/Grade"}{sortConfig.key === 'marking' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</th>
+              <th style={{ cursor: 'pointer' }} onClick={() => requestSort('score')}>Points{sortConfig.key === 'score' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</th>
+              <th style={{ cursor: 'pointer' }} onClick={() => requestSort('createdAt')}>Date Set{sortConfig.key === 'createdAt' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</th>
+              {Object.values(categories)
+                .filter((item) => categoryTops[item.code].length > 0 && (selectedCategoryCode ? item.code === selectedCategoryCode : true))
+                .map((item) => (
+                  <React.Fragment key={item.code}>
+                    <th style={{ cursor: 'pointer' }} onClick={() => requestSort(`stat-${item.code}`)}>
+                      {item.name || 'TBC'}{sortConfig.key === `stat-${item.code}` ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}
+                    </th>
+                  </React.Fragment>
+                ))}
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan="10">Loading...</td>
               </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan="10">Loading...</td>
-                </tr>
-              ) : sortedProblems.length > 0 ? (
-                sortedProblems.map((item) => {
-                  const isExpanded = expandedRows.has(item.climbNo);
-                  const totalColumns = 4 + Object.values(categories)
-                    .filter((cat) => categoryTops[cat.code].length > 0 && (selectedCategoryCode ? cat.code === selectedCategoryCode : true))
-                    .length;
-                  return (
-                    <React.Fragment key={item.climbNo}>
-                      <tr onClick={() => handleRowClick(item.climbNo)} style={{ cursor: 'pointer' }}>
-                        <td>{item.climbNo}</td>
-                        <td>{item.marking}</td>
-                        <td>{item.score}</td>
-                        <td title={formatDateForHover(item.createdAt)}>{toTimeAgoString(item.createdAt)}</td>
-                        {item.stats && Object.entries(item.stats)
-                          .filter(([k, _]) => selectedCategoryCode ? k === selectedCategoryCode : true)
-                          .map(([k, v], idx) => (
-                            <td key={`${item.climbNo}-${idx}`}>
-                              {showRawCounts
-                                ? `${v.tops} (${v.flashes})`
-                                : `${(v.tops / countCompetitors(k)).toFixed(0)}% (${(v.flashes / countCompetitors(k)).toFixed(0)}%)`
-                              }
-                            </td>
-                          ))
-                        }
-                      </tr>
-                      {isExpanded && (
-                        <tr className="subTableContainer">
-                          <td colSpan={totalColumns}>
-                            <table border="1" className="subTable" style={{ width: '100%' }}>
-                              <thead>
-                                <tr className="subTableHeader">
-                                  <th>{!isMobile && "Overall "}Rank</th>
-                                  <th>Category</th>
-                                  <th>Name</th>
-                                  <th>Flashed?</th>
-                                  <th>Sent</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {item.sends && item.sends
-                                  .filter((send) => selectedCategoryCode ? send.categoryCode === selectedCategoryCode : true)
-                                  .sort((a, b) => a.rank - b.rank)
-                                  .map((send, subIndex) => (
-                                    <tr key={`${item.climbNo}-${subIndex}`}>
-                                      <td>{send.rank}</td>
-                                      <td>{send.category || 'TBC'}</td>
-                                      <td>{send.name}</td>
-                                      <td>{send.flashed ? 'Y' : ''}</td>
-                                      <td title={formatDateForHover(send.createdAt)}>{toTimeAgoString(send.createdAt)}</td>
-                                    </tr>
-                                  ))}
-                              </tbody>
-                            </table>
+            ) : sortedProblems.length > 0 ? (
+              sortedProblems.map((item) => {
+                const isExpanded = expandedRows.has(item.climbNo);
+                const totalColumns = 4 + Object.values(categories)
+                  .filter((cat) => categoryTops[cat.code].length > 0 && (selectedCategoryCode ? cat.code === selectedCategoryCode : true))
+                  .length;
+                return (
+                  <React.Fragment key={item.climbNo}>
+                    <tr onClick={() => handleRowClick(item.climbNo)} style={{ cursor: 'pointer' }}>
+                      <td>{item.climbNo}</td>
+                      <td>{item.marking}</td>
+                      <td>{item.score}</td>
+                      <td title={formatDateForHover(item.createdAt)}>{toTimeAgoString(item.createdAt)}</td>
+                      {item.stats && Object.entries(item.stats)
+                        .filter(([k, _]) => selectedCategoryCode ? k === selectedCategoryCode : true)
+                        .map(([k, v], idx) => (
+                          <td key={`${item.climbNo}-${idx}`}>
+                            {showRawCounts
+                              ? `${v.tops} (${v.flashes})`
+                              : `${(v.tops / countCompetitors(k)).toFixed(0)}% (${(v.flashes / countCompetitors(k)).toFixed(0)}%)`
+                            }
                           </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan="10">No data available</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                        ))
+                      }
+                    </tr>
+                    {isExpanded && (
+                      <tr className="subTableContainer">
+                        <td colSpan={totalColumns}>
+                          <table border="1" className="subTable" style={{ width: '100%' }}>
+                            <thead>
+                              <tr className="subTableHeader">
+                                <th>{!isMobile && "Overall "}Rank</th>
+                                <th>Category</th>
+                                <th>Name</th>
+                                <th>Flashed?</th>
+                                <th>Sent</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {item.sends && item.sends
+                                .filter((send) => selectedCategoryCode ? send.categoryCode === selectedCategoryCode : true)
+                                .sort((a, b) => a.rank - b.rank)
+                                .map((send, subIndex) => (
+                                  <tr key={`${item.climbNo}-${subIndex}`}>
+                                    <td>{send.rank}</td>
+                                    <td>{send.category || 'TBC'}</td>
+                                    <td>{send.name}</td>
+                                    <td>{send.flashed ? 'Y' : ''}</td>
+                                    <td title={formatDateForHover(send.createdAt)}>{toTimeAgoString(send.createdAt)}</td>
+                                  </tr>
+                                ))}
+                            </tbody>
+                          </table>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan="10">No data available</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </React.Fragment>
   );
