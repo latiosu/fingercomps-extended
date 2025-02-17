@@ -1,10 +1,14 @@
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import ProblemsTable from "./ProblemsTable";
+import loadPosthog from "./Posthog";
 
 const baseUrl = 'https://firestore.googleapis.com/v1/projects/fingercomps-lite-au/databases/(default)/documents';
 
 function App() {
+  // Product analytics and surveys
+  loadPosthog();
+
   const [comps, setComps] = useState([]);
   const [categories, setCategories] = useState({});
   const [scores, setScores] = useState({});
