@@ -542,10 +542,10 @@ function App() {
             }}
             disabled={loading}
           >
-            <option value="user">
+            <option value="user" id="users-option">
               Users
             </option>
-            <option value="problems">
+            <option value="problems" id="problems-option">
               Problems
             </option>
           </select>
@@ -691,6 +691,7 @@ function App() {
                               {recommendedProblemsEnabled &&
                                 <div style={{ marginTop: '10px', textAlign: 'center' }}>
                                   <button
+                                    id="recommended-btn"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setRecommendModalUser(item);
