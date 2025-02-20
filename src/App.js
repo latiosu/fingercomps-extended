@@ -4,8 +4,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import loadPosthog from "./Posthog";
 import ProblemsTable from "./ProblemsTable";
 import RecommendModal from "./RecommendModal";
-import TestMode from './TestMode';
-import { generateNewScore, generateTestData } from './testData';
 
 const baseUrl = 'https://firestore.googleapis.com/v1/projects/fingercomps-lite-au/databases/(default)/documents';
 
@@ -42,7 +40,6 @@ function App() {
   const [userTableData, setUserTableData] = useState([]);
   const [expandedRows, setExpandedRows] = useState(new Set());
   const [limitScores, setLimitScores] = useState(true);
-  const [hideRankChanges, setHideRankChanges] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sortDirection, setSortDirection] = useState('desc');
   const [lastSubmittedScore, setLastSubmittedScore] = useState(null);
@@ -297,77 +294,41 @@ function App() {
 
   const computeUserTableData = useMemo(() => {
     return () => {
-      // Calculate scores for both current time and 12 hours ago
-      const now = new Date();
-      const twelveHoursAgo = new Date(now - 12 * 60 * 60 * 1000);
-
       const table = Object.entries(competitors).map(([uid, user]) => {
         const cat = categories[user.category];
         const flashExtraPoints = cat?.flashExtraPoints || 0;
-
-        // Get all scores and scores from 12 hours ago
-        const allScores = (scores[uid] || [])
-          .map(s => ({ ...problems[s?.climbNo], ...s }))
-          .sort((a, b) => {
-            const aTotal = a.score + (a.flashed ? flashExtraPoints : 0);
-            const bTotal = b.score + (b.flashed ? flashExtraPoints : 0);
-            return bTotal - aTotal;
-          });
-
-        const oldScores = allScores.filter(s => new Date(s.createdAt) <= twelveHoursAgo);
-
-        // Calculate current scores
         const row = {
           ...user,
-          scores: allScores
+          scores: (scores[uid] || [])
+            // Spread order matters so createdAt date is not overwritten
+            // TODO: rename keys to avoid conflict when merging
+            .map(s => ({ ...problems[s?.climbNo], ...s }))
+            .sort((a, b) => {
+              const aTotal = a.score + (a.flashed ? flashExtraPoints : 0);
+              const bTotal = b.score + (b.flashed ? flashExtraPoints : 0);
+              return bTotal - aTotal;
+            })
         };
-        const current = computeScore(
+        const { tops, flashes, total } = computeScore(
           row.scores,
           flashExtraPoints,
           cat?.pumpfestTopScores || 0
         );
-
-        // Calculate old scores
-        const old = computeScore(
-          oldScores,
-          flashExtraPoints,
-          cat?.pumpfestTopScores || 0
-        );
-
         return {
           ...row,
-          tops: current.tops,
-          flashes: current.flashes,
-          total: current.total,
-          oldTotal: old.total,
-          bonus: flashExtraPoints * current.flashes,
+          tops,
+          flashes,
+          total,
+          bonus: flashExtraPoints * flashes,
           flashExtraPoints: flashExtraPoints,
           categoryFullName: cat?.name
         };
       });
 
-      // Get stored positions from localStorage
-      const storedPositions = JSON.parse(localStorage.getItem('lastKnownPositions') || '{}');
-
-      // Sort by total score
-      table.sort((a, b) => b.total - a.total);
-
-      // Save current positions
-      const newPositions = {};
-      table.forEach((item, index) => {
-        newPositions[item.competitorNo] = index + 1;
-        // Add position change
-        const storedPosition = storedPositions[item.competitorNo];
-        item.positionChange = storedPosition ? storedPosition - (index + 1) : null;
-      });
-
-      // Save positions to localStorage
-      localStorage.setItem('lastKnownPositions', JSON.stringify(newPositions));
-
-      // Calculate overall ranks (without change tracking)
+      // Rank Assignment in descending order by default
       let currentRank = 0;
       let lastScore = null;
-      table.forEach((item, index) => {
+      table.sort((a, b) => b.total - a.total).forEach((item, index) => {
         if (lastScore === null || item.total !== lastScore) {
           currentRank = index + 1;
           lastScore = item.total;
@@ -589,17 +550,6 @@ function App() {
                   disabled={loading} // Disable while loading
                 />
                 Hide scores that don't affect total
-             </label>
-           </div>
-           <div>
-             <label>
-               <input
-                 type="checkbox"
-                 checked={hideRankChanges}
-                 onChange={(e) => setHideRankChanges(e.target.checked)}
-                 disabled={loading}
-               />
-               Hide rank changes
               </label>
             </div>
           </div>
@@ -633,24 +583,7 @@ function App() {
                     return (
                       <React.Fragment key={index}>
                         <tr onClick={() => handleRowClick(item.competitorNo)} style={{ cursor: 'pointer' }}>
-                          <td>
-                            {isNaN(index) ? 'N/A' : (
-                              <>
-                                {index + 1}
-                                {!hideRankChanges && item.positionChange !== null && item.positionChange !== 0 && (
-                                  <span style={{ color: '#666', marginLeft: '1px', fontSize: '0.8em' }}>
-                                    {/* was {index + 1 + item.positionChange} */}
-                                    <span style={{
-                                      color: item.positionChange > 0 ? 'green' : 'red',
-                                      marginLeft: '3px'
-                                    }}>
-                                      ({item.positionChange > 0 ? `↑${item.positionChange}` : `↓${Math.abs(item.positionChange)}`})
-                                    </span>
-                                  </span>
-                                )}
-                              </>
-                            )}
-                          </td>
+                          <td>{isNaN(index) ? 'N/A' : index + 1}</td>
                           {!isMobile && <td>{item.rank}</td>}
                           {!selectedCategory ? (<td>{item.categoryFullName}</td>) : null}
                           <td>{item.name}</td>
@@ -727,39 +660,6 @@ function App() {
           formatDateForHover={formatDateForHover}
           selectedCategoryCode={selectedCategoryCode}
           isMobile={isMobile}
-        />
-      )}
-      {/* Test Mode (only shown in development) */}
-      {process.env.NODE_ENV === 'development' && (
-        <TestMode
-          onLoadTestData={() => {
-            const testData = generateTestData();
-            setCompetitors(testData.competitors);
-            setCategories(testData.categories);
-            setScores(testData.scores);
-            setProblems(testData.problems);
-            setSelectedCategory(testData.selectedCategory);
-            setSelectedCategoryCode(testData.selectedCategoryCode);
-          }}
-          onSimulateScore={(competitorNo) => {
-            const { score: newProblem, submission: newScore } = generateNewScore(competitorNo);
-
-            // Add new problem
-            setProblems(prev => ({
-              ...prev,
-              [newProblem.climbNo]: newProblem
-            }));
-
-            // Add new score
-            setScores(prev => {
-              const newScores = { ...prev };
-              if (!newScores[competitorNo]) {
-                newScores[competitorNo] = [];
-              }
-              newScores[competitorNo].push(newScore);
-              return newScores;
-            });
-          }}
         />
       )}
       {/* Last score date display */}
