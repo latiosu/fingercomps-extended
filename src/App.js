@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import ProblemsTable from "./ProblemsTable";
+import RecommendModal from "./RecommendModal";
 import loadPosthog from "./Posthog";
 
 const baseUrl = 'https://firestore.googleapis.com/v1/projects/fingercomps-lite-au/databases/(default)/documents';
@@ -42,6 +43,7 @@ function App() {
   const [lastSubmittedScore, setLastSubmittedScore] = useState(null);
   const [focusView, setFocusView] = useState('user');
   const [minScoresToCount] = useState(1); // TODO initialise to 50% pumpfestTopScores
+  const [recommendModalUser, setRecommendModalUser] = useState(null);
 
   const formatDateForHover = (dateString) => {
     const date = new Date(dateString);
@@ -617,6 +619,17 @@ function App() {
                                   ))}
                                 </tbody>
                               </table>
+                              <div style={{ marginTop: '10px', textAlign: 'center' }}>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setRecommendModalUser(item);
+                                  }}
+                                  style={{ padding: '8px 16px', cursor: 'pointer', borderRadius: '4px', border: '1px solid #ccc' }}
+                                >
+                                  Recommended Problems
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         )}
@@ -652,6 +665,18 @@ function App() {
           <p>No scores available for the selected category.</p>
         )}
       </div>
+      {recommendModalUser && (
+        <RecommendModal
+          onClose={() => setRecommendModalUser(null)}
+          problems={problems}
+          userScores={scores[recommendModalUser.competitorNo]}
+          userCategory={recommendModalUser.category}
+          categories={categories}
+          isMobile={isMobile}
+          userTableData={userTableData}
+          currentUser={recommendModalUser}
+        />
+      )}
     </div>
   );
 }

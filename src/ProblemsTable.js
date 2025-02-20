@@ -70,7 +70,6 @@ function ProblemsTable({
 
   const focusCategories = Object.values(categories)
     .filter((cat) => categoryTops[cat.code].length > 0 && (selectedCategoryCode ? cat.code === selectedCategoryCode : true));
-    console.log(sortedProblems[0].stats)
 
   return (
     <React.Fragment>
