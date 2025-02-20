@@ -579,8 +579,8 @@ function App() {
                     return (
                       <React.Fragment key={index}>
                         <tr onClick={() => handleRowClick(item.competitorNo)} style={{ cursor: 'pointer' }}>
-                          {!isMobile && <td>{isNaN(index) ? 'N/A' : index + 1}</td>}
-                          <td>{item.rank}</td>
+                          <td>{isNaN(index) ? 'N/A' : index + 1}</td>
+                          {!isMobile && <td>{item.rank}</td>}
                           {!selectedCategory ? (<td>{item.categoryFullName}</td>) : null}
                           <td>{item.name}</td>
                           <td>{item.tops}</td>
