@@ -6,11 +6,21 @@ function ProblemsTable({
   // State to track sorting
   const [sortConfig, setSortConfig] = useState({ key: 'score', direction: 'desc' });
   const [showRawCounts, setShowRawCounts] = useState(true);
+  const [hideZeroTops, setHideZeroTops] = useState(true);
   const [expandedRows, setExpandedRows] = useState(new Set());
 
   // Sorting function
   const sortedProblems = React.useMemo(() => {
-    const sortedData = [...Object.values(problems)];
+    let sortedData = [...Object.values(problems)];
+
+    if (hideZeroTops) {
+      sortedData = sortedData.filter(problem => {
+        if (!problem.stats) return false;
+        return Object.entries(problem.stats)
+          .filter(([k, _]) => categoryTops[k].length > 0 && (selectedCategoryCode ? k === selectedCategoryCode : true))
+          .some(([_, v]) => v.tops > 0);
+      });
+    }
 
     if (sortConfig.key) {
       sortedData.sort((a, b) => {
@@ -35,7 +45,7 @@ function ProblemsTable({
     }
 
     return sortedData;
-  }, [problems, sortConfig, countCompetitors, showRawCounts]);
+  }, [problems, hideZeroTops, sortConfig.key, sortConfig.direction, categoryTops, selectedCategoryCode, showRawCounts, countCompetitors]);
 
   // Function to handle column click and update sort configuration
   const requestSort = (key) => {
@@ -72,6 +82,14 @@ function ProblemsTable({
             onChange={() => setShowRawCounts(!showRawCounts)}
           />
           Show raw counts for tops and flashes
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={hideZeroTops}
+            onChange={() => setHideZeroTops(!hideZeroTops)}
+          />
+          Hide problems with no tops
         </label>
       </div>
       <div className="mainTable-container">
