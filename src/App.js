@@ -1,4 +1,5 @@
 import axios from "axios";
+import { useFeatureFlagEnabled } from 'posthog-js/react';
 import React, { useEffect, useMemo, useState } from "react";
 import loadPosthog from "./Posthog";
 import ProblemsTable from "./ProblemsTable";
@@ -9,8 +10,9 @@ import { generateNewScore, generateTestData } from './testData';
 const baseUrl = 'https://firestore.googleapis.com/v1/projects/fingercomps-lite-au/databases/(default)/documents';
 
 function App() {
-  // Product analytics and surveys
+  // Product analytics, surveys, feature flags and experiments
   loadPosthog();
+  const recommendedProblemsEnabled = useFeatureFlagEnabled('recommended-problems')
 
   const [comps, setComps] = useState([]);
   const [categories, setCategories] = useState({});
@@ -686,17 +688,19 @@ function App() {
                                   ))}
                                 </tbody>
                               </table>
-                              <div style={{ marginTop: '10px', textAlign: 'center' }}>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setRecommendModalUser(item);
-                                  }}
-                                  style={{ padding: '8px 16px', cursor: 'pointer', borderRadius: '4px', border: '1px solid #ccc' }}
-                                >
-                                  Recommended Problems
-                                </button>
-                              </div>
+                              {recommendedProblemsEnabled &&
+                                <div style={{ marginTop: '10px', textAlign: 'center' }}>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setRecommendModalUser(item);
+                                    }}
+                                    style={{ padding: '8px 16px', cursor: 'pointer', borderRadius: '4px', border: '1px solid #ccc' }}
+                                  >
+                                    Recommended Problems
+                                  </button>
+                                </div>
+                              }
                             </td>
                           </tr>
                         )}
