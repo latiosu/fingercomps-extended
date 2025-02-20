@@ -4,7 +4,7 @@ function ProblemsTable({
   categories, categoryTops, problems, loading, countCompetitors, toTimeAgoString, formatDateForHover, selectedCategoryCode, isMobile
 }) {
   // State to track sorting
-  const [sortConfig, setSortConfig] = useState({ key: 'climbNo', direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'score', direction: 'desc' });
   const [showRawCounts, setShowRawCounts] = useState(true);
   const [expandedRows, setExpandedRows] = useState(new Set());
 
@@ -58,6 +58,10 @@ function ProblemsTable({
     });
   };
 
+  const focusCategories = Object.values(categories)
+    .filter((cat) => categoryTops[cat.code].length > 0 && (selectedCategoryCode ? cat.code === selectedCategoryCode : true));
+    console.log(sortedProblems[0].stats)
+
   return (
     <React.Fragment>
       <div className="filters">
@@ -78,12 +82,10 @@ function ProblemsTable({
               <th style={{ cursor: 'pointer' }} onClick={() => requestSort('marking')}>Name{!isMobile && "/Grade"}{sortConfig.key === 'marking' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</th>
               <th style={{ cursor: 'pointer' }} onClick={() => requestSort('score')}>Points{sortConfig.key === 'score' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</th>
               <th style={{ cursor: 'pointer' }} onClick={() => requestSort('createdAt')}>Date Set{sortConfig.key === 'createdAt' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</th>
-              {Object.values(categories)
-                .filter((item) => categoryTops[item.code].length > 0 && (selectedCategoryCode ? item.code === selectedCategoryCode : true))
-                .map((item) => (
-                  <React.Fragment key={item.code}>
-                    <th style={{ cursor: 'pointer' }} onClick={() => requestSort(`stat-${item.code}`)}>
-                      {item.name || 'TBC'}{sortConfig.key === `stat-${item.code}` ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}
+              {focusCategories.map((cat) => (
+                  <React.Fragment key={cat.code}>
+                    <th style={{ cursor: 'pointer' }} onClick={() => requestSort(`stat-${cat.code}`)}>
+                      {cat.name || 'TBC'}{sortConfig.key === `stat-${cat.code}` ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}
                     </th>
                   </React.Fragment>
                 ))}
@@ -97,9 +99,7 @@ function ProblemsTable({
             ) : sortedProblems.length > 0 ? (
               sortedProblems.map((item) => {
                 const isExpanded = expandedRows.has(item.climbNo);
-                const totalColumns = 4 + Object.values(categories)
-                  .filter((cat) => categoryTops[cat.code].length > 0 && (selectedCategoryCode ? cat.code === selectedCategoryCode : true))
-                  .length;
+                const totalColumns = 4 + focusCategories.length;
                 return (
                   <React.Fragment key={item.climbNo}>
                     <tr onClick={() => handleRowClick(item.climbNo)} style={{ cursor: 'pointer' }}>
@@ -107,17 +107,18 @@ function ProblemsTable({
                       <td>{item.marking}</td>
                       <td>{item.score}</td>
                       <td title={formatDateForHover(item.createdAt)}>{toTimeAgoString(item.createdAt)}</td>
-                      {item.stats && Object.entries(item.stats)
-                        .filter(([k, _]) => selectedCategoryCode ? k === selectedCategoryCode : true)
+                      {item.stats ? Object.entries(item.stats)
+                        .filter(([k, _]) => categoryTops[k].length > 0 && (selectedCategoryCode ? k === selectedCategoryCode : true))
                         .map(([k, v], idx) => (
                           <td key={`${item.climbNo}-${idx}`}>
-                            {showRawCounts
-                              ? `${v.tops} (${v.flashes})`
-                              : `${(v.tops / countCompetitors(k)).toFixed(0)}% (${(v.flashes / countCompetitors(k)).toFixed(0)}%)`
+                            {v.tops > 0
+                              ? (showRawCounts ? `${v.tops} (${v.flashes})` : (v.tops / countCompetitors(k)).toFixed(0) + `"% (${(v.flashes / countCompetitors(k)).toFixed(0)}%)`)
+                              : "-"
                             }
                           </td>
                         ))
-                      }
+                      : focusCategories.map(() => <td>-</td>)}
+                      {/* {focusCategories.map(() => <td>-</td>)} */}
                     </tr>
                     {isExpanded && (
                       <tr className="subTableContainer">
