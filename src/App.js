@@ -1,9 +1,9 @@
 import axios from "axios";
 import { useFeatureFlagEnabled } from 'posthog-js/react';
 import React, { useEffect, useMemo, useState } from "react";
-import loadPosthog from "./Posthog";
 import ProblemsTable from "./ProblemsTable";
 import RecommendModal from "./RecommendModal";
+import loadPosthog from "./utils/Posthog";
 
 const baseUrl = 'https://firestore.googleapis.com/v1/projects/fingercomps-lite-au/databases/(default)/documents';
 
@@ -622,16 +622,15 @@ function App() {
                                 </tbody>
                               </table>
                               {recommendedProblemsEnabled &&
-                                <div style={{ marginTop: '10px', textAlign: 'center' }}>
+                                <div className="recommendedBtnContainer">
                                   <button
                                     id="recommended-btn"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setRecommendModalUser(item);
                                     }}
-                                    style={{ padding: '8px 16px', cursor: 'pointer', borderRadius: '4px', border: '1px solid #ccc' }}
                                   >
-                                    Recommend Me Problems
+                                    Recommend Problems ✨
                                   </button>
                                 </div>
                               }
@@ -680,6 +679,8 @@ function App() {
           isMobile={isMobile}
           userTableData={userTableData}
           currentUser={recommendModalUser}
+          toTimeAgoString={toTimeAgoString}
+          formatDateForHover={formatDateForHover}
         />
       )}
     </div>

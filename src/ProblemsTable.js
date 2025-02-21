@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
+import SendsSubTable from './SendsSubTable';
+
+import { formatDateForHover, toTimeAgoString } from './utils/dateFormatters';
 
 function ProblemsTable({
-  categories, categoryTops, problems, loading, countCompetitors, toTimeAgoString, formatDateForHover, selectedCategoryCode, isMobile
+  categories, categoryTops, problems, loading, countCompetitors, selectedCategoryCode, isMobile
 }) {
   // State to track sorting
   const [sortConfig, setSortConfig] = useState({ key: 'score', direction: 'desc' });
@@ -140,31 +143,13 @@ function ProblemsTable({
                     {isExpanded && (
                       <tr className="subTableContainer">
                         <td colSpan={totalColumns}>
-                          <table border="1" className="subTable" style={{ width: '100%' }}>
-                            <thead>
-                              <tr className="subTableHeader">
-                                <th>{!isMobile && "Overall "}Rank</th>
-                                <th>Category</th>
-                                <th>Name</th>
-                                <th>Flashed?</th>
-                                <th>Sent</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {item.sends && item.sends
-                                .filter((send) => selectedCategoryCode ? send.categoryCode === selectedCategoryCode : true)
-                                .sort((a, b) => a.rank - b.rank)
-                                .map((send, subIndex) => (
-                                  <tr key={`${item.climbNo}-${subIndex}`}>
-                                    <td>{send.rank}</td>
-                                    <td>{send.category || 'TBC'}</td>
-                                    <td>{send.name}</td>
-                                    <td>{send.flashed ? 'Y' : ''}</td>
-                                    <td title={formatDateForHover(send.createdAt)}>{toTimeAgoString(send.createdAt)}</td>
-                                  </tr>
-                                ))}
-                            </tbody>
-                          </table>
+                          <SendsSubTable
+                            sends={item.sends}
+                            categoryCode={selectedCategoryCode}
+                            isMobile={isMobile}
+                            toTimeAgoString={toTimeAgoString}
+                            formatDateForHover={formatDateForHover}
+                          />
                         </td>
                       </tr>
                     )}

@@ -1,7 +1,11 @@
 import React from 'react';
 import './RecommendModal.css';
+import SendsSubTable from './SendsSubTable';
+
+import { formatDateForHover, toTimeAgoString } from './utils/dateFormatters';
 
 function RecommendModal({ onClose, problems, userScores, userCategory, categories, isMobile, userTableData, currentUser }) {
+  const [expandedRows, setExpandedRows] = React.useState(new Set());
   // Get category users and current user's rank
   const categoryUsers = userTableData.filter(user => user.category === userCategory);
   const currentUserIndex = categoryUsers.findIndex(u => u.competitorNo === currentUser.competitorNo);
@@ -131,8 +135,8 @@ function RecommendModal({ onClose, problems, userScores, userCategory, categorie
               <strong>{pointsNeededForNextRank} points</strong> till next rank (#{currentUserIndex})
             </div>
           )}
-          <table>
-            <thead>
+          <table border="1" className="mainTable">
+            <thead className="tableHeader">
               <tr>
                 <th>Problem{!isMobile && " No."}</th>
                 <th>Name{!isMobile && "/Grade"}</th>
@@ -144,18 +148,51 @@ function RecommendModal({ onClose, problems, userScores, userCategory, categorie
             </thead>
             <tbody>
               {filteredProblems.length > 0 ? (
-                filteredProblems.map(problem => (
-                  <tr key={problem.climbNo}>
-                    <td>{problem.climbNo}</td>
-                    <td>{problem.marking}</td>
-                    {!isMobile && <td>{problem.score}</td>}
-                    <td>+{problem.additionalPoints}</td>
-                    <td style={{ backgroundColor: problem.rankImprovement > 0 ? '#e6ffe6' : 'transparent' }}>
-                      {problem.rankImprovement > 0 ? `+${problem.rankImprovement}` : '0'}
-                    </td>
-                    <td>{getTopCount(problem)}</td>
-                  </tr>
-                ))
+                filteredProblems.map(problem => {
+                  const isExpanded = expandedRows.has(problem.climbNo);
+                  const totalColumns = isMobile ? 5 : 6;
+
+                  return (
+                    <React.Fragment key={problem.climbNo}>
+                      <tr
+                        onClick={() => {
+                          setExpandedRows(prev => {
+                            const newSet = new Set(prev);
+                            if (newSet.has(problem.climbNo)) {
+                              newSet.delete(problem.climbNo);
+                            } else {
+                              newSet.add(problem.climbNo);
+                            }
+                            return newSet;
+                          });
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <td>{problem.climbNo}</td>
+                        <td>{problem.marking}</td>
+                        {!isMobile && <td>{problem.score}</td>}
+                        <td>+{problem.additionalPoints}</td>
+                        <td style={{ backgroundColor: problem.rankImprovement > 0 ? '#e6ffe6' : 'transparent' }}>
+                          {problem.rankImprovement > 0 ? `+${problem.rankImprovement}` : '0'}
+                        </td>
+                        <td>{getTopCount(problem)}</td>
+                      </tr>
+                      {isExpanded && (
+                        <tr className="subTableContainer">
+                          <td colSpan={totalColumns}>
+                            <SendsSubTable
+                              sends={problem.sends}
+                              categoryCode={userCategory}
+                              isMobile={isMobile}
+                              toTimeAgoString={toTimeAgoString}
+                              formatDateForHover={formatDateForHover}
+                            />
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan={isMobile ? 5 : 6}>No recommendations available</td>
