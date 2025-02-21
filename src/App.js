@@ -10,7 +10,7 @@ const baseUrl = 'https://firestore.googleapis.com/v1/projects/fingercomps-lite-a
 function App() {
   // Product analytics, surveys, feature flags and experiments
   loadPosthog();
-  const recommendedProblemsEnabled = useFeatureFlagEnabled('recommended-problems')
+  const recommendedProblemsEnabled = useFeatureFlagEnabled('recommended-problems') || process.env.NODE_ENV === 'development';
 
   const [comps, setComps] = useState([]);
   const [categories, setCategories] = useState({});
@@ -631,7 +631,7 @@ function App() {
                                     }}
                                     style={{ padding: '8px 16px', cursor: 'pointer', borderRadius: '4px', border: '1px solid #ccc' }}
                                   >
-                                    Recommended Problems
+                                    Recommend Me Problems
                                   </button>
                                 </div>
                               }

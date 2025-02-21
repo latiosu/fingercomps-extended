@@ -37,15 +37,48 @@
 .modal-body table {
   width: 100%;
   border-collapse: collapse;
+  margin-top: 20px;
 }
 
 .modal-body th,
 .modal-body td {
   padding: 8px;
-  text-align: left;
+  text-align: center;
   border: 1px solid #ddd;
 }
 
 .modal-body th {
-  background-color: #f5f5f5;
+  background-color: #FFD68A;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.modal-body tbody tr:nth-child(odd) {
+  background-color: #f9f9f9;
+}
+
+.modal-body tbody tr:nth-child(even) {
+  background-color: #e0e0e0;
+}
+
+.modal-body tbody tr {
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.modal-body tbody tr:hover {
+  background-color: rgb(254, 254, 224);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+@media screen and (max-width: 767px) {
+  .modal-body table {
+    font-size: 12px;
+  }
+
+  .modal-body th,
+  .modal-body td {
+    padding: 5px;
+    word-wrap: break-word;
+  }
 }

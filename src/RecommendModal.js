@@ -131,7 +131,7 @@ function RecommendModal({ onClose, problems, userScores, userCategory, categorie
               <strong>{pointsNeededForNextRank} points</strong> till next rank (#{currentUserIndex})
             </div>
           )}
-          <table border="1">
+          <table>
             <thead>
               <tr>
                 <th>Problem{!isMobile && " No."}</th>
