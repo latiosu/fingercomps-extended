@@ -1,44 +1,49 @@
 export function toTimeAgoString(dateString) {
-  const date = new Date(dateString);
   const now = new Date();
-  const diffInSeconds = Math.floor((now - date) / 1000);
+  const past = new Date(dateString);
+  const diffMs = now - past; // Difference in milliseconds
 
-  if (diffInSeconds < 60) {
-    return "just now";
+  // Calculate time components
+  const seconds = Math.floor(diffMs / 1000) % 60;
+  const minutes = Math.floor(diffMs / (1000 * 60)) % 60;
+  const hours = Math.floor(diffMs / (1000 * 60 * 60)) % 24;
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  // Construct the human-readable time difference
+  const parts = [];
+  if (days > 0) {
+    parts.push(`${days} day${days > 1 ? 's' : ''}`);
+  } else {
+    if (hours > 0) {
+      parts.push(`${hours} hr${hours > 1 ? 's' : ''}`);
+    } else {
+      if (minutes > 0) {
+        parts.push(`${minutes} min${minutes > 1 ? 's' : ''}`);
+      } else {
+        if (seconds > 0) parts.push(`${seconds} second${seconds > 1 ? 's' : ''}`);
+      }
+    }
   }
 
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) {
-    return `${diffInMinutes}m ago`;
-  }
-
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) {
-    return `${diffInHours}h ago`;
-  }
-
-  const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 30) {
-    return `${diffInDays}d ago`;
-  }
-
-  const diffInMonths = Math.floor(diffInDays / 30);
-  if (diffInMonths < 12) {
-    return `${diffInMonths}mo ago`;
-  }
-
-  const diffInYears = Math.floor(diffInMonths / 12);
-  return `${diffInYears}y ago`;
+  // Join parts with commas and add "ago"
+  return parts.length > 0 ? parts.join(' ') + ' ago' : 'just now';
 }
 
 export function formatDateForHover(dateString) {
   const date = new Date(dateString);
   return date.toLocaleString("en-AU", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
   });
+}
+
+export function twoMonthsAgoISOString() {
+  const now = new Date();
+  now.setMonth(now.getMonth() - 2);
+  return now.toISOString();
 }

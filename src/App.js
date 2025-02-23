@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useFeatureFlagEnabled } from 'posthog-js/react';
 import React, { useEffect, useMemo, useState } from "react";
+import { formatDateForHover, toTimeAgoString, twoMonthsAgoISOString } from "./utils/dateFormatters.js";
 import ProblemsTable from "./ProblemsTable";
 import RecommendModal from "./RecommendModal";
 import loadPosthog from "./utils/Posthog";
@@ -47,55 +48,6 @@ function App() {
   const [minScoresToCount] = useState(1); // TODO initialise to 50% pumpfestTopScores
   const [recommendModalUser, setRecommendModalUser] = useState(null);
 
-  const formatDateForHover = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleString(undefined, {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  };
-
-  const twoMonthsAgoISOString = () => {
-    const now = new Date();
-    now.setMonth(now.getMonth() - 2);
-    return now.toISOString();
-  };
-
-  function toTimeAgoString(timestamp) {
-    const now = new Date();
-    const past = new Date(timestamp);
-    const diffMs = now - past; // Difference in milliseconds
-
-    // Calculate time components
-    const seconds = Math.floor(diffMs / 1000) % 60;
-    const minutes = Math.floor(diffMs / (1000 * 60)) % 60;
-    const hours = Math.floor(diffMs / (1000 * 60 * 60)) % 24;
-    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    // Construct the human-readable time difference
-    const parts = [];
-    if (days > 0) {
-      parts.push(`${days} day${days > 1 ? 's' : ''}`);
-    } else {
-      if (hours > 0) {
-        parts.push(`${hours} hr${hours > 1 ? 's' : ''}`);
-      } else {
-        if (minutes > 0) {
-          parts.push(`${minutes} min${minutes > 1 ? 's' : ''}`);
-        } else {
-          if (seconds > 0) parts.push(`${seconds} second${seconds > 1 ? 's' : ''}`);
-        }
-      }
-    }
-
-    // Join parts with commas and add "ago"
-    return parts.length > 0 ? parts.join(' ') + ' ago' : 'just now';
-  }
 
   const fetchPaginatedData = async (url, processData) => {
     let token = null;
