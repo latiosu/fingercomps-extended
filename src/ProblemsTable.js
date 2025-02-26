@@ -132,7 +132,7 @@ function ProblemsTable({
                         .map(([k, v], idx) => (
                           <td key={`${item.climbNo}-${idx}`}>
                             {v.tops > 0
-                              ? (showRawCounts ? `${v.tops} (${v.flashes})` : (v.tops / countCompetitors(k)).toFixed(0) + `"% (${(v.flashes / countCompetitors(k)).toFixed(0)}%)`)
+                              ? (showRawCounts ? `${v.tops} (${v.flashes})` : (v.tops / countCompetitors(k)).toFixed(0) + `% (${(v.flashes / countCompetitors(k)).toFixed(0)}%)`)
                               : "-"
                             }
                           </td>
