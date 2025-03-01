@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/fingercomps-extended/static/css/main.dd5a213d.css",
-    "main.js": "/fingercomps-extended/static/js/main.2ed2d7dd.js",
+    "main.css": "/fingercomps-extended/static/css/main.31ae857c.css",
+    "main.js": "/fingercomps-extended/static/js/main.d77ae8f5.js",
     "static/js/453.6bd6aeb1.chunk.js": "/fingercomps-extended/static/js/453.6bd6aeb1.chunk.js",
     "index.html": "/fingercomps-extended/index.html",
-    "main.dd5a213d.css.map": "/fingercomps-extended/static/css/main.dd5a213d.css.map",
-    "main.2ed2d7dd.js.map": "/fingercomps-extended/static/js/main.2ed2d7dd.js.map",
+    "main.31ae857c.css.map": "/fingercomps-extended/static/css/main.31ae857c.css.map",
+    "main.d77ae8f5.js.map": "/fingercomps-extended/static/js/main.d77ae8f5.js.map",
     "453.6bd6aeb1.chunk.js.map": "/fingercomps-extended/static/js/453.6bd6aeb1.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.dd5a213d.css",
-    "static/js/main.2ed2d7dd.js"
+    "static/css/main.31ae857c.css",
+    "static/js/main.d77ae8f5.js"
   ]
 }
