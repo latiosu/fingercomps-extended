@@ -64,7 +64,7 @@ function RecommendModal({ onClose, user }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxHeight: '80vh' }}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxHeight: '70vh' }}>
         <div className="modal-header">
           <h2>Recommended Problems for {user.name}</h2>
           <button onClick={onClose}>&times;</button>
@@ -148,6 +148,13 @@ function RecommendModal({ onClose, user }) {
               )}
             </tbody>
           </table>
+          <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
+            <p>
+              <strong>How does this work?</strong><br/>
+              Recommended problems are sorted by most tops, then greatest rank change, then most points.
+              Clicking a row will show other competitors who have topped that problem.
+            </p>
+          </div>
         </div>
       </div>
     </div>
