@@ -1,5 +1,8 @@
 import React from 'react';
 import { toTimeAgoString, formatDateForHover } from '../../utils/dateFormatters';
+import useExpandableRows from '../../hooks/useExpandableRows';
+import SendsSubTable from '../common/SendsSubTable';
+import { useCompetition } from '../../contexts/CompetitionContext';
 
 /**
  * Component to display a user's scores
@@ -11,16 +14,24 @@ import { toTimeAgoString, formatDateForHover } from '../../utils/dateFormatters'
  * @param {boolean} props.isMobile - Whether the device is mobile
  * @returns {JSX.Element} UserScoresTable component
  */
-function UserScoresTable({ 
-  scores = [], 
-  limitScores = true, 
-  categoryPumpfestTopScores = 0, 
-  flashExtraPoints = 0, 
-  isMobile = false 
+function UserScoresTable({
+  scores = [],
+  limitScores = true,
+  categoryPumpfestTopScores = 0,
+  flashExtraPoints = 0,
+  isMobile = false
 }) {
+  // Use expandable rows hook
+  const { toggleRow, isRowExpanded } = useExpandableRows();
+  // Get problems from competition context
+  const { problems } = useCompetition();
+
+  // Get the current user's competitor number from the first score
+  const currentUserCompetitorNo = scores[0]?.competitorNo;
+
   // Limit the number of scores based on the checkbox state
-  const displayedScores = limitScores 
-    ? scores.slice(0, categoryPumpfestTopScores) 
+  const displayedScores = limitScores
+    ? scores.slice(0, categoryPumpfestTopScores)
     : scores;
 
   return (
@@ -37,18 +48,38 @@ function UserScoresTable({
       <tbody>
         {displayedScores.length > 0 ? (
           displayedScores.map((score, index) => (
-            <tr key={index}>
-              <td>{score.climbNo}</td>
-              <td>{score.marking}</td>
-              <td>{score.flashed ? 'Y' : ''}</td>
-              <td>
-                {score.score} 
-                {score.flashed ? ` (+${flashExtraPoints})` : ''}
-              </td>
-              <td title={formatDateForHover(score.createdAt)}>
-                {toTimeAgoString(score.createdAt)}
-              </td>
-            </tr>
+            <React.Fragment key={index}>
+              <tr
+                onClick={() => toggleRow(score.climbNo)}
+                style={{ cursor: 'pointer' }}
+              >
+                <td>{score.climbNo}</td>
+                <td>{score.marking}</td>
+                <td>{score.flashed ? 'Y' : ''}</td>
+                <td>
+                  {score.score}
+                  {score.flashed ? ` (+${flashExtraPoints})` : ''}
+                </td>
+                <td title={formatDateForHover(score.createdAt)}>
+                  {toTimeAgoString(score.createdAt)}
+                </td>
+              </tr>
+              {isRowExpanded(score.climbNo) && problems[score.climbNo]?.sends && (
+                <tr>
+                  <td colSpan="5">
+                    <div style={{ padding: '8px' }}>
+                      <h4>Other Sends for Problem {score.climbNo}</h4>
+                      <SendsSubTable
+                        sends={(problems[score.climbNo]?.sends || [])
+                          // Filter out the current user's sends
+                          .filter(send => send.competitorNo !== currentUserCompetitorNo)}
+                        isMobile={isMobile}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </React.Fragment>
           ))
         ) : (
           <tr>

@@ -1,8 +1,6 @@
 import {
   collection,
   query,
-  where,
-  orderBy,
   getDocs,
   limit,
   startAfter,
@@ -23,7 +21,7 @@ export const fetchAllData = async (collectionPath, queryConstraints = []) => {
     // Create and execute the query without pagination constraints
     const q = query(collection(db, collectionPath), ...queryConstraints);
     const querySnapshot = await getDocs(q);
-    
+
     // Process documents
     const docs = querySnapshot.docs.map(doc => ({
       id: doc.id,
@@ -31,7 +29,7 @@ export const fetchAllData = async (collectionPath, queryConstraints = []) => {
       // Add reference to the original document for compatibility
       ref: doc.ref
     }));
-    
+
     return docs;
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -49,29 +47,29 @@ export const fetchAllData = async (collectionPath, queryConstraints = []) => {
 export const fetchPaginatedData = async (collectionPath, queryConstraints = [], pageSize = 1000) => {
   let lastDoc = null;
   let allDocuments = [];
-  
+
   try {
     while (true) {
       // Create a new query with pagination
       let constraints = [...queryConstraints];
-      
+
       // Add limit constraint
       constraints.push(limit(pageSize));
-      
+
       // Add startAfter constraint if we have a last document
       if (lastDoc) {
         constraints.push(startAfter(lastDoc));
       }
-      
+
       // Create and execute the query
       const q = query(collection(db, collectionPath), ...constraints);
       const querySnapshot = await getDocs(q);
-      
+
       // If no documents returned, break the loop
       if (querySnapshot.empty) {
         break;
       }
-      
+
       // Process documents
       const docs = querySnapshot.docs.map(doc => ({
         id: doc.id,
@@ -79,18 +77,18 @@ export const fetchPaginatedData = async (collectionPath, queryConstraints = [], 
         // Add reference to the original document for compatibility
         ref: doc.ref
       }));
-      
+
       allDocuments = [...allDocuments, ...docs];
-      
+
       // Update the last document for pagination
       lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
-      
+
       // If we got fewer documents than the page size, we've reached the end
       if (querySnapshot.docs.length < pageSize) {
         break;
       }
     }
-    
+
     return allDocuments;
   } catch (error) {
     console.error('Error fetching data:', error);

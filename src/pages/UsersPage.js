@@ -1,7 +1,6 @@
 import React from 'react';
 import { useApp } from '../contexts/AppContext';
 import UserTable from '../components/users/UserTable';
-import CategorySelector from '../components/common/CategorySelector';
 import LastScoreDisplay from '../components/common/LastScoreDisplay';
 
 /**
@@ -13,12 +12,7 @@ function UsersPage() {
 
   return (
     <>
-      <div className="filters">
-        <CategorySelector />
-      </div>
-      
       <UserTable onRecommendClick={setRecommendModalUser} />
-      
       <LastScoreDisplay />
     </>
   );

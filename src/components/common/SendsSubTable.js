@@ -11,10 +11,10 @@ import { toTimeAgoString, formatDateForHover } from '../../utils/dateFormatters'
  */
 function SendsSubTable({ sends = [], categoryCode = "", isMobile = false }) {
   // Filter sends by category if specified
-  const filteredSends = categoryCode 
+  const filteredSends = categoryCode
     ? sends.filter(send => send.categoryCode === categoryCode)
     : sends;
-  
+
   // Sort sends by rank
   const sortedSends = [...filteredSends].sort((a, b) => a.rank - b.rank);
 

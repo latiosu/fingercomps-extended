@@ -1,6 +1,5 @@
 import React from 'react';
 import ProblemsTable from '../components/problems/ProblemsTable';
-import CategorySelector from '../components/common/CategorySelector';
 import LastScoreDisplay from '../components/common/LastScoreDisplay';
 
 /**
@@ -9,15 +8,10 @@ import LastScoreDisplay from '../components/common/LastScoreDisplay';
  */
 function ProblemsPage() {
   return (
-    <div>
-      <div className="filters">
-        <CategorySelector />
-      </div>
-      
+    <>
       <ProblemsTable />
-      
       <LastScoreDisplay />
-    </div>
+    </>
   );
 }
 

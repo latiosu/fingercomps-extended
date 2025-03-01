@@ -1,12 +1,12 @@
 import React from "react";
-import { useFeatureFlagEnabled } from 'posthog-js/react';
+import CategorySelector from './components/common/CategorySelector';
+import ViewToggle from "./components/common/ViewToggle";
+import CompetitionSelector from "./components/competitions/CompetitionSelector";
+import RecommendModal from "./components/recommendations/RecommendModal";
 import { AppProvider, useApp } from "./contexts/AppContext";
 import { CompetitionProvider } from "./contexts/CompetitionContext";
-import CompetitionSelector from "./components/competitions/CompetitionSelector";
-import ViewToggle from "./components/common/ViewToggle";
-import UsersPage from "./pages/UsersPage";
 import ProblemsPage from "./pages/ProblemsPage";
-import RecommendModal from "./components/recommendations/RecommendModal";
+import UsersPage from "./pages/UsersPage";
 import loadPosthog from "./utils/analytics";
 
 /**
@@ -16,11 +16,11 @@ import loadPosthog from "./utils/analytics";
 function AppContent() {
   // Load PostHog for analytics
   loadPosthog();
-  
+
   // Get app state from context
-  const { 
-    selectedCompId, 
-    compNotFoundMessage, 
+  const {
+    selectedCompId,
+    compNotFoundMessage,
     focusView,
     recommendModalUser,
     setRecommendModalUser
@@ -29,22 +29,26 @@ function AppContent() {
   return (
     <div className="app">
       <h1>FingerComps Extended</h1>
-      
+
       <div className="filters">
         <CompetitionSelector />
-        
-        {selectedCompId && (
-          <ViewToggle />
-        )}
+
+        <CategorySelector />
       </div>
-      
+
       {/* Competition not found message */}
       {compNotFoundMessage && (
         <div style={{ margin: '20px 0', padding: '10px', backgroundColor: '#fff3cd', color: '#856404', borderRadius: '4px' }}>
           {compNotFoundMessage}
         </div>
       )}
-      
+
+      {selectedCompId && (
+        <div className="filters">
+          <ViewToggle />
+        </div>
+      )}
+
       {/* Main content */}
       {selectedCompId && (
         <CompetitionProvider competitionId={selectedCompId}>
@@ -53,7 +57,7 @@ function AppContent() {
           ) : (
             <ProblemsPage />
           )}
-          
+
           {/* Recommendation modal */}
           {recommendModalUser && (
             <RecommendModal
@@ -63,7 +67,7 @@ function AppContent() {
           )}
         </CompetitionProvider>
       )}
-      
+
       {/* Footer */}
       <footer className="footer">
         <p>

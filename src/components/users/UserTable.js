@@ -23,7 +23,7 @@ function UserTable({ onRecommendClick }) {
     categories,
     loading
   } = useCompetition();
-  
+
   const { expandedRows, toggleRow } = useExpandableRows();
 
   // Define columns for the table
@@ -34,34 +34,34 @@ function UserTable({ onRecommendClick }) {
       sortable: false,
       render: (item) => item.index + 1
     },
-    { 
-      key: 'rank', 
-      label: `${!isMobile ? 'Overall ' : ''}Rank`, 
-      sortable: true 
+    {
+      key: 'rank',
+      label: `${!isMobile ? 'Overall ' : ''}Rank`,
+      sortable: true
     },
-    ...(!selectedCategory ? [{ 
-      key: 'categoryFullName', 
-      label: 'Category', 
-      sortable: true 
+    ...(!selectedCategory ? [{
+      key: 'categoryFullName',
+      label: 'Category',
+      sortable: true
     }] : []),
-    { 
-      key: 'name', 
-      label: 'Name', 
-      sortable: true 
+    {
+      key: 'name',
+      label: 'Name',
+      sortable: true
     },
-    { 
-      key: 'tops', 
-      label: 'Tops', 
-      sortable: true 
+    {
+      key: 'tops',
+      label: 'Tops',
+      sortable: true
     },
-    { 
-      key: 'flashes', 
-      label: 'Flashes', 
-      sortable: true 
+    {
+      key: 'flashes',
+      label: 'Flashes',
+      sortable: true
     },
-    { 
-      key: 'total', 
-      label: `Score${!isMobile ? '(+ Flash Bonus)' : ''}`, 
+    {
+      key: 'total',
+      label: `Score${!isMobile ? '(+ Flash Bonus)' : ''}`,
       sortable: true,
       render: (item) => (
         <span>
@@ -85,8 +85,8 @@ function UserTable({ onRecommendClick }) {
   // Render expanded content for a row
   const renderExpandedContent = (item) => (
     <>
-      <UserScoresTable 
-        scores={item.scores} 
+      <UserScoresTable
+        scores={item.scores}
         limitScores={limitScores}
         categoryPumpfestTopScores={categories[item.category]?.pumpfestTopScores}
         flashExtraPoints={item.flashExtraPoints}
@@ -119,7 +119,7 @@ function UserTable({ onRecommendClick }) {
           Hide scores that don't affect total
         </label>
       </div>
-      
+
       <SortableTable
         columns={columns}
         data={filteredData}

@@ -1,12 +1,10 @@
-import { 
-  collection, 
-  query, 
-  where, 
-  orderBy, 
-  getDocs, 
-  getDoc,
-  doc,
-  Timestamp 
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  getDocs,
+  Timestamp
 } from "firebase/firestore";
 import { db, fetchAllData, timestampToISOString, isoStringToTimestamp } from "../client";
 import { twoMonthsAgoISOString } from "../../utils/dateFormatters";
@@ -19,7 +17,7 @@ export const getCompetitions = async () => {
   try {
     // Create a timestamp for two months ago
     const twoMonthsAgo = isoStringToTimestamp(twoMonthsAgoISOString());
-    
+
     // Create a query to get competitions modified in the last two months
     const competitionsQuery = query(
       collection(db, "competitions"),
@@ -27,26 +25,26 @@ export const getCompetitions = async () => {
       orderBy("modified", "desc"),
       orderBy("__name__", "desc")
     );
-    
+
     // Execute the query
     const querySnapshot = await getDocs(competitionsQuery);
-    
+
     // Process the results and fetch links for each competition
     const compsAndLinks = await Promise.all(
       querySnapshot.docs.map(async (docSnapshot) => {
         const compId = docSnapshot.id;
         const compData = docSnapshot.data();
-        
+
         // Fetch links for this competition
         const linksQuery = query(collection(db, `competitions/${compId}/links`));
         const linksSnapshot = await getDocs(linksQuery);
-        
+
         // Convert links to the expected format
         const links = linksSnapshot.docs.map(linkDoc => ({
           id: linkDoc.id,
           ...linkDoc.data()
         }));
-        
+
         // Return the competition with its links
         return {
           document: {
@@ -69,7 +67,7 @@ export const getCompetitions = async () => {
         };
       })
     );
-    
+
     // Filter competitions to only include those with links
     return compsAndLinks.filter(item => item.document?.links) || [];
   } catch (error) {
@@ -91,7 +89,7 @@ export const getCompetitionData = async (compId) => {
       getScores(compId),
       getProblems(compId),
     ]);
-    
+
     return {
       categories,
       competitors,
@@ -113,7 +111,7 @@ export const getCategories = async (compId) => {
   try {
     const collectionPath = `competitions/${compId}/categories`;
     const documents = await fetchAllData(collectionPath);
-    
+
     return documents.reduce((acc, item) => {
       // Convert the document to the format expected by the rest of the app
       acc[item.code] = {
@@ -141,7 +139,7 @@ export const getCompetitors = async (compId) => {
   try {
     const collectionPath = `competitions/${compId}/competitors`;
     const documents = await fetchAllData(collectionPath);
-    
+
     return documents.reduce((acc, item) => {
       // Convert the document to the format expected by the rest of the app
       acc[item.competitorNo] = {
@@ -166,7 +164,7 @@ export const getScores = async (compId) => {
   try {
     const collectionPath = `competitions/${compId}/qualificationScores`;
     const documents = await fetchAllData(collectionPath);
-    
+
     return documents.reduce((acc, item) => {
       const competitorNo = item.competitorNo;
       acc[competitorNo] = acc[competitorNo] || [];
@@ -195,7 +193,7 @@ export const getProblems = async (compId) => {
   try {
     const collectionPath = `competitions/${compId}/climbs`;
     const documents = await fetchAllData(collectionPath);
-    
+
     return documents.reduce((acc, item) => {
       acc[item.climbNo] = {
         score: item.score,
