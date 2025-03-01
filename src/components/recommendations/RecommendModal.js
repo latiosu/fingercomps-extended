@@ -132,7 +132,7 @@ function RecommendModal({ onClose, user }) {
                           <td colSpan={totalColumns}>
                             <SendsSubTable
                               sends={problem.sends}
-                              categoryCode={user.category}
+                              categoryCode={sortByOverallTops ? "" : user.category}
                               isMobile={isMobile}
                             />
                           </td>
