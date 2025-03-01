@@ -1,19 +1,19 @@
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
+import { useCompetition } from '../../contexts/CompetitionContext';
 
 /**
  * Component for selecting categories
- * @param {Object} props - Component props
- * @param {Array} props.categories - Array of categories
- * @param {boolean} props.loading - Whether the table is loading
  * @returns {JSX.Element} CategorySelector component
  */
-function CategorySelector({ categories = [], loading = false}) {
+function CategorySelector() {
   const { 
     selectedCategory, 
     setSelectedCategory, 
     setSelectedCategoryCode 
   } = useApp();
+  
+  const { categories, loading } = useCompetition();
 
   const handleChange = (e) => {
     setSelectedCategory(e.target.value);

@@ -116,7 +116,7 @@ function UserTable({ onRecommendClick }) {
             onChange={(e) => setLimitScores(e.target.checked)}
             disabled={loading}
           />
-          Hide scores that don't affect total
+          Limit to top {Object.values(categories)[0]?.pumpfestTopScores} scores
         </label>
       </div>
 

@@ -32,8 +32,6 @@ function AppContent() {
 
       <div className="filters">
         <CompetitionSelector />
-
-        <CategorySelector />
       </div>
 
       {/* Competition not found message */}
@@ -44,14 +42,15 @@ function AppContent() {
       )}
 
       {selectedCompId && (
-        <div className="filters">
-          <ViewToggle />
-        </div>
-      )}
-
-      {/* Main content */}
-      {selectedCompId && (
         <CompetitionProvider competitionId={selectedCompId}>
+          <div className="filters">
+            <CategorySelector />
+          </div>
+
+          <div className="filters">
+            <ViewToggle />
+          </div>
+
           {focusView === 'user' ? (
             <UsersPage />
           ) : (
