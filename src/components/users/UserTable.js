@@ -21,7 +21,9 @@ function UserTable({ onRecommendClick }) {
   const {
     userTableData,
     categories,
-    loading
+    loading,
+    loadingProgress,
+    partialDataAvailable
   } = useCompetition();
 
   const { expandedRows, toggleRow } = useExpandableRows();
@@ -114,7 +116,7 @@ function UserTable({ onRecommendClick }) {
             type="checkbox"
             checked={limitScores}
             onChange={(e) => setLimitScores(e.target.checked)}
-            disabled={loading}
+            disabled={loading && loadingProgress < 100}
           />
           Limit to top {Object.values(categories)[0]?.pumpfestTopScores} scores
         </label>
@@ -129,6 +131,8 @@ function UserTable({ onRecommendClick }) {
         renderExpandedContent={renderExpandedContent}
         expandedRows={expandedRows}
         loading={loading}
+        loadingProgress={loadingProgress}
+        partialDataAvailable={partialDataAvailable}
         emptyMessage={selectedCategory ? "No users in this category" : "No users available"}
       />
     </>

@@ -1,5 +1,6 @@
 import React from 'react';
 import useSortableTable from '../../hooks/useSortableTable';
+import LoadingProgressBar from './LoadingProgressBar';
 
 /**
  * Reusable sortable table component
@@ -12,42 +13,117 @@ import useSortableTable from '../../hooks/useSortableTable';
  * @param {Function} props.renderExpandedContent - Function to render expanded content
  * @param {Set} props.expandedRows - Set of expanded row IDs
  * @param {boolean} props.loading - Whether the table is loading
+ * @param {number} props.loadingProgress - Loading progress percentage (0-100)
+ * @param {boolean} props.partialDataAvailable - Whether partial data is available for display
  * @param {string} props.emptyMessage - Message to display when there's no data
  * @returns {JSX.Element} SortableTable component
  */
-function SortableTable({ 
-  columns, 
-  data, 
+function SortableTable({
+  columns,
+  data,
   initialSort = { key: null, direction: 'desc' },
   rowKey = 'id',
   onRowClick,
   renderExpandedContent,
   expandedRows = new Set(),
   loading = false,
+  loadingProgress = 0,
+  partialDataAvailable = false,
   emptyMessage = 'No data available'
 }) {
   const { items, requestSort, sortConfig } = useSortableTable(data, initialSort);
 
+  // Render loading states
   if (loading) {
+    
+    // Show partial data with progress bar for later loading stages
+    if (partialDataAvailable && items.length > 0) {
+      return (
+        <div className="loading-table-container">
+          <LoadingProgressBar progress={loadingProgress} />
+          <table className="mainTable">
+            <thead className="tableHeader">
+              <tr>
+                {columns.map((column) => (
+                  <th
+                    key={column.key}
+                    onClick={() => column.sortable !== false && requestSort(column.key)}
+                    style={{ cursor: column.sortable !== false ? 'pointer' : 'default' }}
+                  >
+                    {column.label}
+                    {sortConfig.key === column.key && (
+                      <span>{sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽'}</span>
+                    )}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item) => {
+                const isExpanded = expandedRows.has(item[rowKey]);
+                return (
+                  <React.Fragment key={item[rowKey]}>
+                    <tr
+                      onClick={() => onRowClick && onRowClick(item[rowKey])}
+                      style={{ cursor: onRowClick ? 'pointer' : 'default' }}
+                    >
+                      {columns.map((column) => (
+                        <td key={`${item[rowKey]}-${column.key}`}>
+                          {column.render ? column.render(item) : item[column.key]}
+                        </td>
+                      ))}
+                    </tr>
+                    {isExpanded && renderExpandedContent && (
+                      <tr className="subTableContainer">
+                        <td colSpan={columns.length}>
+                          {renderExpandedContent(item)}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+              {/* Add placeholder shimmer rows to indicate more data is loading */}
+              {loadingProgress < 100 && (
+                Array(3).fill(0).map((_, index) => (
+                  <tr key={`loading-row-${index}`} className="loading-row">
+                    {columns.map((column, colIndex) => (
+                      <td key={`loading-cell-${index}-${colIndex}`} className="loading-cell">
+                        <div className="shimmer"></div>
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+    
+    // Show loading indicator with progress for other cases
     return (
-      <table className="mainTable">
-        <thead className="tableHeader">
-          <tr>
-            {columns.map((column) => (
-              <th key={column.key}>
-                {column.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td colSpan={columns.length}>
-              <span className="loading-dots">Loading</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div className="loading-container">
+        <LoadingProgressBar progress={loadingProgress} />
+        <table className="mainTable">
+          <thead className="tableHeader">
+            <tr>
+              {columns.map((column) => (
+                <th key={column.key}>
+                  {column.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colSpan={columns.length} className="loading-message">
+                <span className="loading-text">Loading data ({loadingProgress}%)</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     );
   }
 

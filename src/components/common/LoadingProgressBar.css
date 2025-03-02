@@ -1,0 +1,63 @@
+.loading-progress-container {
+  margin: 10px 0;
+  text-align: center;
+}
+
+.loading-progress-bar {
+  height: 6px;
+  background-color: #eee;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+
+.loading-progress-fill {
+  height: 100%;
+  background-color: #FFD68A;
+  transition: width 0.3s ease;
+}
+
+.loading-progress-text {
+  font-size: 12px;
+  color: #666;
+}
+
+/* Additional styles for the SortableTable */
+.loading-table-container {
+  position: relative;
+}
+
+.loading-cell .shimmer {
+  height: 15px;
+}
+
+.loading-message {
+  text-align: center;
+  padding: 20px !important;
+}
+
+.loading-text {
+  display: inline-block;
+  position: relative;
+  font-weight: 500;
+}
+
+.loading-text::after {
+  content: '';
+  animation: loading-dots 1.5s infinite;
+}
+
+@keyframes loading-dots {
+  0%, 20% {
+    content: '';
+  }
+  40% {
+    content: '.';
+  }
+  60% {
+    content: '..';
+  }
+  80%, 100% {
+    content: '...';
+  }
+}
