@@ -7,7 +7,13 @@ import { toTimeAgoString } from '../../utils/dateFormatters';
  * @returns {JSX.Element} LastScoreDisplay component
  */
 function LastScoreDisplay() {
-  const { lastSubmittedScore, competitors } = useCompetition();
+  const { lastSubmittedScore, competitors, loading } = useCompetition();
+
+  if (loading) {
+    return (
+      <></>
+    );
+  }
 
   if (!lastSubmittedScore) {
     return (
