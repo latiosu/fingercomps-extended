@@ -37,9 +37,25 @@ export const AppProvider = ({ children }) => {
   });
   const [compNotFoundMessage, setCompNotFoundMessage] = useState("");
 
+  // Helper function to load saved category for a competition
+  const loadSavedCategory = useCallback((compId) => {
+    if (!compId) return { category: "", categoryCode: "" };
+    
+    const savedCategory = localStorage.getItem(`category_${compId}`) || "";
+    const savedCategoryCode = localStorage.getItem(`categoryCode_${compId}`) || "";
+    
+    return { category: savedCategory, categoryCode: savedCategoryCode };
+  }, []);
+
   // State for UI
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedCategoryCode, setSelectedCategoryCode] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(() => {
+    const compId = localStorage.getItem('lastSelectedCompId');
+    return loadSavedCategory(compId).category;
+  });
+  const [selectedCategoryCode, setSelectedCategoryCode] = useState(() => {
+    const compId = localStorage.getItem('lastSelectedCompId');
+    return loadSavedCategory(compId).categoryCode;
+  });
   const [focusView, setFocusView] = useState('user');
   const [limitScores, setLimitScores] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -79,14 +95,17 @@ export const AppProvider = ({ children }) => {
         }
       }
 
-      setSelectedCategory("");
+      // Load saved category for this competition
+      const { category, categoryCode } = loadSavedCategory(selectedCompId);
+      setSelectedCategory(category);
+      setSelectedCategoryCode(categoryCode);
     } catch (err) {
       setError(err.message);
       console.error("Error fetching competitions:", err);
     } finally {
       setLoading(false);
     }
-  }, [selectedComp, selectedCompId]);
+  }, [selectedComp, selectedCompId, loadSavedCategory]);
 
   // Fetch competitions on mount and when dependencies change
   useEffect(() => {
@@ -95,13 +114,17 @@ export const AppProvider = ({ children }) => {
 
   // Handle competition selection
   const handleCompetitionChange = (newComp, newCompId) => {
+    // Update competition selection
     setSelectedComp(newComp);
     setSelectedCompId(newCompId);
     localStorage.setItem('lastSelectedComp', newComp);
     localStorage.setItem('lastSelectedCompId', newCompId);
     setCompNotFoundMessage("");
-    setSelectedCategory("");
-    setSelectedCategoryCode("");
+    
+    // Load saved category for this competition
+    const { category, categoryCode } = loadSavedCategory(newCompId);
+    setSelectedCategory(category);
+    setSelectedCategoryCode(categoryCode);
   };
 
   // Context value

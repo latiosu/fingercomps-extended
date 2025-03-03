@@ -10,14 +10,25 @@ function CategorySelector() {
   const {
     selectedCategory,
     setSelectedCategory,
-    setSelectedCategoryCode
+    setSelectedCategoryCode,
+    selectedCompId
   } = useApp();
 
   const { categories } = useCompetition();
 
   const handleChange = (e) => {
-    setSelectedCategory(e.target.value);
-    setSelectedCategoryCode(e.target.selectedOptions[0].dataset.code || "");
+    const category = e.target.value;
+    const categoryCode = e.target.selectedOptions[0].dataset.code || "";
+    
+    setSelectedCategory(category);
+    setSelectedCategoryCode(categoryCode);
+    
+    // Only save to localStorage if a competition is selected
+    if (selectedCompId) {
+      // Save category with competition ID as part of the key
+      localStorage.setItem(`category_${selectedCompId}`, category);
+      localStorage.setItem(`categoryCode_${selectedCompId}`, categoryCode);
+    }
   };
 
   return (
