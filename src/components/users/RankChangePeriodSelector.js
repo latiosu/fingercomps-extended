@@ -37,7 +37,6 @@ function RankChangePeriodSelector() {
         <option value="threedays">Last 3 days</option>
         <option value="weekly">Last 7 days</option>
       </select>
-      {loading && <span className="loading-indicator">Loading...</span>}
     </div>
   );
 }

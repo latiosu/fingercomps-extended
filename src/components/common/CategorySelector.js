@@ -13,7 +13,7 @@ function CategorySelector() {
     setSelectedCategoryCode
   } = useApp();
 
-  const { categories, loading } = useCompetition();
+  const { categories } = useCompetition();
 
   const handleChange = (e) => {
     setSelectedCategory(e.target.value);
@@ -27,7 +27,6 @@ function CategorySelector() {
         id="filterCategory"
         value={selectedCategory}
         onChange={handleChange}
-        disabled={loading}
       >
         <option value="">All</option>
         {Object.values(categories).map((item, index) => (
