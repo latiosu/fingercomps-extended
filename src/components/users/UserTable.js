@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { useCompetition } from '../../contexts/CompetitionContext';
 import useExpandableRows from '../../hooks/useExpandableRows';
@@ -12,6 +12,7 @@ import UserScoresTable from './UserScoresTable';
  * @returns {JSX.Element} UserTable component
  */
 function UserTable({ onRecommendClick }) {
+  const [searchTerm, setSearchTerm] = useState('');
   const {
     selectedCategory,
     limitScores,
@@ -73,11 +74,20 @@ function UserTable({ onRecommendClick }) {
     }
   ];
 
-  // Filter data based on selected category
+  // Filter data based on selected category and search term
   const filteredData = userTableData
     .filter(item => {
-      if (!selectedCategory) return true;
-      return item.categoryFullName === selectedCategory;
+      // Filter by category if selected
+      if (selectedCategory && item.categoryFullName !== selectedCategory) {
+        return false;
+      }
+
+      // Filter by search term if provided
+      if (searchTerm && !item.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+        return false;
+      }
+
+      return true;
     })
     .map((item, index) => ({
       ...item,
@@ -121,7 +131,52 @@ function UserTable({ onRecommendClick }) {
           Limit to top {Object.values(categories)[0]?.pumpfestTopScores} scores
         </label>
       </div>
-
+      <div className="search-container" style={{
+        marginTop: '4px',
+        display: 'flex',
+        alignItems: 'center',
+        maxWidth: '450px',
+        position: 'relative'
+      }}>
+        <span style={{
+          position: 'absolute',
+          left: '10px',
+          color: '#666',
+          fontSize: '16px'
+        }}>
+          🔍
+        </span>
+        <input
+          type="text"
+          placeholder="Search by name..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{
+            padding: '8px 12px 8px 32px',
+            borderRadius: '4px',
+            border: '1px solid #ccc',
+            width: '100%',
+            fontSize: '14px'
+          }}
+        />
+        {searchTerm && (
+          <button
+            onClick={() => setSearchTerm('')}
+            style={{
+              position: 'absolute',
+              right: '10px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '14px',
+              color: '#dd7777'
+            }}
+            aria-label="Clear search"
+          >
+            ✕
+          </button>
+        )}
+      </div>
       <SortableTable
         columns={columns}
         data={filteredData}
