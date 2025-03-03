@@ -28,37 +28,37 @@ export const computeUserTableData = (categories, competitors, problems, scores) 
   const table = Object.entries(competitors).map(([uid, user]) => {
     const cat = categories[user.category];
     const flashExtraPoints = cat?.flashExtraPoints || 0;
-    
+
     // Map scores and add problem details
     const mappedScores = (scores[uid] || [])
       .map(s => ({ ...problems[s?.climbNo], ...s }));
-    
+
     // Filter out duplicate sends of the same problem, keeping only the best attempt
     const uniqueScores = [];
     const seenProblems = new Set();
-    
+
     // Sort by score (highest first) to ensure we keep the best attempt for each problem
     mappedScores.sort((a, b) => {
       const aTotal = a.score + (a.flashed ? flashExtraPoints : 0);
       const bTotal = b.score + (b.flashed ? flashExtraPoints : 0);
       return bTotal - aTotal;
     });
-    
+
     // Keep only the first (best) occurrence of each problem
     mappedScores.forEach(score => {
       if (!score.climbNo) return;
-      
+
       if (!seenProblems.has(score.climbNo)) {
         seenProblems.add(score.climbNo);
         uniqueScores.push(score);
       }
     });
-    
+
     const row = {
       ...user,
       scores: uniqueScores
     };
-    
+
     const { tops, flashes, total } = computeScore(
       row.scores,
       flashExtraPoints,

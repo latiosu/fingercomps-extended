@@ -12,26 +12,26 @@ import SortableTable from '../common/SortableTable';
  */
 function ProblemsTable() {
   const { isMobile, selectedCategoryCode } = useApp();
-  const { 
-    categories, 
-    categoryTops, 
-    problems, 
+  const {
+    categories,
+    categoryTops,
+    problems,
     loading,
     loadingProgress,
     partialDataAvailable,
-    countCompetitors 
+    countCompetitors
   } = useCompetition();
-  
+
   const { expandedRows, toggleRow } = useExpandableRows();
-  
+
   // State for filtering and display options
   const [showRawCounts, setShowRawCounts] = useState(true);
   const [hideZeroTops, setHideZeroTops] = useState(true);
 
   // Filter categories to show based on selected category
-  const focusCategories = useMemo(() => 
+  const focusCategories = useMemo(() =>
     Object.values(categories)
-      .filter((cat) => categoryTops[cat.code]?.length > 0 && 
+      .filter((cat) => categoryTops[cat.code]?.length > 0 &&
         (selectedCategoryCode ? cat.code === selectedCategoryCode : true)),
     [categories, categoryTops, selectedCategoryCode]
   );
@@ -91,7 +91,7 @@ function ProblemsTable() {
       filteredData = filteredData.filter(problem => {
         if (!problem.stats) return false;
         return Object.entries(problem.stats)
-          .filter(([k, _]) => categoryTops[k]?.length > 0 && 
+          .filter(([k, _]) => categoryTops[k]?.length > 0 &&
             (selectedCategoryCode ? k === selectedCategoryCode : true))
           .some(([_, v]) => v.tops > 0);
       });
@@ -105,11 +105,11 @@ function ProblemsTable() {
         acc[statKey] = stats ? {
           tops: stats.tops,
           flashes: stats.flashes,
-          rawValue: showRawCounts ? 
-            `${stats.tops} (${stats.flashes})` : 
+          rawValue: showRawCounts ?
+            `${stats.tops} (${stats.flashes})` :
             `${(stats.tops / countCompetitors(cat.code)).toFixed(0)}% (${(stats.flashes / countCompetitors(cat.code)).toFixed(0)}%)`,
-          sortValue: showRawCounts ? 
-            stats.tops : 
+          sortValue: showRawCounts ?
+            stats.tops :
             stats.tops / countCompetitors(cat.code)
         } : { rawValue: "-", sortValue: 0 };
         return acc;
@@ -148,7 +148,7 @@ function ProblemsTable() {
           Hide problems with no tops
         </label>
       </div>
-      
+
       <SortableTable
         columns={columns}
         data={problemsData}

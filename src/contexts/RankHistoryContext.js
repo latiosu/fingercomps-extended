@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { useCompetition } from './CompetitionContext';
-import { useApp } from './AppContext';
 import RankHistoryService from '../services/RankHistoryService';
+import { useApp } from './AppContext';
+import { useCompetition } from './CompetitionContext';
 
 // Create context
 const RankHistoryContext = createContext();
@@ -31,26 +31,26 @@ export const RankHistoryProvider = ({ children }) => {
   const [rankChanges, setRankChanges] = useState([]);
   const [significantChanges, setSignificantChanges] = useState({ risers: [], fallers: [] });
   const [loading, setLoading] = useState(false);
-  
+
   // Create the rank history service
   const rankHistoryService = useMemo(() => {
     if (Object.keys(categories).length && Object.keys(competitors).length && selectedCompId) {
       return new RankHistoryService(
-        categories, 
-        competitors, 
-        problems, 
-        scores, 
+        categories,
+        competitors,
+        problems,
+        scores,
         selectedCompId
       );
     }
     return null;
   }, [categories, competitors, problems, scores, selectedCompId]);
-  
+
   // Calculate current and previous timepoints based on selected timeframe
   const timepoints = useMemo(() => {
     const now = new Date();
     let previous;
-    
+
     switch (timeframe) {
       case 'hourly':
         previous = new Date(now);
@@ -76,17 +76,17 @@ export const RankHistoryProvider = ({ children }) => {
         previous = new Date(now);
         previous.setDate(previous.getDate() - 1);
     }
-    
+
     return { current: now, previous };
   }, [timeframe]);
-  
+
   // Update rank changes when timeframe, service, or selected category changes
   useEffect(() => {
     const updateRankChanges = async () => {
       if (!rankHistoryService) return;
-      
+
       setLoading(true);
-      
+
       try {
         // Get rank changes
         const changes = await rankHistoryService.getRankChanges(
@@ -94,9 +94,9 @@ export const RankHistoryProvider = ({ children }) => {
           timepoints.previous,
           selectedCategory
         );
-        
+
         setRankChanges(changes);
-        
+
         // Get significant changes
         const significant = await rankHistoryService.getSignificantChanges(
           timepoints.current,
@@ -104,7 +104,7 @@ export const RankHistoryProvider = ({ children }) => {
           3, // Threshold
           selectedCategory
         );
-        
+
         setSignificantChanges(significant);
       } catch (error) {
         console.error('Error updating rank changes:', error);
@@ -112,10 +112,10 @@ export const RankHistoryProvider = ({ children }) => {
         setLoading(false);
       }
     };
-    
+
     updateRankChanges();
   }, [rankHistoryService, timepoints, timeframe, selectedCategory]);
-  
+
   // Clear cache when competition changes
   useEffect(() => {
     return () => {
@@ -123,11 +123,11 @@ export const RankHistoryProvider = ({ children }) => {
       rankHistoryService?.clearCache();
     };
   }, [selectedCompId, rankHistoryService]);
-  
+
   // Function to get competitor rank history
   const getCompetitorRankHistory = async (competitorNo) => {
     if (!rankHistoryService) return [];
-    
+
     try {
       return await rankHistoryService.getCompetitorRankHistory(
         competitorNo,
@@ -139,7 +139,7 @@ export const RankHistoryProvider = ({ children }) => {
       return [];
     }
   };
-  
+
   // Context value
   const value = {
     rankChanges,
@@ -149,7 +149,7 @@ export const RankHistoryProvider = ({ children }) => {
     loading,
     getCompetitorRankHistory
   };
-  
+
   return (
     <RankHistoryContext.Provider value={value}>
       {children}

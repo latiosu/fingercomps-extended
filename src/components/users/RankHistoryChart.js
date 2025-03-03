@@ -12,7 +12,7 @@ function RankHistoryChart({ competitorNo }) {
   const { getCompetitorRankHistory, timeframe } = useRankHistory();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
-  
+
   // Fetch rank history when competitor or timeframe changes
   useEffect(() => {
     const fetchHistory = async () => {
@@ -26,25 +26,25 @@ function RankHistoryChart({ competitorNo }) {
         setLoading(false);
       }
     };
-    
+
     fetchHistory();
   }, [competitorNo, getCompetitorRankHistory, timeframe]);
-  
+
   // Show loading state
   if (loading) {
     return <div className="rank-history-chart-loading">Loading history...</div>;
   }
-  
+
   // Show message if not enough data
   if (history.length < 2) {
     return <div className="rank-history-chart-empty">Not enough historical data available</div>;
   }
-  
+
   // Calculate min and max ranks for normalization
   const maxRank = Math.max(...history.map(h => h.rank));
   const minRank = Math.min(...history.map(h => h.rank));
   const range = maxRank - minRank || 1;
-  
+
   // Format date based on timeframe
   const formatDate = (timestamp) => {
     const date = new Date(timestamp);
@@ -59,7 +59,7 @@ function RankHistoryChart({ competitorNo }) {
         return date.toLocaleDateString();
     }
   };
-  
+
   return (
     <div className="rank-history-chart">
       <h4>Rank History</h4>
@@ -69,9 +69,9 @@ function RankHistoryChart({ competitorNo }) {
             // Normalize rank (inverted, since lower rank is better)
             const normalizedRank = 1 - ((point.rank - minRank) / range);
             const height = `${normalizedRank * 100}%`;
-            
+
             return (
-              <div 
+              <div
                 key={index}
                 className="sparkline-point"
                 style={{ height }}
@@ -80,13 +80,13 @@ function RankHistoryChart({ competitorNo }) {
             );
           })}
         </div>
-        
+
         <div className="chart-labels">
           <div className="y-axis-label top">{minRank}</div>
           <div className="y-axis-label bottom">{maxRank}</div>
         </div>
       </div>
-      
+
       <div className="chart-legend">
         <div className="legend-item">
           <span className="legend-date">{formatDate(history[0].timestamp)}</span>

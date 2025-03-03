@@ -1,13 +1,13 @@
 import {
   collection,
-  query,
-  where,
-  orderBy,
   getDocs,
-  Timestamp
+  orderBy,
+  query,
+  Timestamp,
+  where
 } from "firebase/firestore";
-import { db, fetchAllData, timestampToISOString, isoStringToTimestamp } from "../client";
 import { twoMonthsAgoISOString } from "../../utils/dateFormatters";
+import { db, fetchAllData, isoStringToTimestamp, timestampToISOString } from "../client";
 
 /**
  * Fetches all competitions modified in the last two months

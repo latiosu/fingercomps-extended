@@ -66,8 +66,8 @@ function SortableTable({
       <thead className="tableHeader">
         <tr>
           {columns.map((column) => (
-            <th 
-              key={column.key} 
+            <th
+              key={column.key}
               onClick={() => column.sortable !== false && requestSort(column.key)}
               style={{ cursor: column.sortable !== false ? 'pointer' : 'default' }}
             >
@@ -85,7 +85,7 @@ function SortableTable({
             const isExpanded = expandedRows.has(item[rowKey]);
             return (
               <React.Fragment key={item[rowKey]}>
-                <tr 
+                <tr
                   onClick={() => onRowClick && onRowClick(item[rowKey])}
                   style={{ cursor: onRowClick ? 'pointer' : 'default' }}
                 >

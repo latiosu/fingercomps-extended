@@ -16,7 +16,7 @@ function RankChangeIndicator({ change }) {
       </div>
     );
   }
-  
+
   // Determine icon and color based on change
   const getIndicator = () => {
     if (change > 4) return { icon: '↑↑', color: 'green', label: 'Rising fast', className: 'rising-fast' };
@@ -25,11 +25,11 @@ function RankChangeIndicator({ change }) {
     if (change < 0) return { icon: '↓', color: 'pink', label: 'Falling', className: 'falling' };
     return { icon: '−', color: 'gray', label: 'Unchanged', className: 'unchanged' };
   };
-  
+
   const indicator = getIndicator();
-  
+
   return (
-    <div 
+    <div
       className={`rank-change-indicator ${indicator.className}`}
       title={`${Math.abs(change)} positions ${change > 0 ? 'up' : change < 0 ? 'down' : 'unchanged'}`}
     >

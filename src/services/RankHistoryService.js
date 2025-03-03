@@ -18,17 +18,17 @@ class RankHistoryService {
     this.problems = problems;
     this.scores = scores;
     this.competitionId = competitionId;
-    
+
     // Create a timeline of all score events
     this.timeline = this._buildTimeline();
-    
+
     // In-memory cache for fastest access during current session
     this.rankingsCache = new Map();
-    
+
     // Initialize IndexedDB
     this._initDatabase();
   }
-  
+
   /**
    * Builds a timeline of all score events
    * @returns {Array} Sorted array of score events
@@ -36,7 +36,7 @@ class RankHistoryService {
    */
   _buildTimeline() {
     const events = [];
-    
+
     Object.entries(this.scores).forEach(([competitorNo, competitorScores]) => {
       competitorScores.forEach(score => {
         events.push({
@@ -46,11 +46,11 @@ class RankHistoryService {
         });
       });
     });
-    
+
     // Sort by timestamp (oldest first)
     return events.sort((a, b) => a.timestamp - b.timestamp);
   }
-  
+
   /**
    * Initializes the IndexedDB database
    * @returns {Promise} Promise that resolves when the database is initialized
@@ -59,11 +59,11 @@ class RankHistoryService {
   async _initDatabase() {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open('RankHistoryDB', 1);
-      
+
       // Handle database upgrade (first time or version change)
       request.onupgradeneeded = (event) => {
         const db = event.target.result;
-        
+
         // Create object store for rankings if it doesn't exist
         if (!db.objectStoreNames.contains('rankings')) {
           const rankingsStore = db.createObjectStore('rankings', { keyPath: 'id' });
@@ -73,47 +73,47 @@ class RankHistoryService {
           rankingsStore.createIndex('compTimestamp', ['competitionId', 'timestamp'], { unique: true });
         }
       };
-      
+
       request.onsuccess = (event) => {
         this.db = event.target.result;
         console.log('IndexedDB initialized successfully');
         this._loadCacheFromIndexedDB();
         resolve();
       };
-      
+
       request.onerror = (event) => {
         console.error('Error initializing IndexedDB:', event.target.error);
         reject(event.target.error);
       };
     });
   }
-  
+
   /**
    * Loads cached rankings from IndexedDB
    * @private
    */
   async _loadCacheFromIndexedDB() {
     if (!this.db) return;
-    
+
     try {
       const transaction = this.db.transaction(['rankings'], 'readonly');
       const store = transaction.objectStore('rankings');
       const index = store.index('competitionId');
-      
+
       // Get all rankings for this competition
       const request = index.getAll(this.competitionId);
-      
+
       request.onsuccess = (event) => {
         const rankings = event.target.result;
-        
+
         // Populate in-memory cache
         rankings.forEach(entry => {
           this.rankingsCache.set(entry.timestamp, entry.data);
         });
-        
+
         console.log(`Loaded ${this.rankingsCache.size} cached rankings from IndexedDB`);
       };
-      
+
       request.onerror = (event) => {
         console.error('Error loading rankings from IndexedDB:', event.target.error);
       };
@@ -121,7 +121,7 @@ class RankHistoryService {
       console.error('Error accessing IndexedDB:', error);
     }
   }
-  
+
   /**
    * Saves rankings to IndexedDB
    * @param {string} timestamp - ISO string timestamp
@@ -130,14 +130,14 @@ class RankHistoryService {
    */
   async _saveRankingsToIndexedDB(timestamp, rankings) {
     if (!this.db) return;
-    
+
     try {
       const transaction = this.db.transaction(['rankings'], 'readwrite');
       const store = transaction.objectStore('rankings');
-      
+
       // Create a unique ID for this entry
       const id = `${this.competitionId}_${timestamp}`;
-      
+
       // Store the rankings
       const request = store.put({
         id,
@@ -146,22 +146,22 @@ class RankHistoryService {
         data: rankings,
         createdAt: new Date().toISOString()
       });
-      
+
       request.onsuccess = () => {
         console.log(`Saved rankings for ${timestamp} to IndexedDB`);
       };
-      
+
       request.onerror = (event) => {
         console.error('Error saving rankings to IndexedDB:', event.target.error);
       };
-      
+
       // Cleanup old entries to manage database size
       this._cleanupOldEntries();
     } catch (error) {
       console.error('Error accessing IndexedDB for saving:', error);
     }
   }
-  
+
   /**
    * Cleans up old entries to manage database size
    * Keeps only the 100 most recent entries per competition
@@ -169,31 +169,31 @@ class RankHistoryService {
    */
   async _cleanupOldEntries() {
     if (!this.db) return;
-    
+
     try {
       const transaction = this.db.transaction(['rankings'], 'readwrite');
       const store = transaction.objectStore('rankings');
       const index = store.index('compTimestamp');
-      
+
       // Get all entries for this competition, sorted by timestamp
       const request = index.openCursor([this.competitionId, ''], 'prev');
-      
+
       let count = 0;
-      
+
       request.onsuccess = (event) => {
         const cursor = event.target.result;
         if (cursor) {
           count++;
-          
+
           // Delete entries beyond the limit (keep 100 most recent)
           if (count > 100) {
             cursor.delete();
           }
-          
+
           cursor.continue();
         }
       };
-      
+
       request.onerror = (event) => {
         console.error('Error cleaning up old entries:', event.target.error);
       };
@@ -201,7 +201,7 @@ class RankHistoryService {
       console.error('Error accessing IndexedDB for cleanup:', error);
     }
   }
-  
+
   /**
    * Gets rankings at a specific point in time
    * @param {Date} timestamp - Target time
@@ -210,12 +210,12 @@ class RankHistoryService {
    */
   async getRankingsAtTime(timestamp, categoryFilter = '') {
     const cacheKey = `${timestamp.toISOString()}_${categoryFilter}`;
-    
+
     // Check in-memory cache first for fastest access
     if (this.rankingsCache.has(cacheKey)) {
       return this.rankingsCache.get(cacheKey);
     }
-    
+
     // If not in memory, try to get from IndexedDB
     if (this.db) {
       try {
@@ -230,21 +230,21 @@ class RankHistoryService {
         // Continue to calculate if there's an error
       }
     }
-    
+
     // If not in IndexedDB, calculate rankings
     const filteredScores = {};
-    
+
     Object.entries(this.scores).forEach(([competitorNo, competitorScores]) => {
       // Only include competitors in the selected category if a filter is applied
       if (categoryFilter && this.competitors[competitorNo]?.category !== categoryFilter) {
         return;
       }
-      
+
       filteredScores[competitorNo] = competitorScores.filter(score =>
         new Date(score.createdAt) <= timestamp
       );
     });
-    
+
     // Compute rankings
     const rankings = computeUserTableData(
       this.categories,
@@ -252,16 +252,16 @@ class RankHistoryService {
       this.problems,
       filteredScores
     );
-    
+
     // Cache the result in memory
     this.rankingsCache.set(cacheKey, rankings);
-    
+
     // Save to IndexedDB asynchronously
     this._saveRankingsToIndexedDB(cacheKey, rankings);
-    
+
     return rankings;
   }
-  
+
   /**
    * Gets rankings from IndexedDB
    * @param {string} timestamp - ISO string timestamp
@@ -274,14 +274,14 @@ class RankHistoryService {
         resolve(null);
         return;
       }
-      
+
       try {
         const transaction = this.db.transaction(['rankings'], 'readonly');
         const store = transaction.objectStore('rankings');
         const index = store.index('compTimestamp');
-        
+
         const request = index.get([this.competitionId, timestamp]);
-        
+
         request.onsuccess = (event) => {
           const result = event.target.result;
           if (result) {
@@ -290,7 +290,7 @@ class RankHistoryService {
             resolve(null);
           }
         };
-        
+
         request.onerror = (event) => {
           reject(event.target.error);
         };
@@ -299,7 +299,7 @@ class RankHistoryService {
       }
     });
   }
-  
+
   /**
    * Gets key points in the timeline (e.g., daily)
    * @param {string} interval - 'hourly', 'daily', 'weekly'
@@ -307,16 +307,16 @@ class RankHistoryService {
    */
   getKeyTimepoints(interval = 'daily') {
     if (this.timeline.length === 0) return [];
-    
+
     const startTime = this.timeline[0].timestamp;
     const endTime = new Date(); // Now
     const timepoints = [];
-    
+
     let current = new Date(startTime);
-    
+
     while (current <= endTime) {
       timepoints.push(new Date(current));
-      
+
       // Increment based on interval
       switch (interval) {
         case 'hourly':
@@ -332,10 +332,10 @@ class RankHistoryService {
           current.setDate(current.getDate() + 1);
       }
     }
-    
+
     return timepoints;
   }
-  
+
   /**
    * Gets rank changes between two points in time
    * @param {Date} currentTime - Current time
@@ -346,10 +346,10 @@ class RankHistoryService {
   async getRankChanges(currentTime, previousTime, categoryFilter = '') {
     const currentRankings = await this.getRankingsAtTime(currentTime, categoryFilter);
     const previousRankings = await this.getRankingsAtTime(previousTime, categoryFilter);
-    
+
     return currentRankings.map(current => {
       const previous = previousRankings.find(p => p.competitorNo === current.competitorNo);
-      
+
       // If competitor wasn't ranked before, they're new
       if (!previous) {
         return {
@@ -359,9 +359,9 @@ class RankHistoryService {
           scoreChange: current.total
         };
       }
-      
+
       const rankChange = previous.rank - current.rank;
-      
+
       return {
         ...current,
         rankChange,
@@ -370,7 +370,7 @@ class RankHistoryService {
       };
     });
   }
-  
+
   /**
    * Gets rank history for a specific competitor
    * @param {string} competitorNo - Competitor number
@@ -381,11 +381,11 @@ class RankHistoryService {
   async getCompetitorRankHistory(competitorNo, interval = 'daily', categoryFilter = '') {
     const timepoints = this.getKeyTimepoints(interval);
     const history = [];
-    
+
     for (const timepoint of timepoints) {
       const rankings = await this.getRankingsAtTime(timepoint, categoryFilter);
       const competitor = rankings.find(r => r.competitorNo === competitorNo);
-      
+
       if (competitor) {
         history.push({
           timestamp: timepoint,
@@ -394,10 +394,10 @@ class RankHistoryService {
         });
       }
     }
-    
+
     return history;
   }
-  
+
   /**
    * Gets significant rank changes
    * @param {Date} currentTime - Current time
@@ -408,34 +408,34 @@ class RankHistoryService {
    */
   async getSignificantChanges(currentTime, previousTime, threshold = 3, categoryFilter = '') {
     const changes = await this.getRankChanges(currentTime, previousTime, categoryFilter);
-    
+
     const risers = changes
       .filter(c => typeof c.rankChange === 'number' && c.rankChange > threshold)
       .sort((a, b) => b.rankChange - a.rankChange);
-      
+
     const fallers = changes
       .filter(c => typeof c.rankChange === 'number' && c.rankChange < -threshold)
       .sort((a, b) => a.rankChange - b.rankChange);
-      
+
     return { risers, fallers };
   }
-  
+
   /**
    * Clears the cache for this competition
    */
   async clearCache() {
     // Clear in-memory cache
     this.rankingsCache.clear();
-    
+
     // Clear IndexedDB entries for this competition
     if (this.db) {
       try {
         const transaction = this.db.transaction(['rankings'], 'readwrite');
         const store = transaction.objectStore('rankings');
         const index = store.index('competitionId');
-        
+
         const request = index.openCursor(this.competitionId);
-        
+
         request.onsuccess = (event) => {
           const cursor = event.target.result;
           if (cursor) {
@@ -443,7 +443,7 @@ class RankHistoryService {
             cursor.continue();
           }
         };
-        
+
         console.log('Rankings cache cleared from IndexedDB');
       } catch (error) {
         console.error('Error clearing IndexedDB cache:', error);

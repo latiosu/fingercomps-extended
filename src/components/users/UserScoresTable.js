@@ -1,8 +1,8 @@
 import React from 'react';
-import { toTimeAgoString, formatDateForHover } from '../../utils/dateFormatters';
-import useExpandableRows from '../../hooks/useExpandableRows';
-import SendsSubTable from '../common/SendsSubTable';
 import { useCompetition } from '../../contexts/CompetitionContext';
+import useExpandableRows from '../../hooks/useExpandableRows';
+import { formatDateForHover, toTimeAgoString } from '../../utils/dateFormatters';
+import SendsSubTable from '../common/SendsSubTable';
 
 /**
  * Component to display a user's scores

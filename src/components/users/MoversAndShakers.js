@@ -10,10 +10,10 @@ import './MoversAndShakers.css';
 function MoversAndShakers() {
   const { significantChanges, timeframe, loading } = useRankHistory();
   const { isMobile, selectedCategory } = useApp();
-  
+
   // The significantChanges are now filtered by category at the service level
   const { risers, fallers } = significantChanges;
-  
+
   const timeframeText = {
     hourly: 'hour',
     halfday: '12 hours',
@@ -23,7 +23,7 @@ function MoversAndShakers() {
   }[timeframe] || 'period';
 
   const fallbackText = `No significant rank changes in past ${timeframeText.toLowerCase()}${selectedCategory ? ` for ${selectedCategory}` : ''}`;
-  
+
   // Show loading state
   if (loading) {
     return (
@@ -32,7 +32,7 @@ function MoversAndShakers() {
       </div>
     );
   }
-  
+
   // Show message if no significant changes
   if (risers.length === 0 && fallers.length === 0) {
     return (
@@ -44,11 +44,11 @@ function MoversAndShakers() {
       </div>
     );
   }
-  
+
   return (
     <div className="movers-and-shakers">
       {/* <h3>Movers & Shakers</h3> */}
-      
+
       <div className="movers-container">
         <div className="movers-section risers">
           <h4>
@@ -70,7 +70,7 @@ function MoversAndShakers() {
             <p className="no-changes">{fallbackText}</p>
           )}
         </div>
-        
+
         {/* <div className="movers-section fallers">
           <h4>Fastest Fallers This {timeframeText}</h4>
           {fallers.length > 0 ? (

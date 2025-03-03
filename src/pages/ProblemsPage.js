@@ -1,6 +1,6 @@
 import React from 'react';
-import ProblemsTable from '../components/problems/ProblemsTable';
 import LastScoreDisplay from '../components/common/LastScoreDisplay';
+import ProblemsTable from '../components/problems/ProblemsTable';
 
 /**
  * Page component for the problems view

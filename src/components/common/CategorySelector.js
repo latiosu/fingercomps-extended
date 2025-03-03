@@ -7,12 +7,12 @@ import { useCompetition } from '../../contexts/CompetitionContext';
  * @returns {JSX.Element} CategorySelector component
  */
 function CategorySelector() {
-  const { 
-    selectedCategory, 
-    setSelectedCategory, 
-    setSelectedCategoryCode 
+  const {
+    selectedCategory,
+    setSelectedCategory,
+    setSelectedCategoryCode
   } = useApp();
-  
+
   const { categories, loading } = useCompetition();
 
   const handleChange = (e) => {

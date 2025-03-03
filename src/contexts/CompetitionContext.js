@@ -37,7 +37,7 @@ export const CompetitionProvider = ({ children, competitionId }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedCategoryCode, setSelectedCategoryCode] = useState("");
-  
+
   // New loading state with progress tracking
   const [loadingState, setLoadingState] = useState({
     categories: { loading: false, progress: 0, complete: false, error: null },
@@ -45,22 +45,22 @@ export const CompetitionProvider = ({ children, competitionId }) => {
     scores: { loading: false, progress: 0, complete: false, error: null },
     problems: { loading: false, progress: 0, complete: false, error: null }
   });
-  
+
   // Calculate overall loading progress (0-100)
   const loadingProgress = useMemo(() => {
     const { categories, competitors, scores, problems } = loadingState;
     const totalProgress = categories.progress + competitors.progress + scores.progress + problems.progress;
     const progress = Math.round(totalProgress / 4);
-    
+
     // Set loading to false when progress reaches 100%
     if (progress >= 100 && loading) {
       // Use setTimeout to avoid state update during render
       setTimeout(() => setLoading(false), 0);
     }
-    
+
     return progress;
   }, [loadingState, loading]);
-  
+
   // Determine if any data is available for display
   const partialDataAvailable = useMemo(() => {
     return Object.keys(categories).length > 0 || Object.keys(competitors).length > 0;
@@ -78,7 +78,7 @@ export const CompetitionProvider = ({ children, competitionId }) => {
 
     setLoading(true);
     setError(null);
-    
+
     // Initialize loading state for all data types
     setLoadingState({
       categories: { loading: true, progress: 0, complete: false, error: null },
@@ -86,7 +86,7 @@ export const CompetitionProvider = ({ children, competitionId }) => {
       scores: { loading: true, progress: 0, complete: false, error: null },
       problems: { loading: true, progress: 0, complete: false, error: null }
     });
-    
+
     try {
       // Fetch categories
       try {
@@ -94,14 +94,14 @@ export const CompetitionProvider = ({ children, competitionId }) => {
           ...prev,
           categories: { ...prev.categories, progress: 10 }
         }));
-        
+
         const categoriesData = await getCategories(competitionId);
-        
+
         setLoadingState(prev => ({
           ...prev,
           categories: { loading: false, progress: 100, complete: true, error: null }
         }));
-        
+
         setCategories(categoriesData);
       } catch (err) {
         setLoadingState(prev => ({
@@ -110,21 +110,21 @@ export const CompetitionProvider = ({ children, competitionId }) => {
         }));
         console.error("Error fetching categories:", err);
       }
-      
+
       // Fetch competitors
       try {
         setLoadingState(prev => ({
           ...prev,
           competitors: { ...prev.competitors, progress: 10 }
         }));
-        
+
         const competitorsData = await getCompetitors(competitionId);
-        
+
         setLoadingState(prev => ({
           ...prev,
           competitors: { loading: false, progress: 100, complete: true, error: null }
         }));
-        
+
         setCompetitors(competitorsData);
       } catch (err) {
         setLoadingState(prev => ({
@@ -133,21 +133,21 @@ export const CompetitionProvider = ({ children, competitionId }) => {
         }));
         console.error("Error fetching competitors:", err);
       }
-      
+
       // Fetch scores
       try {
         setLoadingState(prev => ({
           ...prev,
           scores: { ...prev.scores, progress: 10 }
         }));
-        
+
         const scoresData = await getScores(competitionId);
-        
+
         setLoadingState(prev => ({
           ...prev,
           scores: { loading: false, progress: 100, complete: true, error: null }
         }));
-        
+
         setScores(scoresData);
       } catch (err) {
         setLoadingState(prev => ({
@@ -156,21 +156,21 @@ export const CompetitionProvider = ({ children, competitionId }) => {
         }));
         console.error("Error fetching scores:", err);
       }
-      
+
       // Fetch problems
       try {
         setLoadingState(prev => ({
           ...prev,
           problems: { ...prev.problems, progress: 10 }
         }));
-        
+
         const problemsData = await getProblems(competitionId);
-        
+
         setLoadingState(prev => ({
           ...prev,
           problems: { loading: false, progress: 100, complete: true, error: null }
         }));
-        
+
         setProblems(problemsData);
       } catch (err) {
         setLoadingState(prev => ({
@@ -179,7 +179,7 @@ export const CompetitionProvider = ({ children, competitionId }) => {
         }));
         console.error("Error fetching problems:", err);
       }
-      
+
     } catch (err) {
       setError(err.message);
       console.error("Error fetching competition data:", err);
@@ -189,12 +189,12 @@ export const CompetitionProvider = ({ children, competitionId }) => {
         const allComplete = Object.values(prevState).every(
           state => state.complete || state.error
         );
-        
+
         if (allComplete) {
           // Use setTimeout to avoid state update during render
           setTimeout(() => setLoading(false), 0);
         }
-        
+
         return prevState;
       });
     }

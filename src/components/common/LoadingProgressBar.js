@@ -16,8 +16,8 @@ function LoadingProgressBar({ progress, hideOnComplete = true }) {
   return (
     <div className="loading-progress-container">
       <div className="loading-progress-bar">
-        <div 
-          className="loading-progress-fill" 
+        <div
+          className="loading-progress-fill"
           style={{ width: `${progress}%` }}
         />
       </div>

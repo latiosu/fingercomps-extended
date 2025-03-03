@@ -1,16 +1,15 @@
+import posthog from 'posthog-js';
 import React, { useMemo, useState } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { useCompetition } from '../../contexts/CompetitionContext';
 import { useRankHistory } from '../../contexts/RankHistoryContext';
 import useExpandableRows from '../../hooks/useExpandableRows';
 import { useSearchTracking } from '../../utils/analytics';
-import posthog from 'posthog-js';
 import SortableTable from '../common/SortableTable';
-import UserScoresTable from './UserScoresTable';
+import MoversAndShakers from './MoversAndShakers';
 import RankChangeIndicator from './RankChangeIndicator';
 import RankChangePeriodSelector from './RankChangePeriodSelector';
-// import RankHistoryChart from './RankHistoryChart';
-import MoversAndShakers from './MoversAndShakers';
+import UserScoresTable from './UserScoresTable';
 
 /**
  * Component to display the user table
@@ -20,11 +19,9 @@ import MoversAndShakers from './MoversAndShakers';
  */
 function UserTable({ onRecommendClick }) {
   const [searchTerm, setSearchTerm] = useState('');
-  // const [rankChangeFilter, setRankChangeFilter] = useState('');
   const {
     selectedCategory,
     limitScores,
-    // setLimitScores,
     isMobile,
   } = useApp();
   const {
@@ -34,7 +31,7 @@ function UserTable({ onRecommendClick }) {
     loadingProgress,
     partialDataAvailable
   } = useCompetition();
-  const { rankChanges, loading: rankChangesLoading } = useRankHistory();
+  const { rankChanges} = useRankHistory();
 
   const { expandedRows, toggleRow } = useExpandableRows();
 
@@ -66,22 +63,6 @@ function UserTable({ onRecommendClick }) {
         if (searchTerm && !item.name.toLowerCase().includes(searchTerm.toLowerCase())) {
           return false;
         }
-
-        // Filter by rank change if selected
-        // if (rankChangeFilter) {
-        //   if (rankChangeFilter === 'risers' && (item.rankChange <= 0 || item.rankChange === 'new')) {
-        //     return false;
-        //   }
-        //   if (rankChangeFilter === 'fallers' && item.rankChange >= 0) {
-        //     return false;
-        //   }
-        //   if (rankChangeFilter === 'unchanged' && item.rankChange !== 0) {
-        //     return false;
-        //   }
-        //   if (rankChangeFilter === 'new' && item.rankChange !== 'new') {
-        //     return false;
-        //   }
-        // }
 
         return true;
       })
@@ -180,9 +161,6 @@ function UserTable({ onRecommendClick }) {
         isMobile={isMobile}
       />
 
-      {/* Add rank history chart */}
-      {/* <RankHistoryChart competitorNo={item.competitorNo} /> */}
-
       <div className="recommendedBtnContainer">
         <button
           id="recommended-btn"
@@ -211,38 +189,9 @@ function UserTable({ onRecommendClick }) {
   return (
     <>
       <div className="filters">
-        {/* Rank change period selector */}
         <RankChangePeriodSelector />
-
-        {/* Rank change filter */}
-        {/* <div>
-          <label>Filter by rank change: </label>
-          <select
-            value={rankChangeFilter}
-            onChange={(e) => setRankChangeFilter(e.target.value)}
-            disabled={loading || rankChangesLoading}
-          >
-            <option value="">All competitors</option>
-            <option value="risers">Risers only</option>
-            <option value="fallers">Fallers only</option>
-            <option value="unchanged">Unchanged only</option>
-            <option value="new">New competitors</option>
-          </select>
-        </div> */}
-
-        {/* Limit to relevant scores */}
-        {/* <label>
-          <input
-            type="checkbox"
-            checked={limitScores}
-            onChange={(e) => setLimitScores(e.target.checked)}
-            disabled={loading && loadingProgress < 100}
-          />
-          Limit to top {Object.values(categories)[0]?.pumpfestTopScores} scores
-        </label> */}
       </div>
 
-      {/* Movers and Shakers section */}
       <MoversAndShakers />
 
       {/* Search by name */}
