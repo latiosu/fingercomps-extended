@@ -27,7 +27,7 @@ export const useRankHistory = () => {
 export const RankHistoryProvider = ({ children }) => {
   const { categories, competitors, problems, scores } = useCompetition();
   const { selectedCompId, selectedCategory } = useApp();
-  const [timeframe, setTimeframe] = useState('daily'); // 'hourly', 'daily', 'weekly'
+  const [timeframe, setTimeframe] = useState('daily'); // 'hourly', 'halfday', 'daily', 'threedays', 'weekly'
   const [rankChanges, setRankChanges] = useState([]);
   const [significantChanges, setSignificantChanges] = useState({ risers: [], fallers: [] });
   const [loading, setLoading] = useState(false);
@@ -79,6 +79,11 @@ export const RankHistoryProvider = ({ children }) => {
 
     return { current: now, previous };
   }, [timeframe]);
+
+  // Force timeframe to 'daily' on initial load
+  useEffect(() => {
+    setTimeframe('daily');
+  }, []);
 
   // Update rank changes when timeframe, service, or selected category changes
   useEffect(() => {
