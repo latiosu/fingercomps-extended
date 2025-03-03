@@ -143,11 +143,13 @@ export const RankHistoryProvider = ({ children }) => {
     updateRankChanges();
   }, [rankHistoryService, timepoints, timeframe, selectedCategory]);
 
-  // Clear cache when competition changes
+  // Clear in-memory cache when competition changes
   useEffect(() => {
     return () => {
       // Cleanup when unmounting or when competition changes
-      rankHistoryService?.clearCache();
+      if (rankHistoryService) {
+        rankHistoryService.clearCache();
+      }
     };
   }, [selectedCompId, rankHistoryService]);
 
