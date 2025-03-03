@@ -1,3 +1,4 @@
+import posthog from 'posthog-js';
 import React from 'react';
 import { useRankHistory } from '../../contexts/RankHistoryContext';
 
@@ -7,13 +8,27 @@ import { useRankHistory } from '../../contexts/RankHistoryContext';
  */
 function RankChangePeriodSelector() {
   const { timeframe, setTimeframe, loading } = useRankHistory();
-  
+
+  const handleTimeframeChange = (e) => {
+    const newTimeframe = e.target.value;
+    setTimeframe(newTimeframe);
+
+    // Track timeframe change with PostHog
+    if (process.env.NODE_ENV !== "development") {
+      posthog.capture('rank_timeframe_changed', {
+        component: 'RankChangePeriodSelector',
+        previous_timeframe: timeframe,
+        new_timeframe: newTimeframe
+      });
+    }
+  };
+
   return (
     <div className="rank-change-period-selector">
       <label>Show rank changes for: </label>
-      <select 
-        value={timeframe} 
-        onChange={(e) => setTimeframe(e.target.value)}
+      <select
+        value={timeframe}
+        onChange={handleTimeframeChange}
         disabled={loading}
       >
         <option value="hourly">Last hour</option>

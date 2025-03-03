@@ -4,11 +4,12 @@ import { useCompetition } from '../../contexts/CompetitionContext';
 import { useRankHistory } from '../../contexts/RankHistoryContext';
 import useExpandableRows from '../../hooks/useExpandableRows';
 import { useSearchTracking } from '../../utils/analytics';
+import posthog from 'posthog-js';
 import SortableTable from '../common/SortableTable';
 import UserScoresTable from './UserScoresTable';
 import RankChangeIndicator from './RankChangeIndicator';
 import RankChangePeriodSelector from './RankChangePeriodSelector';
-import RankHistoryChart from './RankHistoryChart';
+// import RankHistoryChart from './RankHistoryChart';
 import MoversAndShakers from './MoversAndShakers';
 
 /**
@@ -23,7 +24,7 @@ function UserTable({ onRecommendClick }) {
   const {
     selectedCategory,
     limitScores,
-    setLimitScores,
+    // setLimitScores,
     isMobile,
   } = useApp();
   const {
@@ -40,7 +41,7 @@ function UserTable({ onRecommendClick }) {
   // Combine user table data with rank changes
   const dataWithRankChanges = useMemo(() => {
     if (!rankChanges.length) return userTableData;
-    
+
     return userTableData.map(user => {
       const rankChange = rankChanges.find(rc => rc.competitorNo === user.competitorNo);
       return {
@@ -65,7 +66,7 @@ function UserTable({ onRecommendClick }) {
         if (searchTerm && !item.name.toLowerCase().includes(searchTerm.toLowerCase())) {
           return false;
         }
-        
+
         // Filter by rank change if selected
         // if (rankChangeFilter) {
         //   if (rankChangeFilter === 'risers' && (item.rankChange <= 0 || item.rankChange === 'new')) {
@@ -178,15 +179,26 @@ function UserTable({ onRecommendClick }) {
         flashExtraPoints={item.flashExtraPoints}
         isMobile={isMobile}
       />
-      
+
       {/* Add rank history chart */}
       {/* <RankHistoryChart competitorNo={item.competitorNo} /> */}
-      
+
       <div className="recommendedBtnContainer">
         <button
           id="recommended-btn"
           onClick={(e) => {
             e.stopPropagation();
+
+            // Track recommend problems button click with PostHog
+            if (process.env.NODE_ENV !== "development") {
+              posthog.capture('recommend_problems_clicked', {
+                component: 'UserTable',
+                user_category: item.category,
+                user_name: item.name,
+                user_rank: item.rank,
+              });
+            }
+
             onRecommendClick && onRecommendClick(item);
           }}
         >
@@ -201,7 +213,7 @@ function UserTable({ onRecommendClick }) {
       <div className="filters">
         {/* Rank change period selector */}
         <RankChangePeriodSelector />
-        
+
         {/* Rank change filter */}
         {/* <div>
           <label>Filter by rank change: </label>
@@ -229,7 +241,7 @@ function UserTable({ onRecommendClick }) {
           Limit to top {Object.values(categories)[0]?.pumpfestTopScores} scores
         </label> */}
       </div>
-      
+
       {/* Movers and Shakers section */}
       <MoversAndShakers />
 
