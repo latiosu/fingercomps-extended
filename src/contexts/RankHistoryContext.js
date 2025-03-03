@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import RankHistoryService from '../services/RankHistoryService';
 import { useApp } from './AppContext';
 import { useCompetition } from './CompetitionContext';
@@ -27,10 +27,36 @@ export const useRankHistory = () => {
 export const RankHistoryProvider = ({ children }) => {
   const { categories, competitors, problems, scores } = useCompetition();
   const { selectedCompId, selectedCategory } = useApp();
-  const [timeframe, setTimeframe] = useState('daily'); // 'hourly', 'halfday', 'daily', 'threedays', 'weekly'
+
+  // Initialize timeframe from localStorage if available, otherwise use 'daily'
+  const [timeframe, setTimeframeState] = useState(() => {
+    if (selectedCompId) {
+      return localStorage.getItem(`timeframe_${selectedCompId}`) || 'daily';
+    }
+    return 'daily';
+  });
+
+  // Custom setter that also updates localStorage
+  const setTimeframe = useCallback((newTimeframe) => {
+    setTimeframeState(newTimeframe);
+    if (selectedCompId) {
+      localStorage.setItem(`timeframe_${selectedCompId}`, newTimeframe);
+    }
+  }, [selectedCompId]);
+
   const [rankChanges, setRankChanges] = useState([]);
   const [significantChanges, setSignificantChanges] = useState({ risers: [], fallers: [] });
   const [loading, setLoading] = useState(false);
+
+  // Update timeframe when competition changes
+  useEffect(() => {
+    if (selectedCompId) {
+      const savedTimeframe = localStorage.getItem(`timeframe_${selectedCompId}`);
+      if (savedTimeframe && savedTimeframe !== timeframe) {
+        setTimeframeState(savedTimeframe); // Use setTimeframeState directly to avoid circular updates
+      }
+    }
+  }, [selectedCompId, timeframe]);
 
   // Create the rank history service
   const rankHistoryService = useMemo(() => {
@@ -79,11 +105,6 @@ export const RankHistoryProvider = ({ children }) => {
 
     return { current: now, previous };
   }, [timeframe]);
-
-  // Force timeframe to 'daily' on initial load
-  useEffect(() => {
-    setTimeframe('daily');
-  }, []);
 
   // Update rank changes when timeframe, service, or selected category changes
   useEffect(() => {
