@@ -70,7 +70,8 @@ function AppContent() {
       {/* Footer */}
       <footer className="footer">
         <p>
-        <a href="https://github.com/latiosu/fingercomps-extended" target="_blank" rel="noopener noreferrer">Open-source</a> and made with love by Eric Liu ❤️
+          <a href="https://github.com/latiosu/fingercomps-extended" target="_blank" rel="noopener noreferrer">Open-source</a> and made
+          with love by <a href="https://www.instagram.com/eric.c.liu/" target="_blank" rel="noopener noreferrer">Eric Liu</a> ❤️
         </p>
       </footer>
     </div>
