@@ -26,13 +26,13 @@ export const useRankHistory = () => {
  */
 export const RankHistoryProvider = ({ children }) => {
   const { categories, competitors, problems, scores } = useCompetition();
-  const { selectedCompId, selectedCategory } = useApp();
-
-  // Use a ref to track if we've loaded from localStorage for the current competition
-  const initializedCompIdRef = React.useRef(null);
-
-  // Initialize with a default value - we'll load from localStorage in the effect
+  const { selectedCompId, selectedCategory, loading: appLoading } = useApp();
+  
+  // Initialize with a default value
   const [timeframe, setTimeframeState] = useState('daily');
+  
+  // Track the last competition ID we've loaded a timeframe for
+  const lastCompIdRef = React.useRef(null);
 
   // Custom setter that also updates localStorage
   const setTimeframe = useCallback((newTimeframe) => {
@@ -46,17 +46,18 @@ export const RankHistoryProvider = ({ children }) => {
   const [significantChanges, setSignificantChanges] = useState({ risers: [], fallers: [] });
   const [loading, setLoading] = useState(false);
 
-  // Load timeframe from localStorage when competition changes or on initial mount
+  // Load timeframe from localStorage when competition changes or app loading completes
   useEffect(() => {
-    if (selectedCompId && initializedCompIdRef.current !== selectedCompId) {
+    // Only proceed if we have a competition ID, app loading is complete, and it's a different competition
+    if (selectedCompId && !appLoading && lastCompIdRef.current !== selectedCompId) {
       const savedTimeframe = localStorage.getItem(`timeframe_${selectedCompId}`);
       if (savedTimeframe) {
         setTimeframeState(savedTimeframe);
       }
-      // Mark this competition as initialized
-      initializedCompIdRef.current = selectedCompId;
+      // Update the ref to track the current competition ID
+      lastCompIdRef.current = selectedCompId;
     }
-  }, [selectedCompId]);
+  }, [selectedCompId, appLoading]);
 
   // Create the rank history service
   const rankHistoryService = useMemo(() => {
