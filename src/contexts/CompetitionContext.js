@@ -202,9 +202,7 @@ export const CompetitionProvider = ({ children, competitionId }) => {
 
   // Fetch competition data when competitionId changes
   useEffect(() => {
-    console.time("fetchCompetitionData");
     fetchCompetitionData();
-    console.timeEnd("fetchCompetitionData");
   }, [fetchCompetitionData]);
 
   // Calculate processed data when raw data changes

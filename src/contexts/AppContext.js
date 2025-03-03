@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { getCompetitions } from '../api/services/competitions';
 
 // Create context
@@ -59,7 +59,7 @@ export const AppProvider = ({ children }) => {
   const fetchCompetitions = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const availableComps = await getCompetitions();
       setComps(availableComps);
@@ -90,9 +90,7 @@ export const AppProvider = ({ children }) => {
 
   // Fetch competitions on mount and when dependencies change
   useEffect(() => {
-    console.time("fetchCompetitions");
     fetchCompetitions();
-    console.timeEnd("fetchCompetitions");
   }, [fetchCompetitions]);
 
   // Handle competition selection
@@ -113,7 +111,7 @@ export const AppProvider = ({ children }) => {
     selectedComp,
     selectedCompId,
     compNotFoundMessage,
-    
+
     // UI state
     selectedCategory,
     selectedCategoryCode,
@@ -123,7 +121,7 @@ export const AppProvider = ({ children }) => {
     recommendModalUser,
     loading,
     error,
-    
+
     // Actions
     setSelectedCategory,
     setSelectedCategoryCode,
