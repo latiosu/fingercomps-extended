@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { useCompetition } from '../../contexts/CompetitionContext';
 import useExpandableRows from '../../hooks/useExpandableRows';
+import { useSearchTracking } from '../../utils/analytics';
 import SortableTable from '../common/SortableTable';
 import UserScoresTable from './UserScoresTable';
 
@@ -28,6 +29,36 @@ function UserTable({ onRecommendClick }) {
   } = useCompetition();
 
   const { expandedRows, toggleRow } = useExpandableRows();
+
+  // Memoize filtered data to avoid recalculation on every render
+  const filteredData = useMemo(() => {
+    return userTableData
+      .filter(item => {
+        // Filter by category if selected
+        if (selectedCategory && item.categoryFullName !== selectedCategory) {
+          return false;
+        }
+
+        // Filter by search term if provided
+        if (searchTerm && !item.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+          return false;
+        }
+
+        return true;
+      })
+      .map((item, index) => ({
+        ...item,
+        index
+      }));
+  }, [userTableData, selectedCategory, searchTerm]);
+
+  // Track search input usage with PostHog
+  useSearchTracking(searchTerm, {
+    component: 'UserTable',
+    field: 'search_by_name',
+    resultsCount: filteredData.length,
+    debounceTime: 800 // Track after 800ms of inactivity
+  });
 
   // Define columns for the table
   const columns = [
@@ -73,26 +104,6 @@ function UserTable({ onRecommendClick }) {
       )
     }
   ];
-
-  // Filter data based on selected category and search term
-  const filteredData = userTableData
-    .filter(item => {
-      // Filter by category if selected
-      if (selectedCategory && item.categoryFullName !== selectedCategory) {
-        return false;
-      }
-
-      // Filter by search term if provided
-      if (searchTerm && !item.name.toLowerCase().includes(searchTerm.toLowerCase())) {
-        return false;
-      }
-
-      return true;
-    })
-    .map((item, index) => ({
-      ...item,
-      index
-    }));
 
   // Render expanded content for a row
   const renderExpandedContent = (item) => (
