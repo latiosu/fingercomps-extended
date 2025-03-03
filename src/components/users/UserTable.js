@@ -82,42 +82,31 @@ function UserTable({ onRecommendClick }) {
 
   // Define columns for the table
   const columns = [
-    // Only show index column in desktop view
-    ...(!isMobile ? [
-      {
-        key: 'index',
-        label: '#',
-        sortable: false,
-        render: (item) => item.index + 1
-      }
-    ] : []),
-    // For mobile: Combined Rank and Change column
-    // For desktop: Separate Rank column
-    ...(isMobile ? [
-      {
-        key: 'rank',
-        label: 'Rank',
-        sortable: true,
-        render: (item) => (
+    // Index column - combined with rank change in mobile view
+    {
+      key: 'index',
+      label: '#',
+      sortable: false,
+      render: (item) => (
+        isMobile ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-            <span>{item.rank}</span>
+            <span>{item.index + 1}</span>
             <RankChangeIndicator change={item.rankChange} />
           </div>
+        ) : (
+          item.index + 1
         )
-      }
-    ] : [
-      {
-        key: 'rank',
-        label: 'Overall Rank',
-        sortable: true
-      },
+      )
+    },
+    // Change column - only in desktop view
+    ...(!isMobile ? [
       {
         key: 'rankChange',
         label: 'Change',
         sortable: true,
         render: (item) => <RankChangeIndicator change={item.rankChange} />
       }
-    ]),
+    ] : []),
     ...(!selectedCategory ? [{
       key: 'categoryFullName',
       label: 'Category',

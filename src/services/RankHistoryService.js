@@ -52,7 +52,7 @@ class RankHistoryService {
    * Gets rankings at a specific point in time
    * @param {Date} timestamp - Target time
    * @param {string} [categoryFilter] - Optional category filter
-   * @returns {Promise<Array>} Rankings at that time
+   * @returns {Promise<Array>} Rankings at that time, with category position if filtered
    */
   async getRankingsAtTime(timestamp, categoryFilter = '') {
     const cacheKey = `${timestamp.toISOString()}_${categoryFilter}`;
@@ -83,6 +83,22 @@ class RankHistoryService {
       this.problems,
       filteredScores
     );
+
+    // If category filter is applied, add position within category
+    if (categoryFilter) {
+      // Sort by total score (descending)
+      const sortedRankings = [...rankings].sort((a, b) => b.total - a.total);
+
+      // Add position within category
+      sortedRankings.forEach((competitor, index) => {
+        competitor.categoryPosition = index + 1;
+      });
+
+      // Cache the result in memory for current session only
+      this.rankingsCache.set(cacheKey, sortedRankings);
+
+      return sortedRankings;
+    }
 
     // Cache the result in memory for current session only
     this.rankingsCache.set(cacheKey, rankings);
@@ -131,7 +147,7 @@ class RankHistoryService {
    * @param {Date} currentTime - Current time
    * @param {Date} previousTime - Previous time
    * @param {string} [categoryFilter] - Optional category filter
-   * @returns {Promise<Array>} Rankings with change information
+   * @returns {Promise<Array>} Rankings with change information based on category position if filtered
    */
   async getRankChanges(currentTime, previousTime, categoryFilter = '') {
     const currentRankings = await this.getRankingsAtTime(currentTime, categoryFilter);
@@ -150,12 +166,16 @@ class RankHistoryService {
         };
       }
 
-      const rankChange = previous.rank - current.rank;
+      // Use category position if category filter is applied, otherwise use overall rank
+      const currentPosition = categoryFilter ? current.categoryPosition : current.rank;
+      const previousPosition = categoryFilter ? previous.categoryPosition : previous.rank;
+
+      const rankChange = previousPosition - currentPosition;
 
       return {
         ...current,
         rankChange,
-        previousRank: previous.rank,
+        previousRank: previousPosition,
         scoreChange: current.total - previous.total
       };
     });
@@ -166,7 +186,7 @@ class RankHistoryService {
    * @param {string} competitorNo - Competitor number
    * @param {string} interval - 'hourly', 'daily', 'weekly'
    * @param {string} [categoryFilter] - Optional category filter
-   * @returns {Promise<Array>} Rank history
+   * @returns {Promise<Array>} Rank history with category position if filtered
    */
   async getCompetitorRankHistory(competitorNo, interval = 'daily', categoryFilter = '') {
     const timepoints = this.getKeyTimepoints(interval);
@@ -177,9 +197,12 @@ class RankHistoryService {
       const competitor = rankings.find(r => r.competitorNo === competitorNo);
 
       if (competitor) {
+        // Use category position if category filter is applied, otherwise use overall rank
+        const position = categoryFilter ? competitor.categoryPosition : competitor.rank;
+
         history.push({
           timestamp: timepoint,
-          rank: competitor.rank,
+          rank: position, // Use the appropriate position
           total: competitor.total
         });
       }
@@ -194,7 +217,7 @@ class RankHistoryService {
    * @param {Date} previousTime - Previous time
    * @param {number} threshold - Minimum change to be considered significant
    * @param {string} [categoryFilter] - Optional category filter
-   * @returns {Promise<Object>} Top risers and fallers
+   * @returns {Promise<Object>} Top risers and fallers based on category position if filtered
    */
   async getSignificantChanges(currentTime, previousTime, threshold = 3, categoryFilter = '') {
     const changes = await this.getRankChanges(currentTime, previousTime, categoryFilter);
