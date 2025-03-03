@@ -39,6 +39,19 @@ export const calculateRankChange = (categoryUsers, currentUser, newTotal) => {
 };
 
 /**
+ * Helper function to extract the main location from a location string
+ * @param {string} location - Location string
+ * @returns {string} Main location in title case
+ */
+export const getMainLocation = (location) => {
+  if (!location) return '';
+  // Extract the first part before any delimiter
+  const mainPart = location.split(/[-/,\s]/)[0].trim();
+  // Normalize to title case for grouping
+  return mainPart.charAt(0).toUpperCase() + mainPart.slice(1).toLowerCase();
+};
+
+/**
  * Gets recommended problems for a user
  * @param {Object} problems - All problems data
  * @param {Array} userScores - User's scores
@@ -47,16 +60,18 @@ export const calculateRankChange = (categoryUsers, currentUser, newTotal) => {
  * @param {Object} category - Category data
  * @param {boolean} sortByOverallTops - Whether to sort by overall tops
  * @param {boolean} showNonRankingProblems - Whether to show problems that don't change rank
+ * @param {string} location - Filter by problem location
  * @returns {Array} Array of recommended problems
  */
 export const getRecommendedProblems = (
-  problems, 
-  userScores, 
-  currentUser, 
-  categoryUsers, 
+  problems,
+  userScores,
+  currentUser,
+  categoryUsers,
   category,
   sortByOverallTops = false,
-  showNonRankingProblems = false
+  showNonRankingProblems = false,
+  location = ''
 ) => {
   const flashPoints = category?.flashExtraPoints || 0;
   const pumpfestTopScores = category?.pumpfestTopScores || 0;
@@ -108,6 +123,9 @@ export const getRecommendedProblems = (
         const additionalPoints = newTotal - currentTotal;
         if (additionalPoints < pointsNeededForNextRank * 0.5) return false;
       }
+      
+      // Filter by location if selected
+      if (location && getMainLocation(problem.station) !== location) return false;
       
       return true;
     })
