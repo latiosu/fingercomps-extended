@@ -15,30 +15,30 @@ import './RecommendModal.css';
  */
 function RecommendModal({ onClose, user }) {
   const { isMobile } = useApp();
-  const { 
-    problems, 
-    scores, 
-    categories, 
-    userTableData 
+  const {
+    problems,
+    scores,
+    categories,
+    userTableData
   } = useCompetition();
-  
+
   const { expandedRows, toggleRow } = useExpandableRows();
-  
+
   // Get category users and current user's rank
   const categoryUsers = userTableData.filter(u => u.category === user.category);
   const currentUserIndex = categoryUsers.findIndex(u => u.competitorNo === user.competitorNo);
-  
+
   // State for filtering options
   const [showNonRankingProblems, setShowNonRankingProblems] = useState(currentUserIndex === 0);
   const [sortByOverallTops, setSortByOverallTops] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState('');
-  
+
   // Get user's scores
   const userScores = scores[user.competitorNo] || [];
-  
+
   // Get category data
   const category = categories[user.category];
-  
+
   // Get unique locations from problems and organize them into groups
   const locationGroups = useMemo(() => {
     // Collect all unique locations
@@ -49,22 +49,22 @@ function RecommendModal({ onClose, user }) {
       }
     });
     const allLocations = Array.from(locationSet);
-    
+
     // Group locations by their main part
     const groups = {};
     allLocations.forEach(location => {
       const mainLocation = getMainLocation(location);
-      
+
       if (!groups[mainLocation]) {
         groups[mainLocation] = {
           name: mainLocation,
           locations: []
         };
       }
-      
+
       groups[mainLocation].locations.push(location);
     });
-    
+
     // Sort locations within each group
     Object.values(groups).forEach(group => {
       group.locations.sort((a, b) => {
@@ -75,11 +75,11 @@ function RecommendModal({ onClose, user }) {
         return a.localeCompare(b);
       });
     });
-    
+
     // Sort groups alphabetically
     return Object.values(groups).sort((a, b) => a.name.localeCompare(b.name));
   }, [problems]);
-  
+
   // Get recommended problems
   const recommendedProblems = getRecommendedProblems(
     problems,
@@ -91,12 +91,12 @@ function RecommendModal({ onClose, user }) {
     showNonRankingProblems,
     selectedLocation
   );
-  
+
   // Calculate points needed for next rank
   const pointsNeededForNextRank = currentUserIndex > 0
     ? categoryUsers[currentUserIndex - 1].total - user.total
     : 0;
-  
+
   // Helper function to get tops count based on sort mode
   const getTopCount = (problem) => {
     if (sortByOverallTops) {
@@ -154,13 +154,13 @@ function RecommendModal({ onClose, user }) {
               </select>
             </div>
           </div>
-          
+
           {currentUserIndex > 0 && (
             <div style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
               <strong>{pointsNeededForNextRank} points</strong> till next rank (#{currentUserIndex})
             </div>
           )}
-          
+
           <table border="1" className="mainTable">
             <thead className="tableHeader">
               <tr>

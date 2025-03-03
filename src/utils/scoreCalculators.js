@@ -24,17 +24,17 @@ export const calculateNewTotal = (sortedUserScores, newProblemScore, flashPoints
  */
 export const calculateRankChange = (categoryUsers, currentUser, newTotal) => {
   const currentUserIndex = categoryUsers.findIndex(u => u.competitorNo === currentUser.competitorNo);
-  
+
   const updatedCategoryUsers = categoryUsers.map(user => {
     if (user.competitorNo === currentUser.competitorNo) {
       return { ...user, total: newTotal };
     }
     return user;
   });
-  
+
   updatedCategoryUsers.sort((a, b) => b.total - a.total);
   const newRank = updatedCategoryUsers.findIndex(u => u.competitorNo === currentUser.competitorNo) + 1;
-  
+
   return currentUserIndex + 1 - newRank;
 };
 
@@ -75,7 +75,7 @@ export const getRecommendedProblems = (
 ) => {
   const flashPoints = category?.flashExtraPoints || 0;
   const pumpfestTopScores = category?.pumpfestTopScores || 0;
-  
+
   // Get user's sorted scores
   const sortedUserScores = [...(userScores || [])]
     .map(s => ({ ...problems[s?.climbNo], ...s }))
@@ -84,21 +84,21 @@ export const getRecommendedProblems = (
       const bTotal = b.score + (b.flashed ? flashPoints : 0);
       return bTotal - aTotal;
     });
-  
+
   // Get user's lowest counting score
   const lowestCountingScore = sortedUserScores[pumpfestTopScores - 1]?.score || 0;
-  
+
   // Calculate current total
   const currentTotal = sortedUserScores
     .slice(0, pumpfestTopScores)
     .reduce((sum, s) => sum + s.score + (s.flashed ? flashPoints : 0), 0);
-  
+
   // Calculate points needed for next rank
   const currentUserIndex = categoryUsers.findIndex(u => u.competitorNo === currentUser.competitorNo);
   const pointsNeededForNextRank = currentUserIndex > 0
     ? categoryUsers[currentUserIndex - 1].total - currentUser.total
     : 0;
-  
+
   // Helper function to get tops count based on sort mode
   const getTopCount = (problem) => {
     if (sortByOverallTops) {
@@ -106,27 +106,27 @@ export const getRecommendedProblems = (
     }
     return problem.stats?.[category.code]?.tops || 0;
   };
-  
+
   // Filter and process problems
   const recommendedProblems = Object.values(problems)
     .filter(problem => {
       // Check if user hasn't topped it
       const hasTopped = userScores?.some(s => s.climbNo === problem.climbNo && s.topped);
       if (hasTopped) return false;
-      
+
       // Check if worth more points than user's lowest counting top
       if (problem.score <= lowestCountingScore) return false;
-      
+
       // If not at rank 1, check if problem provides at least 50% of points needed
       if (currentUserIndex > 0) {
         const newTotal = calculateNewTotal(sortedUserScores, problem.score, flashPoints, pumpfestTopScores);
         const additionalPoints = newTotal - currentTotal;
         if (additionalPoints < pointsNeededForNextRank * 0.5) return false;
       }
-      
+
       // Filter by location if selected
       if (location && getMainLocation(problem.station) !== location) return false;
-      
+
       return true;
     })
     .map(problem => {
@@ -145,7 +145,7 @@ export const getRecommendedProblems = (
       }
       return b.score - a.score;
     });
-  
+
   // Filter based on rank improvement and checkbox state
   return recommendedProblems.filter(problem =>
     showNonRankingProblems || problem.rankImprovement > 0
