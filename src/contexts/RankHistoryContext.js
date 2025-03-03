@@ -28,13 +28,11 @@ export const RankHistoryProvider = ({ children }) => {
   const { categories, competitors, problems, scores } = useCompetition();
   const { selectedCompId, selectedCategory } = useApp();
 
-  // Initialize timeframe from localStorage if available, otherwise use 'daily'
-  const [timeframe, setTimeframeState] = useState(() => {
-    if (selectedCompId) {
-      return localStorage.getItem(`timeframe_${selectedCompId}`) || 'daily';
-    }
-    return 'daily';
-  });
+  // Use a ref to track if we've loaded from localStorage for the current competition
+  const initializedCompIdRef = React.useRef(null);
+
+  // Initialize with a default value - we'll load from localStorage in the effect
+  const [timeframe, setTimeframeState] = useState('daily');
 
   // Custom setter that also updates localStorage
   const setTimeframe = useCallback((newTimeframe) => {
@@ -48,15 +46,17 @@ export const RankHistoryProvider = ({ children }) => {
   const [significantChanges, setSignificantChanges] = useState({ risers: [], fallers: [] });
   const [loading, setLoading] = useState(false);
 
-  // Update timeframe when competition changes
+  // Load timeframe from localStorage when competition changes or on initial mount
   useEffect(() => {
-    if (selectedCompId) {
+    if (selectedCompId && initializedCompIdRef.current !== selectedCompId) {
       const savedTimeframe = localStorage.getItem(`timeframe_${selectedCompId}`);
-      if (savedTimeframe && savedTimeframe !== timeframe) {
-        setTimeframeState(savedTimeframe); // Use setTimeframeState directly to avoid circular updates
+      if (savedTimeframe) {
+        setTimeframeState(savedTimeframe);
       }
+      // Mark this competition as initialized
+      initializedCompIdRef.current = selectedCompId;
     }
-  }, [selectedCompId, timeframe]);
+  }, [selectedCompId]);
 
   // Create the rank history service
   const rankHistoryService = useMemo(() => {
