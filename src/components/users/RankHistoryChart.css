@@ -1,0 +1,117 @@
+.rank-history-chart {
+  margin: 16px 0;
+  padding: 12px;
+  border: 1px solid #FFD68A;
+  border-radius: 8px;
+  background-color: #fff4df;
+}
+
+.rank-history-chart h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 16px;
+  color: #333;
+}
+
+.sparkline-container {
+  display: flex;
+  align-items: stretch;
+  height: 60px;
+  margin-bottom: 8px;
+}
+
+.sparkline {
+  flex-grow: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 100%;
+  background-color: white;
+  border: 1px solid #FFD68A;
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.sparkline-point {
+  flex: 1;
+  margin: 0 1px;
+  background-color: #FFD68A;
+  border-top-left-radius: 2px;
+  border-top-right-radius: 2px;
+  transition: height 0.3s ease;
+  cursor: pointer;
+}
+
+.sparkline-point:hover {
+  background-color: #FFC14D;
+}
+
+.chart-labels {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin-left: 4px;
+  width: 30px;
+}
+
+.y-axis-label {
+  font-size: 12px;
+  color: #666;
+}
+
+.y-axis-label.top {
+  align-self: flex-start;
+}
+
+.y-axis-label.bottom {
+  align-self: flex-end;
+}
+
+.chart-legend {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #666;
+}
+
+.legend-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.legend-date {
+  font-weight: bold;
+}
+
+.rank-history-chart-loading,
+.rank-history-chart-empty {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  border: 1px solid #FFD68A;
+  border-radius: 4px;
+  color: #666;
+  font-size: 14px;
+  font-style: italic;
+}
+
+.rank-history-chart-loading {
+  animation: loading-dots 1.5s infinite;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 767px) {
+  .rank-history-chart {
+    padding: 8px;
+  }
+  
+  .sparkline-container {
+    height: 50px;
+  }
+  
+  .chart-legend {
+    font-size: 10px;
+  }
+}

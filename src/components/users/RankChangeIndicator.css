@@ -1,0 +1,61 @@
+.rank-change-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  transition: transform 0.2s ease;
+}
+
+.rank-change-indicator:hover {
+  transform: scale(1.1);
+}
+
+.rank-change-indicator.rising-fast {
+  color: white;
+  background-color: #28a745;
+}
+
+.rank-change-indicator.rising {
+  color: white;
+  background-color: #5cb85c;
+}
+
+.rank-change-indicator.falling-fast {
+  color: white;
+  background-color: #dc3545;
+}
+
+.rank-change-indicator.falling {
+  color: white;
+  background-color: #f08080;
+}
+
+.rank-change-indicator.unchanged {
+  color: #666;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+}
+
+.rank-change-indicator.new {
+  color: white;
+  background-color: #17a2b8;
+}
+
+.rank-change-icon {
+  margin-right: 2px;
+}
+
+.rank-change-value {
+  font-size: 0.9em;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 767px) {
+  .rank-change-indicator {
+    padding: 1px 4px;
+    font-size: 12px;
+  }
+}

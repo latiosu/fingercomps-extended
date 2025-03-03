@@ -107,7 +107,7 @@ function RecommendModal({ onClose, user }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxHeight: '70vh' }}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Recommended Problems for {user.name}</h2>
           <button onClick={onClose}>&times;</button>

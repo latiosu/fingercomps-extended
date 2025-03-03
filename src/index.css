@@ -49,6 +49,13 @@ h1 {
   z-index: 2;
 }
 
+.filtersContainer {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  flex-grow: 1;
+}
+
 /* Filter styles */
 .filters {
   background: #fff4df;
@@ -57,6 +64,12 @@ h1 {
   padding: 12px;
   margin: 2px 0;
   font-size: 14px;
+
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .filters label {

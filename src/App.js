@@ -5,6 +5,7 @@ import CompetitionSelector from "./components/competitions/CompetitionSelector";
 import RecommendModal from "./components/recommendations/RecommendModal";
 import { AppProvider, useApp } from "./contexts/AppContext";
 import { CompetitionProvider } from "./contexts/CompetitionContext";
+import { RankHistoryProvider } from "./contexts/RankHistoryContext";
 import ProblemsPage from "./pages/ProblemsPage";
 import UsersPage from "./pages/UsersPage";
 import loadPosthog from "./utils/analytics";
@@ -31,6 +32,10 @@ function AppContent() {
       <h1>FingerComps Extended</h1>
 
       <div className="filters">
+        <ViewToggle />
+      </div>
+
+      <div className="filters">
         <CompetitionSelector />
       </div>
 
@@ -43,27 +48,25 @@ function AppContent() {
 
       {selectedCompId && (
         <CompetitionProvider competitionId={selectedCompId}>
-          <div className="filters">
-            <CategorySelector />
-          </div>
+          <RankHistoryProvider>
+            <div className="filters">
+              <CategorySelector />
+            </div>
 
-          <div className="filters">
-            <ViewToggle />
-          </div>
+            {focusView === 'user' ? (
+              <UsersPage />
+            ) : (
+              <ProblemsPage />
+            )}
 
-          {focusView === 'user' ? (
-            <UsersPage />
-          ) : (
-            <ProblemsPage />
-          )}
-
-          {/* Recommendation modal */}
-          {recommendModalUser && (
-            <RecommendModal
-              onClose={() => setRecommendModalUser(null)}
-              user={recommendModalUser}
-            />
-          )}
+            {/* Recommendation modal */}
+            {recommendModalUser && (
+              <RecommendModal
+                onClose={() => setRecommendModalUser(null)}
+                user={recommendModalUser}
+              />
+            )}
+          </RankHistoryProvider>
         </CompetitionProvider>
       )}
 

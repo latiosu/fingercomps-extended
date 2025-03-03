@@ -1,10 +1,15 @@
 import React, { useMemo, useState } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { useCompetition } from '../../contexts/CompetitionContext';
+import { useRankHistory } from '../../contexts/RankHistoryContext';
 import useExpandableRows from '../../hooks/useExpandableRows';
 import { useSearchTracking } from '../../utils/analytics';
 import SortableTable from '../common/SortableTable';
 import UserScoresTable from './UserScoresTable';
+import RankChangeIndicator from './RankChangeIndicator';
+import RankChangePeriodSelector from './RankChangePeriodSelector';
+import RankHistoryChart from './RankHistoryChart';
+import MoversAndShakers from './MoversAndShakers';
 
 /**
  * Component to display the user table
@@ -14,6 +19,7 @@ import UserScoresTable from './UserScoresTable';
  */
 function UserTable({ onRecommendClick }) {
   const [searchTerm, setSearchTerm] = useState('');
+  // const [rankChangeFilter, setRankChangeFilter] = useState('');
   const {
     selectedCategory,
     limitScores,
@@ -27,12 +33,28 @@ function UserTable({ onRecommendClick }) {
     loadingProgress,
     partialDataAvailable
   } = useCompetition();
+  const { rankChanges, loading: rankChangesLoading } = useRankHistory();
 
   const { expandedRows, toggleRow } = useExpandableRows();
 
+  // Combine user table data with rank changes
+  const dataWithRankChanges = useMemo(() => {
+    if (!rankChanges.length) return userTableData;
+    
+    return userTableData.map(user => {
+      const rankChange = rankChanges.find(rc => rc.competitorNo === user.competitorNo);
+      return {
+        ...user,
+        rankChange: rankChange ? rankChange.rankChange : 0,
+        previousRank: rankChange ? rankChange.previousRank : user.rank,
+        scoreChange: rankChange ? rankChange.scoreChange : 0
+      };
+    });
+  }, [userTableData, rankChanges]);
+
   // Memoize filtered data to avoid recalculation on every render
   const filteredData = useMemo(() => {
-    return userTableData
+    return dataWithRankChanges
       .filter(item => {
         // Filter by category if selected
         if (selectedCategory && item.categoryFullName !== selectedCategory) {
@@ -43,6 +65,22 @@ function UserTable({ onRecommendClick }) {
         if (searchTerm && !item.name.toLowerCase().includes(searchTerm.toLowerCase())) {
           return false;
         }
+        
+        // Filter by rank change if selected
+        // if (rankChangeFilter) {
+        //   if (rankChangeFilter === 'risers' && (item.rankChange <= 0 || item.rankChange === 'new')) {
+        //     return false;
+        //   }
+        //   if (rankChangeFilter === 'fallers' && item.rankChange >= 0) {
+        //     return false;
+        //   }
+        //   if (rankChangeFilter === 'unchanged' && item.rankChange !== 0) {
+        //     return false;
+        //   }
+        //   if (rankChangeFilter === 'new' && item.rankChange !== 'new') {
+        //     return false;
+        //   }
+        // }
 
         return true;
       })
@@ -50,7 +88,7 @@ function UserTable({ onRecommendClick }) {
         ...item,
         index
       }));
-  }, [userTableData, selectedCategory, searchTerm]);
+  }, [dataWithRankChanges, selectedCategory, searchTerm]);
 
   // Track search input usage with PostHog
   useSearchTracking(searchTerm, {
@@ -62,17 +100,42 @@ function UserTable({ onRecommendClick }) {
 
   // Define columns for the table
   const columns = [
-    {
-      key: 'index',
-      label: '#',
-      sortable: false,
-      render: (item) => item.index + 1
-    },
-    {
-      key: 'rank',
-      label: `${!isMobile ? 'Overall ' : ''}Rank`,
-      sortable: true
-    },
+    // Only show index column in desktop view
+    ...(!isMobile ? [
+      {
+        key: 'index',
+        label: '#',
+        sortable: false,
+        render: (item) => item.index + 1
+      }
+    ] : []),
+    // For mobile: Combined Rank and Change column
+    // For desktop: Separate Rank column
+    ...(isMobile ? [
+      {
+        key: 'rank',
+        label: 'Rank',
+        sortable: true,
+        render: (item) => (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <span>{item.rank}</span>
+            <RankChangeIndicator change={item.rankChange} />
+          </div>
+        )
+      }
+    ] : [
+      {
+        key: 'rank',
+        label: 'Overall Rank',
+        sortable: true
+      },
+      {
+        key: 'rankChange',
+        label: 'Change',
+        sortable: true,
+        render: (item) => <RankChangeIndicator change={item.rankChange} />
+      }
+    ]),
     ...(!selectedCategory ? [{
       key: 'categoryFullName',
       label: 'Category',
@@ -115,6 +178,10 @@ function UserTable({ onRecommendClick }) {
         flashExtraPoints={item.flashExtraPoints}
         isMobile={isMobile}
       />
+      
+      {/* Add rank history chart */}
+      {/* <RankHistoryChart competitorNo={item.competitorNo} /> */}
+      
       <div className="recommendedBtnContainer">
         <button
           id="recommended-btn"
@@ -132,7 +199,27 @@ function UserTable({ onRecommendClick }) {
   return (
     <>
       <div className="filters">
-        <label>
+        {/* Rank change period selector */}
+        <RankChangePeriodSelector />
+        
+        {/* Rank change filter */}
+        {/* <div>
+          <label>Filter by rank change: </label>
+          <select
+            value={rankChangeFilter}
+            onChange={(e) => setRankChangeFilter(e.target.value)}
+            disabled={loading || rankChangesLoading}
+          >
+            <option value="">All competitors</option>
+            <option value="risers">Risers only</option>
+            <option value="fallers">Fallers only</option>
+            <option value="unchanged">Unchanged only</option>
+            <option value="new">New competitors</option>
+          </select>
+        </div> */}
+
+        {/* Limit to relevant scores */}
+        {/* <label>
           <input
             type="checkbox"
             checked={limitScores}
@@ -140,8 +227,13 @@ function UserTable({ onRecommendClick }) {
             disabled={loading && loadingProgress < 100}
           />
           Limit to top {Object.values(categories)[0]?.pumpfestTopScores} scores
-        </label>
+        </label> */}
       </div>
+      
+      {/* Movers and Shakers section */}
+      <MoversAndShakers />
+
+      {/* Search by name */}
       <div className="search-container" style={{
         marginTop: '4px',
         display: 'flex',
@@ -179,7 +271,8 @@ function UserTable({ onRecommendClick }) {
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              fontSize: '14px',
+              fontSize: '18px',
+              fontWeight: 'bold',
               color: '#dd7777'
             }}
             aria-label="Clear search"
