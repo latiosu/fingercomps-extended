@@ -92,7 +92,7 @@ function UserTable({ onRecommendClick }) {
     {
       key: 'categoryIndex',
       label: '#',
-      sortable: false,
+      sortable: true,
       render: (item) => (
         isMobile ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
