@@ -153,6 +153,11 @@ class RankHistoryService {
     const currentRankings = await this.getRankingsAtTime(currentTime, categoryFilter);
     const previousRankings = await this.getRankingsAtTime(previousTime, categoryFilter);
 
+    // Calculate the total number of competitors in the category
+    const totalCompetitors = categoryFilter
+      ? currentRankings.filter(r => r.category === categoryFilter).length
+      : currentRankings.length;
+
     return currentRankings.map(current => {
       const previous = previousRankings.find(p => p.competitorNo === current.competitorNo);
 
@@ -170,7 +175,25 @@ class RankHistoryService {
       const currentPosition = categoryFilter ? current.categoryPosition : current.rank;
       const previousPosition = categoryFilter ? previous.categoryPosition : previous.rank;
 
-      const rankChange = previousPosition - currentPosition;
+      // Calculate rank change
+      let rankChange = previousPosition - currentPosition;
+
+      // Cap the rank change based on logical possibilities
+      if (rankChange > 0) {
+        // For positive changes (rising in rank), the maximum possible change
+        // is from last place to current position
+        const maxPossibleRise = totalCompetitors - currentPosition;
+        if (rankChange > maxPossibleRise) {
+          rankChange = maxPossibleRise;
+        }
+      } else if (rankChange < 0) {
+        // For negative changes (falling in rank), the maximum possible change
+        // is from first place to current position
+        const maxPossibleFall = -(currentPosition - 1);
+        if (rankChange < maxPossibleFall) {
+          rankChange = maxPossibleFall;
+        }
+      }
 
       return {
         ...current,
