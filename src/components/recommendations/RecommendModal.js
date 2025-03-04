@@ -28,8 +28,32 @@ function RecommendModal({ onClose, user }) {
   const categoryUsers = userTableData.filter(u => u.category === user.category);
   const currentUserIndex = categoryUsers.findIndex(u => u.competitorNo === user.competitorNo);
 
+  // Check if there are any problems that increase rank
+  const hasRankIncreasingProblems = useMemo(() => {
+    // Get user's scores
+    const userScores = scores[user.competitorNo] || [];
+
+    // Get category data
+    const category = categories[user.category];
+
+    // Get all recommended problems without filtering by showNonRankingProblems
+    const allRecommendedProblems = getRecommendedProblems(
+      problems,
+      userScores,
+      user,
+      categoryUsers,
+      category,
+      false, // sortByOverallTops
+      true,  // showNonRankingProblems (show all problems)
+      ''     // selectedLocation
+    );
+
+    // Check if any problem increases rank
+    return allRecommendedProblems.some(problem => problem.rankImprovement > 0);
+  }, [problems, scores, user, categoryUsers, categories]);
+
   // State for filtering options
-  const [showNonRankingProblems, setShowNonRankingProblems] = useState(currentUserIndex === 0);
+  const [showNonRankingProblems, setShowNonRankingProblems] = useState(currentUserIndex === 0 || !hasRankIncreasingProblems);
   const [sortByOverallTops, setSortByOverallTops] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState('');
 
