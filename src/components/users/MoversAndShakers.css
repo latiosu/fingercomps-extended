@@ -57,6 +57,13 @@
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+.movers-section li.selected {
+  background-color: #FFE79B;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
+  border: 1px solid #FFD68A;
+  position: relative;
+}
+
 .competitor-category {
   flex: 0.25;
   margin-right: 8px;
@@ -118,19 +125,19 @@
   .movers-container {
     flex-direction: column;
   }
-  
+
   .movers-section {
     width: 100%;
   }
-  
+
   .movers-and-shakers {
     font-size: 12px;
   }
-  
+
   .movers-and-shakers h3 {
     font-size: 16px;
   }
-  
+
   .movers-and-shakers h4 {
     font-size: 14px;
   }

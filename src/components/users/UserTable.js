@@ -187,7 +187,7 @@ function UserTable({ onRecommendClick }) {
         <RankChangePeriodSelector />
       </div>
 
-      <MoversAndShakers onRiserClick={setSearchTerm} />
+      <MoversAndShakers onRiserClick={setSearchTerm} searchTerm={searchTerm} />
 
       {/* Search by name */}
       <div className="search-container" style={{

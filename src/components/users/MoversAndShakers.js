@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { useRankHistory } from '../../contexts/RankHistoryContext';
 import './MoversAndShakers.css';
@@ -7,14 +7,23 @@ import './MoversAndShakers.css';
  * Component to display significant rank changes (biggest risers and fallers)
  * @param {Object} props - Component props
  * @param {Function} props.onRiserClick - Function to call when a riser is clicked
+ * @param {string} props.searchTerm - Current search term
  * @returns {JSX.Element} MoversAndShakers component
  */
-function MoversAndShakers({ onRiserClick }) {
+function MoversAndShakers({ onRiserClick, searchTerm }) {
   const { significantChanges, timeframe, loading } = useRankHistory();
   const { isMobile, selectedCategory } = useApp();
+  const [selectedRiser, setSelectedRiser] = useState(null);
 
   // The significantChanges are now filtered by category at the service level
   const { risers, fallers } = significantChanges;
+
+  // Clear selected riser when search term changes or is cleared
+  useEffect(() => {
+    if (!searchTerm || searchTerm !== selectedRiser) {
+      setSelectedRiser(null);
+    }
+  }, [searchTerm, selectedRiser]);
 
   const timeframeText = {
     hourly: 'hour',
@@ -62,7 +71,17 @@ function MoversAndShakers({ onRiserClick }) {
               {risers.slice(0, isMobile ? 3 : 5).map(competitor => (
                 <li
                   key={competitor.competitorNo}
-                  onClick={() => onRiserClick && onRiserClick(competitor.name)}
+                  onClick={() => {
+                    // Toggle selection - if already selected, clear it
+                    if (selectedRiser === competitor.name) {
+                      setSelectedRiser(null);
+                      onRiserClick && onRiserClick('');
+                    } else {
+                      setSelectedRiser(competitor.name);
+                      onRiserClick && onRiserClick(competitor.name);
+                    }
+                  }}
+                  className={selectedRiser === competitor.name ? 'selected' : ''}
                   style={{ cursor: 'pointer' }}
                   title="Click to search for this competitor"
                 >
