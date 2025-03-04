@@ -52,24 +52,30 @@ function UserTable({ onRecommendClick }) {
 
   // Memoize filtered data to avoid recalculation on every render
   const filteredData = useMemo(() => {
-    return dataWithRankChanges
+    // First, filter by category only
+    const categoryFilteredData = dataWithRankChanges
       .filter(item => {
         // Filter by category if selected
         if (selectedCategory && item.categoryFullName !== selectedCategory) {
           return false;
         }
-
-        // Filter by search term if provided
-        if (searchTerm && !item.name.toLowerCase().includes(searchTerm.toLowerCase())) {
-          return false;
-        }
-
         return true;
       })
       .map((item, index) => ({
         ...item,
-        index
+        // Assign index based on category filtering only
+        categoryIndex: index
       }));
+
+    // Then, apply search term filter while preserving the category-based indices
+    return categoryFilteredData
+      .filter(item => {
+        // Filter by search term if provided
+        if (searchTerm && !item.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+          return false;
+        }
+        return true;
+      });
   }, [dataWithRankChanges, selectedCategory, searchTerm]);
 
   // Track search input usage with PostHog
@@ -84,17 +90,17 @@ function UserTable({ onRecommendClick }) {
   const columns = [
     // Index column - combined with rank change in mobile view
     {
-      key: 'index',
+      key: 'categoryIndex',
       label: '#',
       sortable: false,
       render: (item) => (
         isMobile ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-            <span>{item.index + 1}</span>
+            <span>{item.categoryIndex + 1}</span>
             <RankChangeIndicator change={item.rankChange} />
           </div>
         ) : (
-          item.index + 1
+          item.categoryIndex + 1
         )
       )
     },
