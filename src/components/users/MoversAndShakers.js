@@ -1,13 +1,15 @@
 import React from 'react';
-import { useRankHistory } from '../../contexts/RankHistoryContext';
 import { useApp } from '../../contexts/AppContext';
+import { useRankHistory } from '../../contexts/RankHistoryContext';
 import './MoversAndShakers.css';
 
 /**
  * Component to display significant rank changes (biggest risers and fallers)
+ * @param {Object} props - Component props
+ * @param {Function} props.onRiserClick - Function to call when a riser is clicked
  * @returns {JSX.Element} MoversAndShakers component
  */
-function MoversAndShakers() {
+function MoversAndShakers({ onRiserClick }) {
   const { significantChanges, timeframe, loading } = useRankHistory();
   const { isMobile, selectedCategory } = useApp();
 
@@ -58,7 +60,12 @@ function MoversAndShakers() {
           {risers.length > 0 ? (
             <ul>
               {risers.slice(0, isMobile ? 3 : 5).map(competitor => (
-                <li key={competitor.competitorNo}>
+                <li
+                  key={competitor.competitorNo}
+                  onClick={() => onRiserClick && onRiserClick(competitor.name)}
+                  style={{ cursor: 'pointer' }}
+                  title="Click to search for this competitor"
+                >
                   {!selectedCategory && <span className="competitor-category">[{competitor.category}]</span>}
                   <span className="competitor-name">{competitor.name}</span>
                   <span className="rank-change up">↑ {competitor.rankChange}</span>

@@ -187,7 +187,7 @@ function UserTable({ onRecommendClick }) {
         <RankChangePeriodSelector />
       </div>
 
-      <MoversAndShakers />
+      <MoversAndShakers onRiserClick={setSearchTerm} />
 
       {/* Search by name */}
       <div className="search-container" style={{
@@ -201,7 +201,8 @@ function UserTable({ onRecommendClick }) {
           position: 'absolute',
           left: '10px',
           color: '#666',
-          fontSize: '16px'
+          fontSize: '18px',
+          pointerEvents: 'none' // Allow clicks to pass through to the input underneath
         }}>
           🔍
         </span>
@@ -211,7 +212,7 @@ function UserTable({ onRecommendClick }) {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           style={{
-            padding: '8px 12px 8px 32px',
+            padding: '8px 12px 8px 40px',
             borderRadius: '4px',
             border: '1px solid #ccc',
             width: '100%',
