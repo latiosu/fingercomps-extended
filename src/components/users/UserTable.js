@@ -1,5 +1,5 @@
 import posthog from 'posthog-js';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { useCompetition } from '../../contexts/CompetitionContext';
 import { useRankHistory } from '../../contexts/RankHistoryContext';
@@ -15,10 +15,11 @@ import UserScoresTable from './UserScoresTable';
  * Component to display the user table
  * @param {Object} props - Component props
  * @param {Function} props.onRecommendClick - Function to call when recommend button is clicked
+ * @param {string} props.searchTerm - Current search term
+ * @param {Function} props.setSearchTerm - Function to update search term
  * @returns {JSX.Element} UserTable component
  */
-function UserTable({ onRecommendClick }) {
-  const [searchTerm, setSearchTerm] = useState('');
+function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
   const {
     selectedCategory,
     limitScores,

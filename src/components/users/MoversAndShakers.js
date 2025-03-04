@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { useRankHistory } from '../../contexts/RankHistoryContext';
+import ClickableCompetitor from '../common/ClickableCompetitor';
 import './MoversAndShakers.css';
 
 /**
@@ -48,7 +49,6 @@ function MoversAndShakers({ onRiserClick, searchTerm }) {
   if (risers.length === 0 && fallers.length === 0) {
     return (
       <div className="movers-and-shakers empty">
-        {/* <h3>Movers & Shakers</h3> */}
         <p>
           {fallbackText}
         </p>
@@ -58,8 +58,6 @@ function MoversAndShakers({ onRiserClick, searchTerm }) {
 
   return (
     <div className="movers-and-shakers">
-      {/* <h3>Movers & Shakers</h3> */}
-
       <div className="movers-container">
         <div className="movers-section risers">
           <h4>
@@ -71,24 +69,27 @@ function MoversAndShakers({ onRiserClick, searchTerm }) {
               {risers.slice(0, isMobile ? 3 : 5).map(competitor => (
                 <li
                   key={competitor.competitorNo}
-                  onClick={() => {
-                    // Toggle selection - if already selected, clear it
-                    if (selectedRiser === competitor.name) {
-                      setSelectedRiser(null);
-                      onRiserClick && onRiserClick('');
-                    } else {
-                      setSelectedRiser(competitor.name);
-                      onRiserClick && onRiserClick(competitor.name);
-                    }
-                  }}
                   className={selectedRiser === competitor.name ? 'selected' : ''}
-                  style={{ cursor: 'pointer' }}
-                  title="Click to search for this competitor"
                 >
-                  {!selectedCategory && <span className="competitor-category">[{competitor.category}]</span>}
-                  <span className="competitor-name">{competitor.name}</span>
-                  <span className="rank-change up">↑ {competitor.rankChange}</span>
-                  <span className="current-rank">Now #{competitor.rank}</span>
+                  <ClickableCompetitor
+                    name={competitor.name}
+                    category={competitor.category}
+                    rank={competitor.rank}
+                    rankChange={competitor.rankChange}
+                    isSelected={selectedRiser === competitor.name}
+                    showCategory={!selectedCategory}
+                    fullWidth={true}
+                    onClick={() => {
+                      // Toggle selection - if already selected, clear it
+                      if (selectedRiser === competitor.name) {
+                        setSelectedRiser(null);
+                        onRiserClick && onRiserClick('');
+                      } else {
+                        setSelectedRiser(competitor.name);
+                        onRiserClick && onRiserClick(competitor.name);
+                      }
+                    }}
+                  />
                 </li>
               ))}
             </ul>
@@ -97,22 +98,7 @@ function MoversAndShakers({ onRiserClick, searchTerm }) {
           )}
         </div>
 
-        {/* <div className="movers-section fallers">
-          <h4>Fastest Fallers This {timeframeText}</h4>
-          {fallers.length > 0 ? (
-            <ul>
-              {fallers.slice(0, 3).map(competitor => (
-                <li key={competitor.competitorNo}>
-                  <span className="competitor-name">{competitor.name}</span>
-                  <span className="rank-change down">↓ {Math.abs(competitor.rankChange)}</span>
-                  <span className="current-rank">Now #{competitor.rank}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="no-changes">No significant fallers</p>
-          )}
-        </div> */}
+        {/* Fallers section removed for brevity */}
       </div>
     </div>
   );

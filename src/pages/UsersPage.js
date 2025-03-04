@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import LastScoreDisplay from '../components/common/LastScoreDisplay';
 import UserTable from '../components/users/UserTable';
 import { useApp } from '../contexts/AppContext';
@@ -9,11 +9,19 @@ import { useApp } from '../contexts/AppContext';
  */
 function UsersPage() {
   const { setRecommendModalUser } = useApp();
+  const [searchTerm, setSearchTerm] = useState('');
 
   return (
     <>
-      <UserTable onRecommendClick={setRecommendModalUser} />
-      <LastScoreDisplay />
+      <UserTable
+        onRecommendClick={setRecommendModalUser}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+      />
+      <LastScoreDisplay
+        onCompetitorClick={setSearchTerm}
+        searchTerm={searchTerm}
+      />
     </>
   );
 }

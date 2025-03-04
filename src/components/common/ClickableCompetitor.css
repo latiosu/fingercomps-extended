@@ -1,0 +1,46 @@
+.clickable-competitor {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: white;
+  border-radius: 4px;
+  border: 1px solid #FFD68A;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+  margin-bottom: 0;
+}
+
+.clickable-competitor.full-width {
+  display: flex;
+}
+
+.clickable-competitor:hover {
+  background-color: rgb(254, 254, 224);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.clickable-competitor.selected {
+  background-color: #FFE79B;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
+  border: 1px solid #FFD68A;
+}
+
+.competitor-category {
+  margin-right: 8px;
+  color: #555;
+}
+
+.competitor-name {
+  font-weight: normal;
+  flex: 1;
+  margin-right: 8px;
+}
+
+.rank-change-indicator {
+  margin-right: 8px;
+}
+
+.current-rank {
+  color: #666;
+  font-size: 0.9em;
+}

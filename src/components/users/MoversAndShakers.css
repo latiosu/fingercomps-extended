@@ -41,61 +41,10 @@
 }
 
 .movers-section li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  padding: 8px 12px;
   margin-bottom: 8px;
-  background-color: white;
-  border-radius: 4px;
-  border: 1px solid #FFD68A;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.movers-section li:hover {
-  background-color: rgb(254, 254, 224);
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.movers-section li.selected {
-  background-color: #FFE79B;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
-  border: 1px solid #FFD68A;
-  position: relative;
-}
-
-.competitor-category {
-  flex: 0.25;
-  margin-right: 8px;
-}
-
-.competitor-name {
-  flex: 1;
-  margin-right: 8px;
-}
-
-.rank-change {
-  display: inline-block;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: bold;
-  margin-right: 8px;
-}
-
-.rank-change.up {
-  color: white;
-  background-color: #28a745;
-}
-
-.rank-change.down {
-  color: white;
-  background-color: #dc3545;
-}
-
-.current-rank {
-  color: #666;
-  font-size: 0.9em;
-}
+/* We've moved competitor styling to ClickableCompetitor.css */
 
 .no-changes {
   padding: 8px 12px;
