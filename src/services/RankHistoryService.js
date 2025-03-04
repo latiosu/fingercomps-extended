@@ -262,7 +262,6 @@ class RankHistoryService {
   async clearCache() {
     // Clear in-memory cache only
     this.rankingsCache.clear();
-    console.log('In-memory rankings cache cleared');
   }
 }
 

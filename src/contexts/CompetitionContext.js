@@ -5,6 +5,7 @@ import {
   computeProblemStats,
   computeUserTableData
 } from '../utils/dataProcessors';
+import { useApp } from './AppContext';
 
 // Create context
 const CompetitionContext = createContext();
@@ -29,6 +30,9 @@ export const useCompetition = () => {
  * @returns {JSX.Element} Provider component
  */
 export const CompetitionProvider = ({ children, competitionId }) => {
+  // Get selectedCategoryCode from AppContext
+  const { selectedCategoryCode } = useApp();
+
   // State for competition data
   const [categories, setCategories] = useState({});
   const [competitors, setCompetitors] = useState({});
@@ -36,7 +40,6 @@ export const CompetitionProvider = ({ children, competitionId }) => {
   const [problems, setProblems] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedCategoryCode, setSelectedCategoryCode] = useState("");
 
   // New loading state with progress tracking
   const [loadingState, setLoadingState] = useState({
@@ -239,18 +242,14 @@ export const CompetitionProvider = ({ children, competitionId }) => {
     );
   }, []);
 
-  // Compute last score date for a selected category
+  // Compute last score based on selected category
   const lastSubmittedScore = useMemo(() => {
     const filteredScores = Object.values(scores).flat()
-      .filter(score => selectedCategoryCode ? score.category === selectedCategoryCode : true)
+      .filter(score => selectedCategoryCode ? (competitors[score.competitorNo]?.category === selectedCategoryCode) : true)
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sort in descending order
-    return filteredScores.length > 0 ? filteredScores[0] : null;
-  }, [scores, selectedCategoryCode]);
 
-  // Set selected category code
-  const updateSelectedCategoryCode = useCallback((code) => {
-    setSelectedCategoryCode(code);
-  }, []);
+    return filteredScores.length > 0 ? filteredScores[0] : null;
+  }, [selectedCategoryCode, scores, competitors]);
 
   // Context value
   const value = {
@@ -268,8 +267,7 @@ export const CompetitionProvider = ({ children, competitionId }) => {
     lastSubmittedScore, // Already using computed value
     selectedCategoryCode,
     countCompetitors,
-    sortUserTableData: (direction) => getSortedUserTableData(processedData, direction),
-    updateSelectedCategoryCode
+    sortUserTableData: (direction) => getSortedUserTableData(processedData, direction)
   };
 
   return (

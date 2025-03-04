@@ -7,12 +7,14 @@ import { toTimeAgoString } from '../../utils/dateFormatters';
  * @returns {JSX.Element} LastScoreDisplay component
  */
 function LastScoreDisplay() {
-  const { lastSubmittedScore, competitors, loading } = useCompetition();
+  const {
+    lastSubmittedScore,
+    competitors,
+    loading,
+  } = useCompetition();
 
   if (loading) {
-    return (
-      <></>
-    );
+    return <></>;
   }
 
   if (!lastSubmittedScore) {
@@ -24,11 +26,12 @@ function LastScoreDisplay() {
   }
 
   const competitorName = competitors[lastSubmittedScore.competitorNo]?.name || 'Unknown';
+  const competitorCategory = competitors[lastSubmittedScore.competitorNo]?.category || null;
 
   return (
     <div style={{ marginTop: '20px' }}>
       <p>
-        Last score in this category was submitted at: {toTimeAgoString(lastSubmittedScore.createdAt)} by {competitorName}
+        {`Last score was submitted at: ${toTimeAgoString(lastSubmittedScore.createdAt)} by ${competitorName}${competitorCategory ? ` in ${competitorCategory}` : ''}`}
       </p>
     </div>
   );
