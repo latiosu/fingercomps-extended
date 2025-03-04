@@ -154,29 +154,22 @@ function RecommendModal({ onClose, user }) {
               />
               Use overall tops instead of category tops
             </label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <label htmlFor="location-filter">Filter by location:</label>
-              <select
-                id="location-filter"
-                value={selectedLocation}
-                onChange={(e) => setSelectedLocation(e.target.value)}
-                style={{ padding: '4px', borderRadius: '4px' }}
-              >
-                <option value="">All locations</option>
-                {locationGroups.map(group => (
-                  <React.Fragment key={group.name}>
-                    <option value={group.name}>{group.name}</option>
-                    <optgroup label="Includes:">
-                      {group.locations
-                        .filter(location => location !== group.name) // Don't repeat the main location
-                        .map(location => (
-                          <option key={location} value={location} disabled>{location}</option>
-                        ))}
-                    </optgroup>
-                  </React.Fragment>
-                ))}
-              </select>
-            </div>
+            {locationGroups?.length > 1 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label htmlFor="location-filter">Filter by location:</label>
+                <select
+                  id="location-filter"
+                  value={selectedLocation}
+                  onChange={(e) => setSelectedLocation(e.target.value)}
+                  style={{ padding: '4px', borderRadius: '4px' }}
+                >
+                  <option value="">All locations</option>
+                  {locationGroups.map(group => (
+                    <option key={group.name} value={group.name}>{group.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           {currentUserIndex > 0 && (
