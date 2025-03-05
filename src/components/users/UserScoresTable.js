@@ -71,9 +71,6 @@ function UserScoresTable({
               <tr
                 className="pointer"
                 onClick={() => toggleRow(score.climbNo)}
-                // style={shouldHighlight(score.climbNo) ? { backgroundColor: '#C7E8CA' } : {}}
-                // style={shouldHighlight(score.climbNo) ? { backgroundColor: '#E9FFDB' } : {}}
-                // style={shouldHighlight(score.climbNo) ? { backgroundColor: '#B5EAD7' } : {}}
                 style={shouldHighlight(score.climbNo) ? { backgroundColor: '#E9FFDB'  } : {backgroundColor: '#F9F9F9' }}
               >
                 <td>{shouldHighlight(score.climbNo) ? '✅' : ''}{score.climbNo}</td>
