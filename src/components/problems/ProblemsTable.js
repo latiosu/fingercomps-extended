@@ -60,7 +60,7 @@ function ProblemsTable() {
         label: `Problem${!isMobile ? " No." : ""}`,
         sortable: true,
         render: (item) => (
-          <span>
+          <span className="center">
             {item.climbNo}
             <PhotoIndicator
               climbNo={item.climbNo}

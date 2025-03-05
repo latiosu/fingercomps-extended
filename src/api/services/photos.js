@@ -171,30 +171,3 @@ export const getAllProblemPhotos = async (competitionId) => {
     return {};
   }
 };
-
-/**
- * Reports an inappropriate photo
- * @param {string} photoId - ID of the photo to report
- * @param {string} [reportedBy] - Optional identifier of who reported the photo
- * @returns {Promise<boolean>} Success status
- */
-export const reportPhoto = async (photoId, reportedBy) => {
-  try {
-    // Get client identifier if no reporter ID is provided
-    const reporter = reportedBy || getClientIdentifier();
-
-    const { error } = await supabase
-      .from('problem_photo_reports')
-      .insert({
-        photo_id: photoId,
-        reported_by: reporter,
-        reported_at: new Date()
-      });
-
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    console.error("Error reporting photo:", error);
-    return false;
-  }
-};

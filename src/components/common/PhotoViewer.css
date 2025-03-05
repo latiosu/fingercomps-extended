@@ -133,12 +133,76 @@
 }
 
 .reported-message {
-  color: #777;
+  color: #000;
+  font-weight: bold;
   font-size: 12px;
   padding: 5px;
+}
+
+.report-confirmation-overlay {
   position: absolute;
-  bottom: 10px;
-  left: 10px;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+}
+
+.report-confirmation-dialog {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  width: 80%;
+  max-width: 400px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  animation: zoomIn 0.2s ease-out;
+}
+
+.report-confirmation-dialog h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.report-confirmation-dialog p {
+  margin-bottom: 20px;
+  color: #555;
+}
+
+.report-confirmation-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.cancel-button, .confirm-button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  border: none;
+}
+
+.cancel-button {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.cancel-button:hover {
+  background-color: #d0d0d0;
+}
+
+.confirm-button {
+  background-color: #ff4136;
+  color: white;
+}
+
+.confirm-button:hover {
+  background-color: #e03026;
 }
 
 @keyframes zoomIn {

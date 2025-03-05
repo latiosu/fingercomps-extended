@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../../api/supabase';
 import { useCompetition } from '../../contexts/CompetitionContext';
+import { getClientIdentifier } from '../../utils/clientIdentifier';
 import { getMainLocation } from '../../utils/scoreCalculators';
 import ErrorBoundary from './ErrorBoundary';
 import './PhotoViewer.css';
@@ -15,6 +16,7 @@ function PhotoViewer({ photos, onClose }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [reported, setReported] = useState(false);
+  const [showReportConfirmation, setShowReportConfirmation] = useState(false);
 
   if (!photos || photos.length === 0) {
     return null;
@@ -39,23 +41,30 @@ function PhotoViewer({ photos, onClose }) {
     setCurrentIndex((prevIndex) => (prevIndex - 1 + photos.length) % photos.length);
   };
 
+
   /**
-   * Report inappropriate photo
+   * Reports an inappropriate photo
+   * @param {string} photoId - ID of the photo to report
+   * @param {string} [reportedBy] - Optional identifier of who reported the photo
+   * @returns {Promise<boolean>} Success status
    */
-  const reportPhoto = async () => {
+  const reportPhoto = async (photoId, reportedBy) => {
     try {
+      // Get client identifier if no reporter ID is provided
+      const reporter = reportedBy || getClientIdentifier();
+
       const { error } = await supabase
         .from('problem_photo_reports')
         .insert({
-          photo_id: currentPhoto.id,
-          reported_at: new Date()
+          photo_id: photoId,
+          reported_at: new Date(),
+          reported_by: reporter
         });
 
       if (error) throw error;
       setReported(true);
     } catch (error) {
       console.error("Error reporting photo:", error);
-      // Show error but still set reported to true to prevent multiple attempts
       setReported(true);
     }
   };
@@ -81,7 +90,7 @@ function PhotoViewer({ photos, onClose }) {
 
   return (
     <ErrorBoundary>
-      <div className="photo-viewer-overlay" onClick={onClose}>
+      <div className="photo-viewer-overlay" onClick={showReportConfirmation ? undefined : onClose}>
         <div className="photo-viewer-modal" onClick={(e) => e.stopPropagation()}>
           <button className="close-button" onClick={onClose}>×</button>
 
@@ -123,18 +132,44 @@ function PhotoViewer({ photos, onClose }) {
             {!reported ? (
               <button
                 className="report-button"
-                onClick={reportPhoto}
+                onClick={() => setShowReportConfirmation(true)}
                 title="Report inappropriate content"
               >
                 ⚠️ Report
               </button>
             ) : (
               <div className="reported-message">
-                Photo reported. Thank you.
+                Photo reported. Thank you, it will be investigated.
               </div>
             )}
           </div>
         </div>
+
+        {showReportConfirmation && (
+          <div className="report-confirmation-overlay">
+            <div className="report-confirmation-dialog">
+              <h3>Report Photo</h3>
+              <p>Are you sure you want to report this photo as inappropriate?</p>
+              <div className="report-confirmation-buttons">
+                <button
+                  className="cancel-button"
+                  onClick={() => setShowReportConfirmation(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="confirm-button"
+                  onClick={() => {
+                    reportPhoto(currentPhoto.id);
+                    setShowReportConfirmation(false);
+                  }}
+                >
+                  Report
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </ErrorBoundary>
   );

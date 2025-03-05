@@ -41,7 +41,7 @@ function PhotoIndicator({
           fontSize: '14px'
         }}
       >
-        📷
+        🖼️
       </span>
     );
   } else if (showUploadButton) {
@@ -59,7 +59,7 @@ function PhotoIndicator({
           padding: '0 2px'
         }}
       >
-        +
+        ➕
       </button>
     );
   }

@@ -240,3 +240,9 @@ select {
 .pointer {
   cursor: pointer;
 }
+
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
