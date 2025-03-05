@@ -390,6 +390,7 @@ export const CompetitionProvider = ({ children, competitionId }) => {
 
   // Context value
   const value = {
+    competitionId, // Expose competitionId in the context
     categories,
     competitors,
     scores,

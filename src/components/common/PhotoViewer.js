@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../../api/supabase';
 import { useCompetition } from '../../contexts/CompetitionContext';
+import { trackPhotoReportConfirmed, trackPhotoReportInitiated, trackPhotoViewed } from '../../utils/analytics';
 import { getClientIdentifier } from '../../utils/clientIdentifier';
 import { getMainLocation } from '../../utils/scoreCalculators';
 import ErrorBoundary from './ErrorBoundary';
@@ -17,6 +18,17 @@ function PhotoViewer({ photos, onClose }) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [reported, setReported] = useState(false);
   const [showReportConfirmation, setShowReportConfirmation] = useState(false);
+
+  // Get competitionId from competition context
+  const { competitionId } = useCompetition();
+
+  // Track when a photo is viewed (when photo changes or on first view)
+  React.useEffect(() => {
+    if (photos && photos.length > 0) {
+      const photo = photos[currentIndex];
+      trackPhotoViewed(photo.climb_no, photo.id, competitionId);
+    }
+  }, [photos, currentIndex, competitionId]);
 
   if (!photos || photos.length === 0) {
     return null;
@@ -63,6 +75,9 @@ function PhotoViewer({ photos, onClose }) {
 
       if (error) throw error;
       setReported(true);
+
+      // Track the confirmed report
+      trackPhotoReportConfirmed(currentPhoto.climb_no, photoId, currentPhoto.competition_id);
     } catch (error) {
       console.error("Error reporting photo:", error);
       setReported(true);
@@ -132,7 +147,10 @@ function PhotoViewer({ photos, onClose }) {
             {!reported ? (
               <button
                 className="report-button"
-                onClick={() => setShowReportConfirmation(true)}
+                onClick={() => {
+                  trackPhotoReportInitiated(currentPhoto.climb_no, currentPhoto.id, competitionId);
+                  setShowReportConfirmation(true);
+                }}
                 title="Report inappropriate content"
               >
                 ⚠️ Report

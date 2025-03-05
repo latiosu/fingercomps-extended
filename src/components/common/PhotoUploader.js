@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useCompetition } from '../../contexts/CompetitionContext';
+import { trackPhotoUploaded } from '../../utils/analytics';
 import ErrorBoundary from './ErrorBoundary';
 import './PhotoUploader.css';
 
@@ -15,7 +16,7 @@ function PhotoUploader({ climbNo, onClose }) {
   const [error, setError] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
-  const { uploadProblemPhoto } = useCompetition();
+  const { uploadProblemPhoto, competitionId } = useCompetition();
 
   /**
    * Handles file selection
@@ -84,6 +85,9 @@ function PhotoUploader({ climbNo, onClose }) {
 
       // Upload the photo
       await uploadProblemPhoto(climbNo, file);
+
+      // Track successful upload
+      trackPhotoUploaded(climbNo, file.type, file.size, competitionId);
 
       // Clear interval and set progress to 100%
       clearInterval(progressInterval);

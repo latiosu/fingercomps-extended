@@ -12,6 +12,110 @@ const loadPosthog = () => {
 };
 
 /**
+ * Track when a user initiates a photo report
+ * @param {number} climbNo - The problem number
+ * @param {string} photoId - The ID of the photo being reported
+ * @param {string} competitionId - ID of the current competition
+ */
+export const trackPhotoReportInitiated = (climbNo, photoId, competitionId) => {
+  if (process.env.NODE_ENV === "development") return;
+
+  posthog.capture('photo_report_initiated', {
+    climb_no: climbNo,
+    photo_id: photoId,
+    competition_id: competitionId
+  });
+};
+
+/**
+ * Track when a user confirms a photo report
+ * @param {number} climbNo - The problem number
+ * @param {string} photoId - The ID of the photo being reported
+ * @param {string} competitionId - ID of the current competition
+ */
+export const trackPhotoReportConfirmed = (climbNo, photoId, competitionId) => {
+  if (process.env.NODE_ENV === "development") return;
+
+  posthog.capture('photo_report_confirmed', {
+    climb_no: climbNo,
+    photo_id: photoId,
+    competition_id: competitionId
+  });
+};
+
+/**
+ * Track when a user clicks to upload a photo
+ * @param {number} climbNo - The problem number
+ * @param {string} competitionId - ID of the current competition
+ */
+export const trackPhotoUploadClick = (climbNo, competitionId) => {
+  if (process.env.NODE_ENV === "development") return;
+
+  posthog.capture('photo_upload_click', {
+    climb_no: climbNo,
+    competition_id: competitionId
+  });
+};
+
+/**
+ * Track when a user submits a photo upload
+ * @param {number} climbNo - The problem number
+ * @param {string} fileType - The MIME type of the uploaded file
+ * @param {number} fileSize - The size of the uploaded file in bytes
+ * @param {string} competitionId - ID of the current competition
+ */
+export const trackPhotoUploaded = (climbNo, fileType, fileSize, competitionId) => {
+  if (process.env.NODE_ENV === "development") return;
+
+  posthog.capture('photo_uploaded', {
+    climb_no: climbNo,
+    file_type: fileType,
+    file_size: fileSize,
+    competition_id: competitionId
+  });
+};
+
+/**
+ * Track when a user views a photo
+ * @param {number} climbNo - The problem number
+ * @param {string} photoId - The ID of the photo being viewed
+ * @param {string} competitionId - ID of the current competition
+ */
+export const trackPhotoViewed = (climbNo, photoId, competitionId) => {
+  if (process.env.NODE_ENV === "development") return;
+
+  posthog.capture('photo_viewed', {
+    climb_no: climbNo,
+    photo_id: photoId,
+    competition_id: competitionId
+  });
+};
+
+/**
+ * Track when a user switches to Competitor View
+ * @param {string} competitionId - ID of the current competition
+ */
+export const trackCompetitorViewClicked = (competitionId) => {
+  if (process.env.NODE_ENV === "development") return;
+
+  posthog.capture('competitor_view_clicked', {
+    competition_id: competitionId
+  });
+};
+
+/**
+ * Track when a user switches to Routesetter View
+ * @param {string} competitionId - ID of the current competition
+ */
+export const trackRoutesetterViewClicked = (competitionId) => {
+  if (process.env.NODE_ENV === "development") return;
+
+  posthog.capture('routesetter_view_clicked', {
+    competition_id: competitionId
+  });
+};
+
+/**
  * Custom hook to track search input usage
  * @param {string} searchTerm - The current search term
  * @param {Object} options - Configuration options

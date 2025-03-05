@@ -1,4 +1,6 @@
 import React from 'react';
+import { useCompetition } from '../../contexts/CompetitionContext';
+import { trackPhotoUploadClick, trackPhotoViewed } from '../../utils/analytics';
 
 /**
  * Component to display a photo indicator (camera icon or upload button)
@@ -17,15 +19,19 @@ function PhotoIndicator({
   onUploadPhoto,
   showUploadButton = false
 }) {
+  // Get competitionId from context
+  const { competitionId } = useCompetition();
   const hasPhotos = problemPhotos[climbNo]?.length > 0;
 
   const handleViewClick = (e) => {
     e.stopPropagation(); // Prevent row expansion
+    trackPhotoViewed(climbNo, problemPhotos[climbNo][0]?.id, competitionId);
     onViewPhoto(climbNo);
   };
 
   const handleUploadClick = (e) => {
     e.stopPropagation(); // Prevent row expansion
+    trackPhotoUploadClick(climbNo, competitionId);
     onUploadPhoto(climbNo);
   };
 

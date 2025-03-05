@@ -1,5 +1,7 @@
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
+import { useCompetition } from '../../contexts/CompetitionContext';
+import { trackCompetitorViewClicked, trackRoutesetterViewClicked } from '../../utils/analytics';
 
 /**
  * Component for toggling between user and problem views
@@ -7,9 +9,17 @@ import { useApp } from '../../contexts/AppContext';
  */
 function ViewToggle() {
   const { focusView, setFocusView, loading } = useApp();
+  const { competitionId } = useCompetition();
 
   const handleClick = (view) => {
     setFocusView(view);
+
+    // Track when user switches to Routesetter View
+    if (view === 'problems') {
+      trackRoutesetterViewClicked(competitionId);
+    } else if (view === 'user') {
+      trackCompetitorViewClicked(competitionId);
+    }
   };
 
   const buttonStyle = {
