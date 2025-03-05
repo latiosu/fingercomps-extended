@@ -52,6 +52,51 @@ export const getMainLocation = (location) => {
 };
 
 /**
+ * Gets all unique locations from problems and organizes them into groups
+ * @param {Object} problems - All problems data
+ * @returns {Array} Array of location groups, each with a name and array of locations
+ */
+export const getOrganizedLocations = (problems) => {
+  // Collect all unique locations
+  const locationSet = new Set();
+  Object.values(problems).forEach(problem => {
+    if (problem.station) {
+      locationSet.add(problem.station);
+    }
+  });
+  const allLocations = Array.from(locationSet);
+
+  // Group locations by their main part
+  const groups = {};
+  allLocations.forEach(location => {
+    const mainLocation = getMainLocation(location);
+
+    if (!groups[mainLocation]) {
+      groups[mainLocation] = {
+        name: mainLocation,
+        locations: []
+      };
+    }
+
+    groups[mainLocation].locations.push(location);
+  });
+
+  // Sort locations within each group
+  Object.values(groups).forEach(group => {
+    group.locations.sort((a, b) => {
+      // Put the main location (exact match to group name) first
+      if (getMainLocation(a) === a && getMainLocation(b) !== b) return -1;
+      if (getMainLocation(a) !== a && getMainLocation(b) === b) return 1;
+      // Otherwise sort alphabetically
+      return a.localeCompare(b);
+    });
+  });
+
+  // Sort groups alphabetically
+  return Object.values(groups).sort((a, b) => a.name.localeCompare(b.name));
+};
+
+/**
  * Gets recommended problems for a user
  * @param {Object} problems - All problems data
  * @param {Array} userScores - User's scores

@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { useCompetition } from '../../contexts/CompetitionContext';
 import useExpandableRows from '../../hooks/useExpandableRows';
-import { getMainLocation, getRecommendedProblems } from '../../utils/scoreCalculators';
+import { getOrganizedLocations, getRecommendedProblems } from '../../utils/scoreCalculators';
 import SendsSubTable from '../common/SendsSubTable';
 import './RecommendModal.css';
 
@@ -65,43 +65,7 @@ function RecommendModal({ onClose, user }) {
 
   // Get unique locations from problems and organize them into groups
   const locationGroups = useMemo(() => {
-    // Collect all unique locations
-    const locationSet = new Set();
-    Object.values(problems).forEach(problem => {
-      if (problem.station) {
-        locationSet.add(problem.station);
-      }
-    });
-    const allLocations = Array.from(locationSet);
-
-    // Group locations by their main part
-    const groups = {};
-    allLocations.forEach(location => {
-      const mainLocation = getMainLocation(location);
-
-      if (!groups[mainLocation]) {
-        groups[mainLocation] = {
-          name: mainLocation,
-          locations: []
-        };
-      }
-
-      groups[mainLocation].locations.push(location);
-    });
-
-    // Sort locations within each group
-    Object.values(groups).forEach(group => {
-      group.locations.sort((a, b) => {
-        // Put the main location (exact match to group name) first
-        if (getMainLocation(a) === a && getMainLocation(b) !== b) return -1;
-        if (getMainLocation(a) !== a && getMainLocation(b) === b) return 1;
-        // Otherwise sort alphabetically
-        return a.localeCompare(b);
-      });
-    });
-
-    // Sort groups alphabetically
-    return Object.values(groups).sort((a, b) => a.name.localeCompare(b.name));
+    return getOrganizedLocations(problems);
   }, [problems]);
 
   // Get recommended problems

@@ -1,8 +1,11 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useCompetition } from '../../contexts/CompetitionContext';
 import { useHighlightedProblems } from '../../contexts/HighlightedProblemsContext';
 import useExpandableRows from '../../hooks/useExpandableRows';
 import { formatDateForHover, toTimeAgoString } from '../../utils/dateFormatters';
+import PhotoUploader from '../common/PhotoUploader';
+import PhotoViewer from '../common/PhotoViewer';
+import PhotoIndicator from '../common/PhotoIndicator';
 import SendsSubTable from '../common/SendsSubTable';
 
 /**
@@ -24,8 +27,12 @@ function UserScoresTable({
 }) {
   // Use expandable rows hook
   const { toggleRow, isRowExpanded } = useExpandableRows();
-  // Get problems from competition context
-  const { problems } = useCompetition();
+  // State for photo viewer and uploader
+  const [selectedPhotoClimbNo, setSelectedPhotoClimbNo] = useState(null);
+  const [showPhotoUploader, setShowPhotoUploader] = useState(false);
+
+  // Get problems and photos from competition context
+  const { problems, problemPhotos } = useCompetition();
 
   // Get highlighting functions from context
   const { registerProblems, shouldHighlight } = useHighlightedProblems();
@@ -54,61 +61,92 @@ function UserScoresTable({
   }, [displayedScores, registerProblems]);
 
   return (
-    <table border="1" className="subTable" style={{ width: '100%' }}>
-      <thead>
-        <tr className="subTableHeader">
-          <th>Problem{!isMobile && " No."}</th>
-          <th>Name{!isMobile && "/Grade"}</th>
-          <th>Flashed?</th>
-          <th>Points{!isMobile && " (+ Flash Bonus)"}</th>
-          <th>Sent</th>
-        </tr>
-      </thead>
-      <tbody>
-        {displayedScores.length > 0 ? (
-          displayedScores.map((score, index) => (
-            <React.Fragment key={index}>
-              <tr
-                className="pointer"
-                onClick={() => toggleRow(score.climbNo)}
-                style={shouldHighlight(score.climbNo) ? { backgroundColor: '#E9FFDB'  } : {backgroundColor: '#F9F9F9' }}
-              >
-                <td>{shouldHighlight(score.climbNo) ? '✅' : ''}{score.climbNo}</td>
-                <td>{score.marking}</td>
-                <td>{score.flashed ? 'Y' : ''}</td>
-                <td>
-                  {score.score}
-                  {score.flashed ? ` (+${flashExtraPoints})` : ''}
-                </td>
-                <td title={formatDateForHover(score.createdAt)}>
-                  {toTimeAgoString(score.createdAt)}
-                </td>
-              </tr>
-              {isRowExpanded(score.climbNo) && problems[score.climbNo]?.sends && (
-                <tr>
-                  <td colSpan="5">
-                    <div>
-                      <h4 style={{margin: '5px'}}>Others who topped Problem {score.climbNo}</h4>
-                      <SendsSubTable
-                        sends={(problems[score.climbNo]?.sends || [])
-                          // Filter out the current user's sends
-                          .filter(send => send.competitorNo !== currentUserCompetitorNo)}
-                        emptyText="None found. Congratulations on the first top! 🎉"
-                        isMobile={isMobile}
-                      />
-                    </div>
+    <>
+      <table border="1" className="subTable" style={{ width: '100%' }}>
+        <thead>
+          <tr className="subTableHeader">
+            <th>Problem{!isMobile && " No."}</th>
+            <th>Name{!isMobile && "/Grade"}</th>
+            <th>Flashed?</th>
+            <th>Points{!isMobile && " (+ Flash Bonus)"}</th>
+            <th>Sent</th>
+          </tr>
+        </thead>
+        <tbody>
+          {displayedScores.length > 0 ? (
+            displayedScores.map((score, index) => (
+              <React.Fragment key={index}>
+                <tr
+                  className="pointer"
+                  onClick={() => toggleRow(score.climbNo)}
+                  style={shouldHighlight(score.climbNo) ? { backgroundColor: '#E9FFDB'  } : {backgroundColor: '#F9F9F9' }}
+                >
+                  <td>
+                    {shouldHighlight(score.climbNo) ? '✅' : ''}
+                    {score.climbNo}
+                    <PhotoIndicator
+                      climbNo={score.climbNo}
+                      problemPhotos={problemPhotos}
+                      onViewPhoto={setSelectedPhotoClimbNo}
+                      onUploadPhoto={null}
+                      showUploadButton={false}
+                    />
+                  </td>
+                  <td>{score.marking}</td>
+                  <td>{score.flashed ? 'Y' : ''}</td>
+                  <td>
+                    {score.score}
+                    {score.flashed ? ` (+${flashExtraPoints})` : ''}
+                  </td>
+                  <td title={formatDateForHover(score.createdAt)}>
+                    {toTimeAgoString(score.createdAt)}
                   </td>
                 </tr>
-              )}
-            </React.Fragment>
-          ))
-        ) : (
-          <tr>
-            <td colSpan="5">No scores available</td>
-          </tr>
-        )}
-      </tbody>
-    </table>
+                {isRowExpanded(score.climbNo) && problems[score.climbNo]?.sends && (
+                  <tr>
+                    <td colSpan="5">
+                      <div>
+                        <h4 style={{margin: '5px'}}>Others who topped Problem {score.climbNo}</h4>
+                        <SendsSubTable
+                          sends={(problems[score.climbNo]?.sends || [])
+                            // Filter out the current user's sends
+                            .filter(send => send.competitorNo !== currentUserCompetitorNo)}
+                          emptyText="None found. Congratulations on the first top! 🎉"
+                          isMobile={isMobile}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="5">No scores available</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+
+      {/* Photo Viewer Modal */}
+      {selectedPhotoClimbNo && problemPhotos[selectedPhotoClimbNo]?.length > 0 && (
+        <PhotoViewer
+          photos={problemPhotos[selectedPhotoClimbNo]}
+          onClose={() => setSelectedPhotoClimbNo(null)}
+        />
+      )}
+
+      {/* Photo Uploader Modal */}
+      {showPhotoUploader && selectedPhotoClimbNo && (
+        <PhotoUploader
+          climbNo={selectedPhotoClimbNo}
+          onClose={() => {
+            setShowPhotoUploader(false);
+            setSelectedPhotoClimbNo(null);
+          }}
+        />
+      )}
+    </>
   );
 }
 

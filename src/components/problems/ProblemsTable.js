@@ -3,6 +3,9 @@ import { useApp } from '../../contexts/AppContext';
 import { useCompetition } from '../../contexts/CompetitionContext';
 import useExpandableRows from '../../hooks/useExpandableRows';
 import { formatDateForHover, toTimeAgoString } from '../../utils/dateFormatters';
+import PhotoUploader from '../common/PhotoUploader';
+import PhotoViewer from '../common/PhotoViewer';
+import PhotoIndicator from '../common/PhotoIndicator';
 import SendsSubTable from '../common/SendsSubTable';
 import SortableTable from '../common/SortableTable';
 
@@ -19,7 +22,8 @@ function ProblemsTable() {
     loading,
     loadingProgress,
     partialDataAvailable,
-    countCompetitors
+    countCompetitors,
+    problemPhotos
   } = useCompetition();
 
   const { expandedRows, toggleRow } = useExpandableRows();
@@ -27,6 +31,10 @@ function ProblemsTable() {
   // State for filtering and display options
   const [showRawCounts, setShowRawCounts] = useState(true);
   const [hideZeroTops, setHideZeroTops] = useState(true);
+
+  // State for photo viewer and uploader
+  const [selectedPhotoClimbNo, setSelectedPhotoClimbNo] = useState(null);
+  const [showPhotoUploader, setShowPhotoUploader] = useState(false);
 
   // Filter categories to show based on selected category
   const focusCategories = useMemo(() =>
@@ -42,7 +50,22 @@ function ProblemsTable() {
       {
         key: 'climbNo',
         label: `Problem${!isMobile ? " No." : ""}`,
-        sortable: true
+        sortable: true,
+        render: (item) => (
+          <span>
+            {item.climbNo}
+            <PhotoIndicator
+              climbNo={item.climbNo}
+              problemPhotos={problemPhotos}
+              onViewPhoto={setSelectedPhotoClimbNo}
+              onUploadPhoto={(climbNo) => {
+                setShowPhotoUploader(true);
+                setSelectedPhotoClimbNo(climbNo);
+              }}
+              showUploadButton={true}
+            />
+          </span>
+        )
       },
       {
         key: 'marking',
@@ -81,7 +104,7 @@ function ProblemsTable() {
     }));
 
     return [...baseColumns, ...categoryColumns];
-  }, [focusCategories, isMobile]);
+  }, [focusCategories, isMobile, problemPhotos]);
 
   // Filter and prepare problems data
   const problemsData = useMemo(() => {
@@ -162,6 +185,25 @@ function ProblemsTable() {
         partialDataAvailable={partialDataAvailable}
         emptyMessage="No problems available"
       />
+
+      {/* Photo Viewer Modal */}
+      {selectedPhotoClimbNo && problemPhotos[selectedPhotoClimbNo]?.length > 0 && (
+        <PhotoViewer
+          photos={problemPhotos[selectedPhotoClimbNo]}
+          onClose={() => setSelectedPhotoClimbNo(null)}
+        />
+      )}
+
+      {/* Photo Uploader Modal */}
+      {showPhotoUploader && selectedPhotoClimbNo && (
+        <PhotoUploader
+          climbNo={selectedPhotoClimbNo}
+          onClose={() => {
+            setShowPhotoUploader(false);
+            setSelectedPhotoClimbNo(null);
+          }}
+        />
+      )}
     </>
   );
 }

@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { getCategories, getCompetitors, getProblems, getScores } from '../api/services/competitions';
+import { getAllProblemPhotos, uploadProblemPhoto as uploadPhoto } from '../api/services/photos';
 import {
   computeCategoryTops,
   computeProblemStats,
@@ -41,12 +42,22 @@ export const CompetitionProvider = ({ children, competitionId }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // State for problem photos
+  const [problemPhotos, setProblemPhotos] = useState({});
+  const [photoOperationState, setPhotoOperationState] = useState({
+    loading: false,
+    operation: null, // 'fetch', 'upload', 'delete'
+    progress: 0,
+    error: null
+  });
+
   // New loading state with progress tracking
   const [loadingState, setLoadingState] = useState({
     categories: { loading: false, progress: 0, complete: false, error: null },
     competitors: { loading: false, progress: 0, complete: false, error: null },
     scores: { loading: false, progress: 0, complete: false, error: null },
-    problems: { loading: false, progress: 0, complete: false, error: null }
+    problems: { loading: false, progress: 0, complete: false, error: null },
+    photos: { loading: false, progress: 0, complete: false, error: null }
   });
 
   // Calculate overall loading progress (0-100)
@@ -203,10 +214,136 @@ export const CompetitionProvider = ({ children, competitionId }) => {
     }
   }, [competitionId]);
 
+  // Function to fetch problem photos
+  const fetchCompetitionPhotos = useCallback(async () => {
+    if (!competitionId) return;
+
+    setLoadingState(prev => ({
+      ...prev,
+      photos: { loading: true, progress: 10, complete: false, error: null }
+    }));
+
+    setPhotoOperationState({
+      loading: true,
+      operation: 'fetch',
+      progress: 10,
+      error: null
+    });
+
+    try {
+      setLoadingState(prev => ({
+        ...prev,
+        photos: { ...prev.photos, progress: 50 }
+      }));
+
+      setPhotoOperationState(prev => ({
+        ...prev,
+        progress: 50
+      }));
+
+      const photosData = await getAllProblemPhotos(competitionId);
+      setProblemPhotos(photosData);
+
+      setLoadingState(prev => ({
+        ...prev,
+        photos: { loading: false, progress: 100, complete: true, error: null }
+      }));
+
+      setPhotoOperationState({
+        loading: false,
+        operation: 'fetch',
+        progress: 100,
+        error: null
+      });
+    } catch (error) {
+      console.error("Error fetching problem photos:", error);
+
+      setLoadingState(prev => ({
+        ...prev,
+        photos: { loading: false, progress: 0, complete: false, error: error.message }
+      }));
+
+      setPhotoOperationState({
+        loading: false,
+        operation: 'fetch',
+        progress: 0,
+        error: error.message
+      });
+    }
+  }, [competitionId]);
+
+  // Function to upload a problem photo
+  const handleUploadPhoto = async (climbNo, file) => {
+    try {
+      setPhotoOperationState({
+        loading: true,
+        operation: 'upload',
+        progress: 10,
+        error: null
+      });
+
+      // Get current user's competitor number or use a default
+      const currentCompetitorNo = Object.keys(competitors)[0] || 'anonymous';
+
+      setPhotoOperationState(prev => ({
+        ...prev,
+        progress: 30
+      }));
+
+      // Upload the photo
+      const photoData = await uploadPhoto(
+        competitionId,
+        climbNo,
+        file,
+        currentCompetitorNo
+      );
+
+      setPhotoOperationState(prev => ({
+        ...prev,
+        progress: 70
+      }));
+
+      // Update state with new photo
+      setProblemPhotos(prev => {
+        const newPhotos = { ...prev };
+        if (!newPhotos[climbNo]) {
+          newPhotos[climbNo] = [];
+        }
+        newPhotos[climbNo] = [photoData, ...(newPhotos[climbNo] || [])];
+        return newPhotos;
+      });
+
+      setPhotoOperationState({
+        loading: false,
+        operation: 'upload',
+        progress: 100,
+        error: null
+      });
+
+      return photoData;
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+
+      setPhotoOperationState({
+        loading: false,
+        operation: 'upload',
+        progress: 0,
+        error: error.message
+      });
+
+      throw error; // Re-throw to be handled by the component
+    }
+  };
+
   // Fetch competition data when competitionId changes
   useEffect(() => {
     fetchCompetitionData();
   }, [fetchCompetitionData]);
+
+  // Fetch photos when competition ID changes
+  useEffect(() => {
+    fetchCompetitionPhotos();
+  }, [fetchCompetitionPhotos]);
 
   // Calculate processed data when raw data changes
   const processedData = useMemo(() => {
@@ -267,7 +404,12 @@ export const CompetitionProvider = ({ children, competitionId }) => {
     lastSubmittedScore, // Already using computed value
     selectedCategoryCode,
     countCompetitors,
-    sortUserTableData: (direction) => getSortedUserTableData(processedData, direction)
+    sortUserTableData: (direction) => getSortedUserTableData(processedData, direction),
+    // Photo related values
+    problemPhotos,
+    photoOperationState,
+    uploadProblemPhoto: handleUploadPhoto,
+    refreshPhotos: fetchCompetitionPhotos
   };
 
   return (
