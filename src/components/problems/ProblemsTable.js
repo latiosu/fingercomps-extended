@@ -167,7 +167,7 @@ function ProblemsTable() {
 
   return (
     <>
-      <div className="filters">
+      <div className="filters" style={{ maxWidth: '450px' }}>
         <LocationFilter
           locationGroups={locationGroups}
           selectedLocation={selectedLocation}
