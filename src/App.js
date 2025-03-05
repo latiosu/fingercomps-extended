@@ -5,6 +5,7 @@ import CompetitionSelector from "./components/competitions/CompetitionSelector";
 import RecommendModal from "./components/recommendations/RecommendModal";
 import { AppProvider, useApp } from "./contexts/AppContext";
 import { CompetitionProvider } from "./contexts/CompetitionContext";
+import { HighlightedProblemsProvider } from "./contexts/HighlightedProblemsContext";
 import { RankHistoryProvider } from "./contexts/RankHistoryContext";
 import ProblemsPage from "./pages/ProblemsPage";
 import UsersPage from "./pages/UsersPage";
@@ -49,23 +50,25 @@ function AppContent() {
       {selectedCompId && (
         <CompetitionProvider competitionId={selectedCompId}>
           <RankHistoryProvider>
-            <div className="filters">
-              <CategorySelector />
-            </div>
+            <HighlightedProblemsProvider>
+              <div className="filters">
+                <CategorySelector />
+              </div>
 
-            {focusView === 'user' ? (
-              <UsersPage />
-            ) : (
-              <ProblemsPage />
-            )}
+              {focusView === 'user' ? (
+                <UsersPage />
+              ) : (
+                <ProblemsPage />
+              )}
 
-            {/* Recommendation modal */}
-            {recommendModalUser && (
-              <RecommendModal
-                onClose={() => setRecommendModalUser(null)}
-                user={recommendModalUser}
-              />
-            )}
+              {/* Recommendation modal */}
+              {recommendModalUser && (
+                <RecommendModal
+                  onClose={() => setRecommendModalUser(null)}
+                  user={recommendModalUser}
+                />
+              )}
+            </HighlightedProblemsProvider>
           </RankHistoryProvider>
         </CompetitionProvider>
       )}

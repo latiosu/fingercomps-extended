@@ -236,3 +236,7 @@ select {
     font-size: 12px;
   }
 }
+
+.pointer {
+  cursor: pointer;
+}

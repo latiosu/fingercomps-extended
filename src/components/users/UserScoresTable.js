@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useCompetition } from '../../contexts/CompetitionContext';
+import { useHighlightedProblems } from '../../contexts/HighlightedProblemsContext';
 import useExpandableRows from '../../hooks/useExpandableRows';
 import { formatDateForHover, toTimeAgoString } from '../../utils/dateFormatters';
 import SendsSubTable from '../common/SendsSubTable';
@@ -26,13 +27,31 @@ function UserScoresTable({
   // Get problems from competition context
   const { problems } = useCompetition();
 
+  // Get highlighting functions from context
+  const { registerProblems, shouldHighlight } = useHighlightedProblems();
+
   // Get the current user's competitor number from the first score
   const currentUserCompetitorNo = scores[0]?.competitorNo;
 
   // Limit the number of scores based on the checkbox state
-  const displayedScores = limitScores
-    ? scores.slice(0, categoryPumpfestTopScores)
-    : scores;
+  // Memoize to prevent creating a new array on every render
+  const displayedScores = useMemo(() => {
+    return limitScores
+      ? scores.slice(0, categoryPumpfestTopScores)
+      : scores;
+  }, [scores, limitScores, categoryPumpfestTopScores]);
+
+  // Register problems with the context when component mounts or scores change
+  useEffect(() => {
+    // Extract problem numbers from displayed scores
+    const problemNumbers = displayedScores.map(score => score.climbNo);
+
+    // Register problems and store cleanup function
+    const cleanup = registerProblems(problemNumbers);
+
+    // Clean up when component unmounts or scores change
+    return cleanup;
+  }, [displayedScores, registerProblems]);
 
   return (
     <table border="1" className="subTable" style={{ width: '100%' }}>
@@ -50,10 +69,14 @@ function UserScoresTable({
           displayedScores.map((score, index) => (
             <React.Fragment key={index}>
               <tr
+                className="pointer"
                 onClick={() => toggleRow(score.climbNo)}
-                style={{ cursor: 'pointer' }}
+                // style={shouldHighlight(score.climbNo) ? { backgroundColor: '#C7E8CA' } : {}}
+                // style={shouldHighlight(score.climbNo) ? { backgroundColor: '#E9FFDB' } : {}}
+                // style={shouldHighlight(score.climbNo) ? { backgroundColor: '#B5EAD7' } : {}}
+                style={shouldHighlight(score.climbNo) ? { backgroundColor: '#E9FFDB'  } : {backgroundColor: '#F9F9F9' }}
               >
-                <td>{score.climbNo}</td>
+                <td>{shouldHighlight(score.climbNo) ? '✅' : ''}{score.climbNo}</td>
                 <td>{score.marking}</td>
                 <td>{score.flashed ? 'Y' : ''}</td>
                 <td>
