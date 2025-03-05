@@ -49,6 +49,19 @@ h1 {
   z-index: 2;
 }
 
+/* Responsive table container with horizontal scrolling */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+}
+
+/* Ensure tables inside maintain their structure */
+.table-container .mainTable {
+  /* Your existing table styles are preserved */
+  min-width: 100%; /* Table will expand to fit content but never be narrower than container */
+}
+
 .filtersContainer {
   display: flex;
   flex-direction: row;

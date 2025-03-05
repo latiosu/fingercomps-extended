@@ -194,19 +194,21 @@ function ProblemsTable() {
         </label>
       </div>
 
-      <SortableTable
-        columns={columns}
-        data={problemsData}
-        initialSort={{ key: 'score', direction: 'desc' }}
-        rowKey="climbNo"
-        onRowClick={(id) => toggleRow(id)}
-        renderExpandedContent={renderExpandedContent}
-        expandedRows={expandedRows}
-        loading={loading}
-        loadingProgress={loadingProgress}
-        partialDataAvailable={partialDataAvailable}
-        emptyMessage="No problems available"
-      />
+      <div className="table-container">
+        <SortableTable
+          columns={columns}
+          data={problemsData}
+          initialSort={{ key: 'score', direction: 'desc' }}
+          rowKey="climbNo"
+          onRowClick={(id) => toggleRow(id)}
+          renderExpandedContent={renderExpandedContent}
+          expandedRows={expandedRows}
+          loading={loading}
+          loadingProgress={loadingProgress}
+          partialDataAvailable={partialDataAvailable}
+          emptyMessage="No problems available"
+        />
+      </div>
 
       {/* Photo Viewer Modal */}
       {selectedPhotoClimbNo && problemPhotos[selectedPhotoClimbNo]?.length > 0 && (

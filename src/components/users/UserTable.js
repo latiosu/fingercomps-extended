@@ -239,19 +239,21 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
           </button>
         )}
       </div>
-      <SortableTable
-        columns={columns}
-        data={filteredData}
-        initialSort={{ key: 'total', direction: 'desc' }}
-        rowKey="competitorNo"
-        onRowClick={(id) => toggleRow(id)}
-        renderExpandedContent={renderExpandedContent}
-        expandedRows={expandedRows}
-        loading={loading}
-        loadingProgress={loadingProgress}
-        partialDataAvailable={partialDataAvailable}
-        emptyMessage={selectedCategory ? "No users in this category" : "No users available"}
-      />
+      <div className="table-container">
+        <SortableTable
+          columns={columns}
+          data={filteredData}
+          initialSort={{ key: 'total', direction: 'desc' }}
+          rowKey="competitorNo"
+          onRowClick={(id) => toggleRow(id)}
+          renderExpandedContent={renderExpandedContent}
+          expandedRows={expandedRows}
+          loading={loading}
+          loadingProgress={loadingProgress}
+          partialDataAvailable={partialDataAvailable}
+          emptyMessage={selectedCategory ? "No users in this category" : "No users available"}
+        />
+      </div>
     </>
   );
 }
