@@ -1,6 +1,5 @@
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
-import { useCompetition } from '../../contexts/CompetitionContext';
 import { trackCompetitorViewClicked, trackRoutesetterViewClicked } from '../../utils/analytics';
 
 /**
@@ -8,17 +7,16 @@ import { trackCompetitorViewClicked, trackRoutesetterViewClicked } from '../../u
  * @returns {JSX.Element} ViewToggle component
  */
 function ViewToggle() {
-  const { focusView, setFocusView, loading } = useApp();
-  const { competitionId } = useCompetition();
+  const { focusView, setFocusView, loading, selectedCompId } = useApp();
 
   const handleClick = (view) => {
     setFocusView(view);
 
     // Track when user switches to Routesetter View
-    if (view === 'problems') {
-      trackRoutesetterViewClicked(competitionId);
-    } else if (view === 'user') {
-      trackCompetitorViewClicked(competitionId);
+    if (view === 'problems' && selectedCompId) {
+      trackRoutesetterViewClicked(selectedCompId);
+    } else if (view === 'user' && selectedCompId) {
+      trackCompetitorViewClicked(selectedCompId);
     }
   };
 
