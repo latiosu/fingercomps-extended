@@ -93,20 +93,6 @@ function PhotoViewer({ photos, onClose }) {
               onLoad={() => setImageLoaded(true)}
               style={{ display: imageLoaded ? 'block' : 'none' }}
             />
-
-            {!reported ? (
-              <button
-                className="report-button"
-                onClick={reportPhoto}
-                title="Report inappropriate content"
-              >
-                ⚠️ Report
-              </button>
-            ) : (
-              <div className="reported-message">
-                Photo reported. Thank you.
-              </div>
-            )}
           </div>
 
           {photos.length > 1 && (
@@ -133,7 +119,20 @@ function PhotoViewer({ photos, onClose }) {
           </div>
 
           <div className="metadata">
-            Uploaded by {currentPhoto.uploaded_by} • {formatDate(currentPhoto.created_at)}
+            Uploaded by {currentPhoto.uploaded_by} • {formatDate(currentPhoto.created_at)} •
+            {!reported ? (
+              <button
+                className="report-button"
+                onClick={reportPhoto}
+                title="Report inappropriate content"
+              >
+                ⚠️ Report
+              </button>
+            ) : (
+              <div className="reported-message">
+                Photo reported. Thank you.
+              </div>
+            )}
           </div>
         </div>
       </div>

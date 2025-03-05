@@ -125,7 +125,7 @@ function PhotoUploader({ climbNo, onClose }) {
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label htmlFor="photo-file">Select Photo (Max 5MB)</label>
+              <label htmlFor="photo-file">Select photo (max 5MB)</label>
               <input
                 type="file"
                 id="photo-file"
