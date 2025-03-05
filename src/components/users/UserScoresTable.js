@@ -67,12 +67,13 @@ function UserScoresTable({
               {isRowExpanded(score.climbNo) && problems[score.climbNo]?.sends && (
                 <tr>
                   <td colSpan="5">
-                    <div style={{ padding: '8px' }}>
-                      <h4>Other Sends for Problem {score.climbNo}</h4>
+                    <div>
+                      <h4 style={{margin: '5px'}}>Others who topped Problem {score.climbNo}</h4>
                       <SendsSubTable
                         sends={(problems[score.climbNo]?.sends || [])
                           // Filter out the current user's sends
                           .filter(send => send.competitorNo !== currentUserCompetitorNo)}
+                        emptyText="None found. Congratulations on the first top! 🎉"
                         isMobile={isMobile}
                       />
                     </div>

@@ -213,11 +213,15 @@ function RecommendModal({ onClose, user }) {
                       {isExpanded && (
                         <tr className="subTableContainer">
                           <td colSpan={totalColumns}>
-                            <SendsSubTable
-                              sends={problem.sends}
-                              categoryCode={sortByOverallTops ? "" : user.category}
-                              isMobile={isMobile}
-                            />
+                            <div>
+                              <h4 style={{margin: '5px'}}>Others who topped Problem {problem.climbNo}</h4>
+                              <SendsSubTable
+                                sends={problem.sends}
+                                categoryCode={sortByOverallTops ? "" : user.category}
+                                isMobile={isMobile}
+                                emptyText="No one yet. Could you be the first? 👀"
+                              />
+                            </div>
                           </td>
                         </tr>
                       )}
