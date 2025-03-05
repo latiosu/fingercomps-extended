@@ -3,9 +3,11 @@ import { useApp } from '../../contexts/AppContext';
 import { useCompetition } from '../../contexts/CompetitionContext';
 import useExpandableRows from '../../hooks/useExpandableRows';
 import { formatDateForHover, toTimeAgoString } from '../../utils/dateFormatters';
+import { getMainLocation, getOrganizedLocations } from '../../utils/scoreCalculators';
+import LocationFilter from '../common/LocationFilter';
+import PhotoIndicator from '../common/PhotoIndicator';
 import PhotoUploader from '../common/PhotoUploader';
 import PhotoViewer from '../common/PhotoViewer';
-import PhotoIndicator from '../common/PhotoIndicator';
 import SendsSubTable from '../common/SendsSubTable';
 import SortableTable from '../common/SortableTable';
 
@@ -31,10 +33,16 @@ function ProblemsTable() {
   // State for filtering and display options
   const [showRawCounts, setShowRawCounts] = useState(true);
   const [hideZeroTops, setHideZeroTops] = useState(true);
+  const [selectedLocation, setSelectedLocation] = useState('');
 
   // State for photo viewer and uploader
   const [selectedPhotoClimbNo, setSelectedPhotoClimbNo] = useState(null);
   const [showPhotoUploader, setShowPhotoUploader] = useState(false);
+
+  // Get unique locations from problems and organize them into groups
+  const locationGroups = useMemo(() => {
+    return getOrganizedLocations(problems);
+  }, [problems]);
 
   // Filter categories to show based on selected category
   const focusCategories = useMemo(() =>
@@ -110,6 +118,7 @@ function ProblemsTable() {
   const problemsData = useMemo(() => {
     let filteredData = [...Object.values(problems)];
 
+    // Filter problems with no tops if hideZeroTops is enabled
     if (hideZeroTops) {
       filteredData = filteredData.filter(problem => {
         if (!problem.stats) return false;
@@ -118,6 +127,13 @@ function ProblemsTable() {
             (selectedCategoryCode ? k === selectedCategoryCode : true))
           .some(([_, v]) => v.tops > 0);
       });
+    }
+
+    // Filter problems by location if a location is selected
+    if (selectedLocation) {
+      filteredData = filteredData.filter(problem =>
+        getMainLocation(problem.station) === selectedLocation
+      );
     }
 
     return filteredData.map(problem => ({
@@ -138,7 +154,7 @@ function ProblemsTable() {
         return acc;
       }, {})
     }));
-  }, [problems, hideZeroTops, focusCategories, categoryTops, selectedCategoryCode, showRawCounts, countCompetitors]);
+  }, [problems, hideZeroTops, focusCategories, categoryTops, selectedCategoryCode, showRawCounts, countCompetitors, selectedLocation]);
 
   // Render expanded content for a row
   const renderExpandedContent = (item) => (
@@ -152,6 +168,12 @@ function ProblemsTable() {
   return (
     <>
       <div className="filters">
+        <LocationFilter
+          locationGroups={locationGroups}
+          selectedLocation={selectedLocation}
+          onLocationChange={setSelectedLocation}
+          id="problems-location-filter"
+        />
         <label>
           <input
             type="checkbox"

@@ -3,6 +3,7 @@ import { useApp } from '../../contexts/AppContext';
 import { useCompetition } from '../../contexts/CompetitionContext';
 import useExpandableRows from '../../hooks/useExpandableRows';
 import { getOrganizedLocations, getRecommendedProblems } from '../../utils/scoreCalculators';
+import LocationFilter from '../common/LocationFilter';
 import SendsSubTable from '../common/SendsSubTable';
 import './RecommendModal.css';
 
@@ -118,22 +119,11 @@ function RecommendModal({ onClose, user }) {
               />
               Use overall tops instead of category tops
             </label>
-            {locationGroups?.length > 1 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <label htmlFor="location-filter">Filter by location:</label>
-                <select
-                  id="location-filter"
-                  value={selectedLocation}
-                  onChange={(e) => setSelectedLocation(e.target.value)}
-                  style={{ padding: '4px', borderRadius: '4px' }}
-                >
-                  <option value="">All locations</option>
-                  {locationGroups.map(group => (
-                    <option key={group.name} value={group.name}>{group.name}</option>
-                  ))}
-                </select>
-              </div>
-            )}
+            <LocationFilter
+              locationGroups={locationGroups}
+              selectedLocation={selectedLocation}
+              onLocationChange={setSelectedLocation}
+            />
           </div>
 
           {currentUserIndex > 0 && (
