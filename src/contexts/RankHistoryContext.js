@@ -128,7 +128,7 @@ export const RankHistoryProvider = ({ children }) => {
         const significant = await rankHistoryService.getSignificantChanges(
           timepoints.current,
           timepoints.previous,
-          3, // Threshold
+          0, // Threshold
           selectedCategory
         );
 
