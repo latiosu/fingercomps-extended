@@ -81,7 +81,7 @@ function UserScoresTable({
                   onClick={() => toggleRow(score.climbNo)}
                   style={shouldHighlight(score.climbNo) ? { backgroundColor: '#E9FFDB'  } : {backgroundColor: '#F9F9F9' }}
                 >
-                  <td className="center">
+                  <td>
                     {shouldHighlight(score.climbNo) ? '✅' : ''}
                     {score.climbNo}
                     <PhotoIndicator
