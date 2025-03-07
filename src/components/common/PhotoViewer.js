@@ -105,7 +105,10 @@ function PhotoViewer({ photos, onClose }) {
 
   return (
     <ErrorBoundary>
-      <div className="photo-viewer-overlay" onClick={showReportConfirmation ? undefined : onClose}>
+      <div className="photo-viewer-overlay" onClick={(e) => {
+        e.stopPropagation();
+        if (!showReportConfirmation) onClose();
+      }}>
         <div className="photo-viewer-modal" onClick={(e) => e.stopPropagation()}>
           <button className="close-button" onClick={onClose}>×</button>
 
@@ -164,7 +167,7 @@ function PhotoViewer({ photos, onClose }) {
         </div>
 
         {showReportConfirmation && (
-          <div className="report-confirmation-overlay">
+          <div className="report-confirmation-overlay" onClick={(e) => e.stopPropagation()}>
             <div className="report-confirmation-dialog">
               <h3>Report Photo</h3>
               <p>Are you sure you want to report this photo as inappropriate?</p>

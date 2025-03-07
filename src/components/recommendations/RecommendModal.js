@@ -4,7 +4,11 @@ import { useCompetition } from '../../contexts/CompetitionContext';
 import useExpandableRows from '../../hooks/useExpandableRows';
 import { getOrganizedLocations, getRecommendedProblems } from '../../utils/scoreCalculators';
 import LocationFilter from '../common/LocationFilter';
+import PhotoIndicator from '../common/PhotoIndicator';
+import PhotoUploader from '../common/PhotoUploader';
+import PhotoViewer from '../common/PhotoViewer';
 import SendsSubTable from '../common/SendsSubTable';
+import SortableTable from '../common/SortableTable';
 import './RecommendModal.css';
 
 /**
@@ -20,7 +24,8 @@ function RecommendModal({ onClose, user }) {
     problems,
     scores,
     categories,
-    userTableData
+    userTableData,
+    problemPhotos
   } = useCompetition();
 
   const { expandedRows, toggleRow } = useExpandableRows();
@@ -58,6 +63,10 @@ function RecommendModal({ onClose, user }) {
   const [sortByOverallTops, setSortByOverallTops] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState('');
 
+  // State for photo viewer and uploader
+  const [selectedPhotoClimbNo, setSelectedPhotoClimbNo] = useState(null);
+  const [showPhotoUploader, setShowPhotoUploader] = useState(false);
+
   // Get user's scores
   const userScores = scores[user.competitorNo] || [];
 
@@ -86,16 +95,91 @@ function RecommendModal({ onClose, user }) {
     ? categoryUsers[currentUserIndex - 1].total - user.total
     : 0;
 
-  // Helper function to get tops count based on sort mode
-  const getTopCount = (problem) => {
-    if (sortByOverallTops) {
-      return Object.values(problem.stats || {}).reduce((sum, stat) => sum + (stat.tops || 0), 0);
-    }
-    return problem.stats?.[user.category]?.tops || 0;
-  };
+  // Define columns for the sortable table
+  const columns = useMemo(() => {
+    const getTopCount = (problem) => {
+      if (sortByOverallTops) {
+        return Object.values(problem.stats || {}).reduce((sum, stat) => sum + (stat.tops || 0), 0);
+      }
+      return problem.stats?.[user.category]?.tops || 0;
+    };
+
+    return [
+      {
+        key: 'climbNo',
+        label: `Problem${!isMobile ? " No." : ""}`,
+        sortable: true,
+        render: (problem) => (
+          <span>
+            {problem.climbNo}
+            <PhotoIndicator
+              climbNo={problem.climbNo}
+              problemPhotos={problemPhotos}
+              onViewPhoto={setSelectedPhotoClimbNo}
+              onUploadPhoto={(climbNo) => {
+                setShowPhotoUploader(true);
+                setSelectedPhotoClimbNo(climbNo);
+              }}
+              showUploadButton={true}
+            />
+          </span>
+        )
+      },
+      {
+        key: 'marking',
+        label: `Name${!isMobile ? "/Grade" : ""}`,
+        sortable: true
+      },
+      ...(isMobile ? [] : [{
+        key: 'score',
+        label: 'Points',
+        sortable: true
+      }]),
+      {
+        key: 'additionalPoints',
+        label: `${!isMobile ? "Additional " : ""}Points`,
+        sortable: true,
+        render: (problem) => `+${problem.additionalPoints}`
+      },
+      {
+        key: 'rankImprovement',
+        label: 'Rank Change',
+        sortable: true,
+        render: (problem) => (
+          <span style={{
+            backgroundColor: problem.rankImprovement > 0 ? '#e6ffe6' : 'transparent'
+          }}>
+            {problem.rankImprovement > 0 ? `+${problem.rankImprovement}` : '0'}
+          </span>
+        )
+      },
+      {
+        key: 'tops',
+        label: `${sortByOverallTops ? "Overall" : (user.category || "Category")} Tops`,
+        sortable: true,
+        render: (problem) => getTopCount(problem)
+      }
+    ]
+  }, [isMobile, problemPhotos, sortByOverallTops, user.category]);
+
+  // Render expanded content for a problem
+  const renderExpandedContent = (problem) => (
+    <div>
+      <h4 style={{margin: '5px'}}>Others who topped Problem {problem.climbNo}</h4>
+      <SendsSubTable
+        sends={problem.sends}
+        categoryCode={sortByOverallTops ? "" : user.category}
+        isMobile={isMobile}
+        emptyText="No one yet. Could you be the first? 👀"
+      />
+    </div>
+  );
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={(e) => {
+      e.stopPropagation();
+      if (!showPhotoUploader) onClose();
+    }}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Recommended Problems for {user.name}</h2>
@@ -132,63 +216,16 @@ function RecommendModal({ onClose, user }) {
             </div>
           )}
 
-          <table border="1" className="mainTable">
-            <thead className="tableHeader">
-              <tr>
-                <th>Problem{!isMobile && " No."}</th>
-                <th>Name{!isMobile && "/Grade"}</th>
-                {!isMobile && <th>Points</th>}
-                <th>{!isMobile && "Additional "}Points</th>
-                <th>Rank Change</th>
-                <th>{sortByOverallTops ? "Overall" : (user.category || "Category")} Tops</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recommendedProblems.length > 0 ? (
-                recommendedProblems.map(problem => {
-                  const isExpanded = expandedRows.has(problem.climbNo);
-                  const totalColumns = isMobile ? 5 : 6;
-
-                  return (
-                    <React.Fragment key={problem.climbNo}>
-                      <tr
-                        onClick={() => toggleRow(problem.climbNo)}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <td>{problem.climbNo}</td>
-                        <td>{problem.marking}</td>
-                        {!isMobile && <td>{problem.score}</td>}
-                        <td>+{problem.additionalPoints}</td>
-                        <td style={{ backgroundColor: problem.rankImprovement > 0 ? '#e6ffe6' : 'transparent' }}>
-                          {problem.rankImprovement > 0 ? `+${problem.rankImprovement}` : '0'}
-                        </td>
-                        <td>{getTopCount(problem)}</td>
-                      </tr>
-                      {isExpanded && (
-                        <tr className="subTableContainer">
-                          <td colSpan={totalColumns}>
-                            <div>
-                              <h4 style={{margin: '5px'}}>Others who topped Problem {problem.climbNo}</h4>
-                              <SendsSubTable
-                                sends={problem.sends}
-                                categoryCode={sortByOverallTops ? "" : user.category}
-                                isMobile={isMobile}
-                                emptyText="No one yet. Could you be the first? 👀"
-                              />
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan={isMobile ? 5 : 6}>No recommendations available</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          <SortableTable
+            columns={columns}
+            data={recommendedProblems}
+            initialSort={{ key: 'tops', direction: 'desc' }}
+            rowKey="climbNo"
+            onRowClick={(id) => toggleRow(id)}
+            renderExpandedContent={renderExpandedContent}
+            expandedRows={expandedRows}
+            emptyMessage="No recommendations available"
+          />
           <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
             <p>
               <strong>How does this work?</strong><br/>
@@ -198,6 +235,25 @@ function RecommendModal({ onClose, user }) {
           </div>
         </div>
       </div>
+
+      {/* Photo Viewer Modal */}
+      {selectedPhotoClimbNo && problemPhotos[selectedPhotoClimbNo]?.length > 0 && (
+        <PhotoViewer
+          photos={problemPhotos[selectedPhotoClimbNo]}
+          onClose={() => setSelectedPhotoClimbNo(null)}
+        />
+      )}
+
+      {/* Photo Uploader Modal */}
+      {showPhotoUploader && selectedPhotoClimbNo && (
+        <PhotoUploader
+          climbNo={selectedPhotoClimbNo}
+          onClose={() => {
+            setShowPhotoUploader(false);
+            setSelectedPhotoClimbNo(null);
+          }}
+        />
+      )}
     </div>
   );
 }
