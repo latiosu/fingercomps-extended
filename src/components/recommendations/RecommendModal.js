@@ -61,7 +61,26 @@ function RecommendModal({ onClose, user }) {
   // State for filtering options
   const [showNonRankingProblems, setShowNonRankingProblems] = useState(currentUserIndex === 0 || !hasRankIncreasingProblems);
   const [sortByOverallTops, setSortByOverallTops] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState('');
+
+  // Initialize selectedLocation from localStorage if available
+  const [selectedLocation, setSelectedLocation] = useState(() => {
+    try {
+      return localStorage.getItem('recommendModal.selectedLocation') || '';
+    } catch (e) {
+      console.error('Error accessing localStorage:', e);
+      return '';
+    }
+  });
+
+  // Handler to update selectedLocation and save to localStorage
+  const handleLocationChange = (location) => {
+    setSelectedLocation(location);
+    try {
+      localStorage.setItem('recommendModal.selectedLocation', location);
+    } catch (e) {
+      console.error('Error saving to localStorage:', e);
+    }
+  };
 
   // State for photo viewer and uploader
   const [selectedPhotoClimbNo, setSelectedPhotoClimbNo] = useState(null);
@@ -206,7 +225,7 @@ function RecommendModal({ onClose, user }) {
             <LocationFilter
               locationGroups={locationGroups}
               selectedLocation={selectedLocation}
-              onLocationChange={setSelectedLocation}
+              onLocationChange={handleLocationChange}
             />
           </div>
 
