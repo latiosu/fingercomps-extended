@@ -104,7 +104,7 @@ export const computeProblemStats = (scores, problems, categories, competitors) =
       const tmpId = `${cptNo},${score.climbNo}`;
       // Skip duplicates
       if (seen.has(tmpId)) {
-        console.warn(`Duplicate climb detected: ${tmpId}`);
+        console.debug(`Duplicate climb detected: ${tmpId}`);
         return;
       } else {
         seen.add(tmpId);
