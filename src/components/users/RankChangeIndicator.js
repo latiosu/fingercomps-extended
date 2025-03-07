@@ -5,9 +5,10 @@ import './RankChangeIndicator.css';
  * Component to display rank change indicators
  * @param {Object} props - Component props
  * @param {number|string} props.change - Rank change value or 'new' for new competitors
+ * @param {number} props.threshold - Rank change threshold to be considered a large change
  * @returns {JSX.Element} RankChangeIndicator component
  */
-function RankChangeIndicator({ change }) {
+function RankChangeIndicator({ change, threshold = 4 }) {
   // Handle new competitors
   if (change === 'new') {
     return (
@@ -19,9 +20,9 @@ function RankChangeIndicator({ change }) {
 
   // Determine icon and color based on change
   const getIndicator = () => {
-    if (change > 4) return { icon: '↑↑', color: 'green', label: 'Rising fast', className: 'rising-fast' };
+    if (change > threshold) return { icon: '↑↑', color: 'green', label: 'Rising fast', className: 'rising-fast' };
     if (change > 0) return { icon: '↑', color: 'lightgreen', label: 'Rising', className: 'rising' };
-    if (change < -4) return { icon: '↓↓', color: 'red', label: 'Falling fast', className: 'falling-fast' };
+    if (change < -threshold) return { icon: '↓↓', color: 'red', label: 'Falling fast', className: 'falling-fast' };
     if (change < 0) return { icon: '↓', color: 'pink', label: 'Falling', className: 'falling' };
     return { icon: '−', color: 'gray', label: 'Unchanged', className: 'unchanged' };
   };

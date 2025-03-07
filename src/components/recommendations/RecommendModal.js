@@ -9,6 +9,7 @@ import PhotoUploader from '../common/PhotoUploader';
 import PhotoViewer from '../common/PhotoViewer';
 import SendsSubTable from '../common/SendsSubTable';
 import SortableTable from '../common/SortableTable';
+import RankChangeIndicator from '../users/RankChangeIndicator';
 import './RecommendModal.css';
 
 /**
@@ -165,11 +166,7 @@ function RecommendModal({ onClose, user }) {
         label: 'Rank Change',
         sortable: true,
         render: (problem) => (
-          <span style={{
-            backgroundColor: problem.rankImprovement > 0 ? '#e6ffe6' : 'transparent'
-          }}>
-            {problem.rankImprovement > 0 ? `+${problem.rankImprovement}` : '0'}
-          </span>
+          <RankChangeIndicator change={problem.rankImprovement} />
         )
       },
       {
