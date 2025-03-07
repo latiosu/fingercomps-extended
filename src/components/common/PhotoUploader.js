@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useCompetition } from '../../contexts/CompetitionContext';
 import { trackPhotoUploaded } from '../../utils/analytics';
+import { getMainLocation } from '../../utils/scoreCalculators';
 import ErrorBoundary from './ErrorBoundary';
 import './PhotoUploader.css';
 
@@ -16,7 +17,9 @@ function PhotoUploader({ climbNo, onClose }) {
   const [error, setError] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
-  const { uploadProblemPhoto, competitionId } = useCompetition();
+  const { uploadProblemPhoto, competitionId, problems } = useCompetition();
+
+  const problem = problems[climbNo];
 
   /**
    * Handles file selection
@@ -115,7 +118,21 @@ function PhotoUploader({ climbNo, onClose }) {
     <ErrorBoundary>
       <div className="photo-uploader-overlay" onClick={onClose}>
         <div className="photo-uploader-modal" onClick={e => e.stopPropagation()}>
-          <h3>Upload Photo for Problem {climbNo}</h3>
+          <h3>
+            Problem #{problem.climbNo}
+            {problem?.marking && <span> | {problem.marking}</span>}
+            {problem?.grade && <span> ({problem.grade})</span>}
+            {problem?.station && (
+              <span>
+                  {' | '}
+                  {getMainLocation(problem.station)}
+                </span>
+              )}
+            {problem?.score && <span> | {problem.score} pts</span>}
+          </h3>
+
+          <p>Sadly, there's no photo of this problem. 😞</p>
+          <p>But... maybe you can help us take one? 👀</p>
 
           {error && (
             <div className="error-message">
@@ -129,7 +146,7 @@ function PhotoUploader({ climbNo, onClose }) {
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label htmlFor="photo-file">Select photo (max 5MB)</label>
+              <label htmlFor="photo-file">Upload photo (max 5MB)</label>
               <input
                 type="file"
                 id="photo-file"
