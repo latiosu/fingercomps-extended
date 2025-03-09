@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { useCompetition } from '../../contexts/CompetitionContext';
 import useExpandableRows from '../../hooks/useExpandableRows';
@@ -13,6 +13,9 @@ import SendsSubTable from '../common/SendsSubTable';
 import SortableTable from '../common/SortableTable';
 import RankChangeIndicator from '../users/RankChangeIndicator';
 import './RecommendModal.css';
+
+// Module-level variable to store the last search term between component mounts
+let lastSearchTerm = '';
 
 /**
  * Modal component for recommending problems to a user
@@ -64,7 +67,12 @@ function RecommendModal({ onClose, user }) {
   // State for filtering options
   const [showNonRankingProblems, setShowNonRankingProblems] = useState(currentUserIndex === 0 || !hasRankIncreasingProblems);
   const [sortByOverallTops, setSortByOverallTops] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(lastSearchTerm);
+
+  // Update lastSearchTerm when searchTerm changes
+  useEffect(() => {
+    lastSearchTerm = searchTerm;
+  }, [searchTerm]);
 
   // Initialize selectedLocation from localStorage if available
   const [selectedLocation, setSelectedLocation] = useState(() => {
