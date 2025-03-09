@@ -25,7 +25,6 @@ function PhotoIndicator({
 
   const handleViewClick = (e) => {
     e.stopPropagation(); // Prevent row expansion
-    trackPhotoViewed(climbNo, problemPhotos[climbNo][0]?.id, competitionId);
     onViewPhoto(climbNo);
   };
 
