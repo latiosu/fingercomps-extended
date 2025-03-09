@@ -40,10 +40,10 @@ export const AppProvider = ({ children }) => {
   // Helper function to load saved category for a competition
   const loadSavedCategory = useCallback((compId) => {
     if (!compId) return { category: "", categoryCode: "" };
-    
+
     const savedCategory = localStorage.getItem(`category_${compId}`) || "";
     const savedCategoryCode = localStorage.getItem(`categoryCode_${compId}`) || "";
-    
+
     return { category: savedCategory, categoryCode: savedCategoryCode };
   }, []);
 
@@ -56,7 +56,13 @@ export const AppProvider = ({ children }) => {
     const compId = localStorage.getItem('lastSelectedCompId');
     return loadSavedCategory(compId).categoryCode;
   });
-  const [focusView, setFocusView] = useState('user');
+
+  // Initialize focusView from localStorage if available, otherwise default to 'user'
+  const [focusView, setFocusView] = useState(() => {
+    const compId = localStorage.getItem('lastSelectedCompId');
+    if (!compId) return 'user';
+    return localStorage.getItem(`focusView_${compId}`) || 'user';
+  });
   const [limitScores, setLimitScores] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [recommendModalUser, setRecommendModalUser] = useState(null);
@@ -120,11 +126,17 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('lastSelectedComp', newComp);
     localStorage.setItem('lastSelectedCompId', newCompId);
     setCompNotFoundMessage("");
-    
+
     // Load saved category for this competition
     const { category, categoryCode } = loadSavedCategory(newCompId);
     setSelectedCategory(category);
     setSelectedCategoryCode(categoryCode);
+
+    // Load saved view preference for this competition
+    const savedView = localStorage.getItem(`focusView_${newCompId}`);
+    if (savedView) {
+      setFocusView(savedView);
+    }
   };
 
   // Context value

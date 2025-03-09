@@ -12,6 +12,11 @@ function ViewToggle() {
   const handleClick = (view) => {
     setFocusView(view);
 
+    // Save view preference to localStorage for this competition
+    if (selectedCompId) {
+      localStorage.setItem(`focusView_${selectedCompId}`, view);
+    }
+
     // Track when user switches to Routesetter View
     if (view === 'problems' && selectedCompId) {
       trackRoutesetterViewClicked(selectedCompId);
