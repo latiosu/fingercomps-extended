@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { useCompetition } from '../../contexts/CompetitionContext';
 import useExpandableRows from '../../hooks/useExpandableRows';
@@ -18,6 +18,7 @@ import SortableTable from '../common/SortableTable';
 function ProblemsTable() {
   const { isMobile, selectedCategoryCode } = useApp();
   const {
+    competitionId,
     categories,
     categoryTops,
     problems,
@@ -30,10 +31,34 @@ function ProblemsTable() {
 
   const { expandedRows, toggleRow } = useExpandableRows();
 
+  // Create a localStorage key for this competition's location filter
+  const locationStorageKey = `location_filter_${competitionId}`;
+
   // State for filtering and display options
   const [showRawCounts, setShowRawCounts] = useState(true);
   const [hideZeroTops, setHideZeroTops] = useState(true);
-  const [selectedLocation, setSelectedLocation] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState(() => {
+    try {
+      // Try to get saved location for this competition from localStorage
+      return localStorage.getItem(locationStorageKey) || '';
+    } catch (error) {
+      console.warn('Unable to access localStorage:', error);
+      return '';
+    }
+  });
+
+  // Save selected location to localStorage when it changes
+  useEffect(() => {
+    try {
+      if (selectedLocation) {
+        localStorage.setItem(locationStorageKey, selectedLocation);
+      } else {
+        localStorage.removeItem(locationStorageKey);
+      }
+    } catch (error) {
+      console.warn('Unable to save location to localStorage:', error);
+    }
+  }, [selectedLocation, locationStorageKey]);
 
   // State for photo viewer and uploader
   const [selectedPhotoClimbNo, setSelectedPhotoClimbNo] = useState(null);
