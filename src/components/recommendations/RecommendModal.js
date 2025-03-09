@@ -3,10 +3,12 @@ import { useApp } from '../../contexts/AppContext';
 import { useCompetition } from '../../contexts/CompetitionContext';
 import useExpandableRows from '../../hooks/useExpandableRows';
 import { getOrganizedLocations, getRecommendedProblems } from '../../utils/scoreCalculators';
+import { filterBySearchTerm } from '../../utils/searchFilters';
 import LocationFilter from '../common/LocationFilter';
 import PhotoIndicator from '../common/PhotoIndicator';
 import PhotoUploader from '../common/PhotoUploader';
 import PhotoViewer from '../common/PhotoViewer';
+import SearchInput from '../common/SearchInput';
 import SendsSubTable from '../common/SendsSubTable';
 import SortableTable from '../common/SortableTable';
 import RankChangeIndicator from '../users/RankChangeIndicator';
@@ -62,6 +64,7 @@ function RecommendModal({ onClose, user }) {
   // State for filtering options
   const [showNonRankingProblems, setShowNonRankingProblems] = useState(currentUserIndex === 0 || !hasRankIncreasingProblems);
   const [sortByOverallTops, setSortByOverallTops] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Initialize selectedLocation from localStorage if available
   const [selectedLocation, setSelectedLocation] = useState(() => {
@@ -99,7 +102,7 @@ function RecommendModal({ onClose, user }) {
   }, [problems]);
 
   // Get recommended problems
-  const recommendedProblems = getRecommendedProblems(
+  const allRecommendedProblems = getRecommendedProblems(
     problems,
     userScores,
     user,
@@ -109,6 +112,19 @@ function RecommendModal({ onClose, user }) {
     showNonRankingProblems,
     selectedLocation
   );
+
+  // Filter problems by search term (name/grade)
+  const recommendedProblems = useMemo(() => {
+    if (!searchTerm) return allRecommendedProblems;
+
+    return allRecommendedProblems.filter(problem => {
+      // Search in both problem number and marking (which contains name/grade)
+      const climbNoMatch = String(problem.climbNo).includes(searchTerm);
+      const markingMatch = filterBySearchTerm(problem, searchTerm, 'marking');
+
+      return climbNoMatch || markingMatch;
+    });
+  }, [allRecommendedProblems, searchTerm]);
 
   // Calculate points needed for next rank
   const pointsNeededForNextRank = currentUserIndex > 0
@@ -231,6 +247,16 @@ function RecommendModal({ onClose, user }) {
               <strong>{pointsNeededForNextRank} points</strong> till next rank (#{currentUserIndex})
             </div>
           )}
+
+            <SearchInput
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              placeholder='Search a colour here... (e.g. purple)'
+              component="RecommendModal"
+              field="search_by_name_grade"
+              resultsCount={recommendedProblems.length}
+              style={{ marginTop: '8px' }}
+            />
 
           <SortableTable
             columns={columns}

@@ -4,7 +4,8 @@ import { useApp } from '../../contexts/AppContext';
 import { useCompetition } from '../../contexts/CompetitionContext';
 import { useRankHistory } from '../../contexts/RankHistoryContext';
 import useExpandableRows from '../../hooks/useExpandableRows';
-import { useSearchTracking } from '../../utils/analytics';
+import { filterBySearchTerm } from '../../utils/searchFilters';
+import SearchInput from '../common/SearchInput';
 import SortableTable from '../common/SortableTable';
 import MoversAndShakers from './MoversAndShakers';
 import RankChangeIndicator from './RankChangeIndicator';
@@ -70,22 +71,8 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
 
     // Then, apply search term filter while preserving the category-based indices
     return categoryFilteredData
-      .filter(item => {
-        // Filter by search term if provided
-        if (searchTerm && !item.name.toLowerCase().includes(searchTerm.toLowerCase())) {
-          return false;
-        }
-        return true;
-      });
+      .filter(item => filterBySearchTerm(item, searchTerm));
   }, [dataWithRankChanges, selectedCategory, searchTerm]);
-
-  // Track search input usage with PostHog
-  useSearchTracking(searchTerm, {
-    component: 'UserTable',
-    field: 'search_by_name',
-    resultsCount: filteredData.length,
-    debounceTime: 800 // Track after 800ms of inactivity
-  });
 
   // Define columns for the table
   const columns = [
@@ -190,55 +177,15 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
 
       <MoversAndShakers onRiserClick={setSearchTerm} searchTerm={searchTerm} />
 
-      {/* Search by name */}
-      <div className="search-container" style={{
-        marginTop: '4px',
-        display: 'flex',
-        alignItems: 'center',
-        maxWidth: '450px',
-        position: 'relative'
-      }}>
-        <span style={{
-          position: 'absolute',
-          left: '10px',
-          color: '#666',
-          fontSize: '18px',
-          pointerEvents: 'none' // Allow clicks to pass through to the input underneath
-        }}>
-          🔍
-        </span>
-        <input
-          type="text"
-          placeholder="Search by name..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{
-            padding: '8px 12px 8px 40px',
-            borderRadius: '4px',
-            border: '1px solid #ccc',
-            width: '100%',
-            fontSize: '14px'
-          }}
-        />
-        {searchTerm && (
-          <button
-            onClick={() => setSearchTerm('')}
-            style={{
-              position: 'absolute',
-              right: '10px',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '18px',
-              fontWeight: 'bold',
-              color: '#dd7777'
-            }}
-            aria-label="Clear search"
-          >
-            ✕
-          </button>
-        )}
-      </div>
+      <SearchInput
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        placeholder="Search by name..."
+        component="UserTable"
+        field="search_by_name"
+        resultsCount={filteredData.length}
+        debounceTime={800}
+      />
       <div className="table-container">
         <SortableTable
           columns={columns}
