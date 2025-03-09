@@ -82,7 +82,7 @@ function UserScoresTable({
                   style={shouldHighlight(score.climbNo) ? { backgroundColor: '#E9FFDB'  } : {backgroundColor: '#F9F9F9' }}
                 >
                   <td>
-                    {shouldHighlight(score.climbNo) ? '✅' : ''}
+                    {shouldHighlight(score.climbNo) ? '✅ ' : ''}
                     {score.climbNo}
                     <PhotoIndicator
                       climbNo={score.climbNo}
