@@ -173,6 +173,29 @@
   color: #555;
 }
 
+.report-reason-selector {
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.reason-dropdown {
+  width: 100%;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  background-color: #f9f9f9;
+  font-size: 14px;
+  color: #333;
+  appearance: menulist;
+  cursor: pointer;
+}
+
+.reason-dropdown:focus {
+  outline: none;
+  border-color: #aaa;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
 .report-confirmation-buttons {
   display: flex;
   justify-content: center;

@@ -7,6 +7,14 @@ import { getMainLocation } from '../../utils/scoreCalculators';
 import ErrorBoundary from './ErrorBoundary';
 import './PhotoViewer.css';
 
+// Report reason options
+const REPORT_REASONS = [
+  "Incorrect photo",
+  "Inappropriate content",
+  "Spam",
+  "Other"
+];
+
 /**
  * Component for viewing problem photos
  * @param {Array} photos - Array of photo objects to display
@@ -18,6 +26,7 @@ function PhotoViewer({ photos, onClose }) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [reported, setReported] = useState(false);
   const [showReportConfirmation, setShowReportConfirmation] = useState(false);
+  const [selectedReason, setSelectedReason] = useState(REPORT_REASONS[0]);
 
   // Get competitionId from competition context
   const { competitionId } = useCompetition();
@@ -57,10 +66,11 @@ function PhotoViewer({ photos, onClose }) {
   /**
    * Reports an inappropriate photo
    * @param {string} photoId - ID of the photo to report
+   * @param {string} reason - Reason for reporting the photo
    * @param {string} [reportedBy] - Optional identifier of who reported the photo
    * @returns {Promise<boolean>} Success status
    */
-  const reportPhoto = async (photoId, reportedBy) => {
+  const reportPhoto = async (photoId, reason, reportedBy) => {
     try {
       // Get client identifier if no reporter ID is provided
       const reporter = reportedBy || getClientIdentifier();
@@ -70,7 +80,8 @@ function PhotoViewer({ photos, onClose }) {
         .insert({
           photo_id: photoId,
           reported_at: new Date(),
-          reported_by: reporter
+          reported_by: reporter,
+          report_reason: reason
         });
 
       if (error) throw error;
@@ -170,7 +181,22 @@ function PhotoViewer({ photos, onClose }) {
           <div className="report-confirmation-overlay" onClick={(e) => e.stopPropagation()}>
             <div className="report-confirmation-dialog">
               <h3>Report Photo</h3>
-              <p>Are you sure you want to report this photo as inappropriate?</p>
+              <p>Please select a reason for reporting this photo:</p>
+
+              <div className="report-reason-selector">
+                <select
+                  value={selectedReason}
+                  onChange={(e) => setSelectedReason(e.target.value)}
+                  className="reason-dropdown"
+                >
+                  {REPORT_REASONS.map((reason) => (
+                    <option key={reason} value={reason}>
+                      {reason}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="report-confirmation-buttons">
                 <button
                   className="cancel-button"
@@ -181,7 +207,7 @@ function PhotoViewer({ photos, onClose }) {
                 <button
                   className="confirm-button"
                   onClick={() => {
-                    reportPhoto(currentPhoto.id);
+                    reportPhoto(currentPhoto.id, selectedReason);
                     setShowReportConfirmation(false);
                   }}
                 >
