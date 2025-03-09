@@ -4,10 +4,12 @@ import { useCompetition } from '../../contexts/CompetitionContext';
 import useExpandableRows from '../../hooks/useExpandableRows';
 import { formatDateForHover, toTimeAgoString } from '../../utils/dateFormatters';
 import { getMainLocation, getOrganizedLocations } from '../../utils/scoreCalculators';
+import { filterBySearchTerm } from '../../utils/searchFilters';
 import LocationFilter from '../common/LocationFilter';
 import PhotoIndicator from '../common/PhotoIndicator';
 import PhotoUploader from '../common/PhotoUploader';
 import PhotoViewer from '../common/PhotoViewer';
+import SearchInput from '../common/SearchInput';
 import SendsSubTable from '../common/SendsSubTable';
 import SortableTable from '../common/SortableTable';
 
@@ -37,6 +39,7 @@ function ProblemsTable() {
   // State for filtering and display options
   const [showRawCounts, setShowRawCounts] = useState(true);
   const [hideZeroTops, setHideZeroTops] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedLocation, setSelectedLocation] = useState(() => {
     try {
       // Try to get saved location for this competition from localStorage
@@ -161,6 +164,17 @@ function ProblemsTable() {
       );
     }
 
+    // Filter problems by search term (name/grade/problem number)
+    if (searchTerm) {
+      filteredData = filteredData.filter(problem => {
+        // Search in both problem number and marking (which contains name/grade)
+        const climbNoMatch = String(problem.climbNo).includes(searchTerm);
+        const markingMatch = filterBySearchTerm(problem, searchTerm, 'marking');
+
+        return climbNoMatch || markingMatch;
+      });
+    }
+
     return filteredData.map(problem => ({
       ...problem,
       ...focusCategories.reduce((acc, cat) => {
@@ -179,7 +193,7 @@ function ProblemsTable() {
         return acc;
       }, {})
     }));
-  }, [problems, hideZeroTops, focusCategories, categoryTops, selectedCategoryCode, showRawCounts, countCompetitors, selectedLocation]);
+  }, [problems, hideZeroTops, focusCategories, categoryTops, selectedCategoryCode, showRawCounts, countCompetitors, selectedLocation, searchTerm]);
 
   // Render expanded content for a row
   const renderExpandedContent = (item) => (
@@ -220,6 +234,15 @@ function ProblemsTable() {
       </div>
 
       <div className="table-container">
+        <SearchInput
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          placeholder="Search a colour here... (e.g. purple)"
+          component="ProblemsTable"
+          field="search_by_name_grade"
+          resultsCount={problemsData.length}
+          style={{ marginTop: '8px', marginBottom: '8px' }}
+        />
         <SortableTable
           columns={columns}
           data={problemsData}
