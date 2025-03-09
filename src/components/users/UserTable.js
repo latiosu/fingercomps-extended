@@ -1,5 +1,5 @@
 import posthog from 'posthog-js';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { useCompetition } from '../../contexts/CompetitionContext';
 import { useRankHistory } from '../../contexts/RankHistoryContext';
@@ -36,6 +36,37 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
   const { rankChanges} = useRankHistory();
 
   const { expandedRows, toggleRow } = useExpandableRows();
+
+  /**
+   * Track when exactly two rows are expanded (triggering matching problems feature)
+   * This happens when a user opens two competitor rows, which activates the
+   * matching problems highlighting feature (problems that both users have completed)
+   *
+   * Reference: The HighlightedProblemsContext tracks which problems should be
+   * highlighted when multiple user tables are open, showing matching problems
+   * at the top when exactly 2 rows are expanded.
+   */
+  useEffect(() => {
+    // Only track in production environment
+    if (process.env.NODE_ENV !== "development" && expandedRows.size === 2) {
+      // Convert Set to Array to get the competitor IDs
+      const openCompetitorIds = Array.from(expandedRows);
+
+      // Find the competitor data for the open rows
+      const openCompetitors = openCompetitorIds.map(id =>
+        userTableData.find(user => user.competitorNo === id)
+      ).filter(Boolean);
+
+      // Track the event with PostHog
+      posthog.capture('matching_problems_feature_triggered', {
+        component: 'UserTable',
+        open_competitor_count: 2,
+        open_competitor_categories: openCompetitors.map(c => c.category),
+        open_competitor_names: openCompetitors.map(c => c.name),
+        open_competitor_ranks: openCompetitors.map(c => c.rank)
+      });
+    }
+  }, [expandedRows, userTableData]);
 
   // Combine user table data with rank changes
   const dataWithRankChanges = useMemo(() => {
