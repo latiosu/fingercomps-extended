@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCompetition } from '../../contexts/CompetitionContext';
-import { trackPhotoUploadClick, trackPhotoViewed } from '../../utils/analytics';
+import { trackPhotoUploadClick } from '../../utils/analytics';
 
 /**
  * Component to display a photo indicator (camera icon or upload button)
