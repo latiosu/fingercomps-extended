@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { useCompetition } from '../../contexts/CompetitionContext';
 import useExpandableRows from '../../hooks/useExpandableRows';
+import { trackHideZeroTopsFilterChanged, trackRawCountsFilterChanged } from '../../utils/analytics';
 import { formatDateForHover, toTimeAgoString } from '../../utils/dateFormatters';
 import { getMainLocation, getOrganizedLocations } from '../../utils/scoreCalculators';
 import { filterBySearchTerm } from '../../utils/searchFilters';
@@ -33,16 +34,42 @@ function ProblemsTable() {
 
   const { expandedRows, toggleRow } = useExpandableRows();
 
-  // Create a localStorage key for this competition's location filter
   const locationStorageKey = `location_filter_${competitionId}`;
+  const rawCountsStorageKey = `raw_counts_filter_${competitionId}`;
+  const hideZeroTopsStorageKey = `hide_zero_tops_filter_${competitionId}`;
+  const searchStorageKey = `problems_search_filter_${competitionId}`;
 
-  // State for filtering and display options
-  const [showRawCounts, setShowRawCounts] = useState(true);
-  const [hideZeroTops, setHideZeroTops] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [showRawCounts, setShowRawCounts] = useState(() => {
+    try {
+      const savedValue = localStorage.getItem(rawCountsStorageKey);
+      return savedValue !== null ? savedValue === 'true' : true; // Default to true if not found
+    } catch (error) {
+      console.warn('Unable to access localStorage:', error);
+      return true;
+    }
+  });
+
+  const [hideZeroTops, setHideZeroTops] = useState(() => {
+    try {
+      const savedValue = localStorage.getItem(hideZeroTopsStorageKey);
+      return savedValue !== null ? savedValue === 'true' : true; // Default to true if not found
+    } catch (error) {
+      console.warn('Unable to access localStorage:', error);
+      return true;
+    }
+  });
+
+  const [searchTerm, setSearchTerm] = useState(() => {
+    try {
+      return localStorage.getItem(searchStorageKey) || '';
+    } catch (error) {
+      console.warn('Unable to access localStorage:', error);
+      return '';
+    }
+  });
+
   const [selectedLocation, setSelectedLocation] = useState(() => {
     try {
-      // Try to get saved location for this competition from localStorage
       return localStorage.getItem(locationStorageKey) || '';
     } catch (error) {
       console.warn('Unable to access localStorage:', error);
@@ -50,7 +77,6 @@ function ProblemsTable() {
     }
   });
 
-  // Save selected location to localStorage when it changes
   useEffect(() => {
     try {
       if (selectedLocation) {
@@ -62,6 +88,36 @@ function ProblemsTable() {
       console.warn('Unable to save location to localStorage:', error);
     }
   }, [selectedLocation, locationStorageKey]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(rawCountsStorageKey, showRawCounts.toString());
+      trackRawCountsFilterChanged(showRawCounts, competitionId);
+    } catch (error) {
+      console.warn('Unable to save raw counts preference to localStorage:', error);
+    }
+  }, [showRawCounts, rawCountsStorageKey, competitionId]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(hideZeroTopsStorageKey, hideZeroTops.toString());
+      trackHideZeroTopsFilterChanged(hideZeroTops, competitionId);
+    } catch (error) {
+      console.warn('Unable to save hide zero tops preference to localStorage:', error);
+    }
+  }, [hideZeroTops, hideZeroTopsStorageKey, competitionId]);
+
+  useEffect(() => {
+    try {
+      if (searchTerm) {
+        localStorage.setItem(searchStorageKey, searchTerm);
+      } else {
+        localStorage.removeItem(searchStorageKey);
+      }
+    } catch (error) {
+      console.warn('Unable to save search term to localStorage:', error);
+    }
+  }, [searchTerm, searchStorageKey]);
 
   // State for photo viewer and uploader
   const [selectedPhotoClimbNo, setSelectedPhotoClimbNo] = useState(null);
@@ -242,6 +298,8 @@ function ProblemsTable() {
           field="search_by_name_grade"
           resultsCount={problemsData.length}
           style={{ marginTop: '8px', marginBottom: '8px' }}
+          view="routesetter"
+          competitionId={competitionId}
         />
         <SortableTable
           columns={columns}

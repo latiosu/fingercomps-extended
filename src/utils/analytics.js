@@ -116,6 +116,34 @@ export const trackRoutesetterViewClicked = (competitionId) => {
 };
 
 /**
+ * Track when a user changes the raw counts filter
+ * @param {boolean} showRawCounts - The new filter state
+ * @param {string} competitionId - ID of the current competition
+ */
+export const trackRawCountsFilterChanged = (showRawCounts, competitionId) => {
+  if (process.env.NODE_ENV === "development") return;
+
+  posthog.capture('raw_counts_filter_changed', {
+    show_raw_counts: showRawCounts,
+    competition_id: competitionId
+  });
+};
+
+/**
+ * Track when a user changes the hide zero tops filter
+ * @param {boolean} hideZeroTops - The new filter state
+ * @param {string} competitionId - ID of the current competition
+ */
+export const trackHideZeroTopsFilterChanged = (hideZeroTops, competitionId) => {
+  if (process.env.NODE_ENV === "development") return;
+
+  posthog.capture('hide_zero_tops_filter_changed', {
+    hide_zero_tops: hideZeroTops,
+    competition_id: competitionId
+  });
+};
+
+/**
  * Custom hook to track search input usage
  * @param {string} searchTerm - The current search term
  * @param {Object} options - Configuration options
@@ -123,13 +151,17 @@ export const trackRoutesetterViewClicked = (competitionId) => {
  * @param {string} options.field - The field identifier for the search input
  * @param {number|function} options.resultsCount - The number of results or a function that returns the count
  * @param {number} options.debounceTime - Time in ms to wait before tracking search completion (default: 1000ms)
+ * @param {string} options.view - The view context (e.g., 'competitor', 'routesetter')
+ * @param {string} options.competitionId - The ID of the current competition
  */
 export const useSearchTracking = (searchTerm, options) => {
   const {
     component,
     field,
     resultsCount,
-    debounceTime = 1000
+    debounceTime = 1000,
+    view = '',
+    competitionId = ''
   } = options;
 
   const searchTimeoutRef = useRef(null);
@@ -152,7 +184,9 @@ export const useSearchTracking = (searchTerm, options) => {
       if (!hasSearchedRef.current) {
         posthog.capture('search_started', {
           component,
-          field
+          field,
+          view,
+          competition_id: competitionId
         });
         hasSearchedRef.current = true;
       }
@@ -164,6 +198,8 @@ export const useSearchTracking = (searchTerm, options) => {
         posthog.capture('search_completed', {
           component,
           field,
+          view,
+          competition_id: competitionId,
           search_term: searchTerm,
           results_count: count
         });
@@ -179,7 +215,7 @@ export const useSearchTracking = (searchTerm, options) => {
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [searchTerm, component, field, resultsCount, debounceTime]);
+  }, [searchTerm, component, field, resultsCount, debounceTime, view, competitionId]);
 };
 
 export default loadPosthog;
