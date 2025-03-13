@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { useCompetition } from '../../contexts/CompetitionContext';
 import useExpandableRows from '../../hooks/useExpandableRows';
@@ -13,9 +13,6 @@ import SendsSubTable from '../common/SendsSubTable';
 import SortableTable from '../common/SortableTable';
 import RankChangeIndicator from '../users/RankChangeIndicator';
 import './RecommendModal.css';
-
-// Module-level variable to store the last search term between component mounts
-let lastSearchTerm = '';
 
 /**
  * Modal component for recommending problems to a user
@@ -64,17 +61,65 @@ function RecommendModal({ onClose, user }) {
     return allRecommendedProblems.some(problem => problem.rankImprovement > 0);
   }, [problems, scores, user, categoryUsers, categories]);
 
-  // State for filtering options
-  const [showNonRankingProblems, setShowNonRankingProblems] = useState(currentUserIndex === 0 || !hasRankIncreasingProblems);
-  const [sortByOverallTops, setSortByOverallTops] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(lastSearchTerm);
+  const [showNonRankingProblems, setShowNonRankingProblems] = useState(() => {
+    try {
+      const savedValue = localStorage.getItem('recommendModal.showNonRankingProblems');
+      return savedValue !== null
+        ? savedValue === 'true'
+        : (currentUserIndex === 0 || !hasRankIncreasingProblems); // Default value
+    } catch (e) {
+      console.error('Error accessing localStorage:', e);
+      return currentUserIndex === 0 || !hasRankIncreasingProblems;
+    }
+  });
 
-  // Update lastSearchTerm when searchTerm changes
+  const [sortByOverallTops, setSortByOverallTops] = useState(() => {
+    try {
+      const savedValue = localStorage.getItem('recommendModal.sortByOverallTops');
+      return savedValue !== null ? savedValue === 'true' : false; // Default to false
+    } catch (e) {
+      console.error('Error accessing localStorage:', e);
+      return false;
+    }
+  });
+
+  const [searchTerm, setSearchTerm] = useState(() => {
+    try {
+      return localStorage.getItem('recommendModal.searchTerm') || '';
+    } catch (e) {
+      console.error('Error accessing localStorage:', e);
+      return '';
+    }
+  });
+
   useEffect(() => {
-    lastSearchTerm = searchTerm;
+    try {
+      if (searchTerm) {
+        localStorage.setItem('recommendModal.searchTerm', searchTerm);
+      } else {
+        localStorage.removeItem('recommendModal.searchTerm');
+      }
+    } catch (e) {
+      console.error('Error saving search term to localStorage:', e);
+    }
   }, [searchTerm]);
 
-  // Initialize selectedLocation from localStorage if available
+  useEffect(() => {
+    try {
+      localStorage.setItem('recommendModal.showNonRankingProblems', showNonRankingProblems.toString());
+    } catch (e) {
+      console.error('Error saving to localStorage:', e);
+    }
+  }, [showNonRankingProblems]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('recommendModal.sortByOverallTops', sortByOverallTops.toString());
+    } catch (e) {
+      console.error('Error saving to localStorage:', e);
+    }
+  }, [sortByOverallTops]);
+
   const [selectedLocation, setSelectedLocation] = useState(() => {
     try {
       return localStorage.getItem('recommendModal.selectedLocation') || '';
