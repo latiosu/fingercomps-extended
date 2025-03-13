@@ -194,7 +194,7 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
             onRecommendClick && onRecommendClick(item);
           }}
         >
-          Recommend Problems ✨
+          Recommended Problems ✨
         </button>
       </div>
     </>

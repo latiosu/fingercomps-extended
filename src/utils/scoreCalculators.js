@@ -139,10 +139,10 @@ export const getRecommendedProblems = (
     .reduce((sum, s) => sum + s.score + (s.flashed ? flashPoints : 0), 0);
 
   // Calculate points needed for next rank
-  const currentUserIndex = categoryUsers.findIndex(u => u.competitorNo === currentUser.competitorNo);
-  const pointsNeededForNextRank = currentUserIndex > 0
-    ? categoryUsers[currentUserIndex - 1].total - currentUser.total
-    : 0;
+  // const currentUserIndex = categoryUsers.findIndex(u => u.competitorNo === currentUser.competitorNo);
+  // const pointsNeededForNextRank = currentUserIndex > 0
+  //   ? categoryUsers[currentUserIndex - 1].total - currentUser.total
+  //   : 0;
 
   // Helper function to get tops count based on sort mode
   const getTopCount = (problem) => {
@@ -162,12 +162,13 @@ export const getRecommendedProblems = (
       // Check if worth more points than user's lowest counting top
       if (problem.score <= lowestCountingScore) return false;
 
-      // If not at rank 1, check if problem provides at least 50% of points needed
-      if (currentUserIndex > 0) {
-        const newTotal = calculateNewTotal(sortedUserScores, problem.score, flashPoints, pumpfestTopScores);
-        const additionalPoints = newTotal - currentTotal;
-        if (additionalPoints < pointsNeededForNextRank * 0.5) return false;
-      }
+      // Disable filtering of recommended problems (to encourage use over routesetter view)
+      // If not at rank 1, check if problem provides at least 10% of points needed
+      // if (currentUserIndex > 0) {
+      //   const newTotal = calculateNewTotal(sortedUserScores, problem.score, flashPoints, pumpfestTopScores);
+      //   const additionalPoints = newTotal - currentTotal;
+      //   if (additionalPoints < pointsNeededForNextRank * 0.5) return false;
+      // }
 
       // Filter by location if selected
       if (location && getMainLocation(problem.station) !== location) return false;
