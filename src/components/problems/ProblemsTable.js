@@ -38,6 +38,17 @@ function ProblemsTable() {
   const rawCountsStorageKey = `raw_counts_filter_${competitionId}`;
   const hideZeroTopsStorageKey = `hide_zero_tops_filter_${competitionId}`;
   const searchStorageKey = `problems_search_filter_${competitionId}`;
+  const showOverallTopsFlashesStorageKey = `show_overall_tops_flashes_${competitionId}`;
+
+  const [showOverallTopsFlashes, setShowOverallTopsFlashes] = useState(() => {
+    try {
+      const savedValue = localStorage.getItem(showOverallTopsFlashesStorageKey);
+      return savedValue !== null ? savedValue === 'true' : true; // Default to true if not found
+    } catch (error) {
+      console.warn('Unable to access localStorage:', error);
+      return false;
+    }
+  });
 
   const [showRawCounts, setShowRawCounts] = useState(() => {
     try {
@@ -106,6 +117,14 @@ function ProblemsTable() {
       console.warn('Unable to save hide zero tops preference to localStorage:', error);
     }
   }, [hideZeroTops, hideZeroTopsStorageKey, competitionId]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(showOverallTopsFlashesStorageKey, showOverallTopsFlashes.toString());
+    } catch (error) {
+      console.warn('Unable to save overall tops & flashes preference to localStorage:', error);
+    }
+  }, [showOverallTopsFlashes, showOverallTopsFlashesStorageKey]);
 
   useEffect(() => {
     try {
@@ -181,22 +200,66 @@ function ProblemsTable() {
       }
     ];
 
-    // Add category columns
-    const categoryColumns = focusCategories.map(cat => ({
-      key: `stat-${cat.code}`,
-      label: cat.name || 'TBC',
-      sortable: true,
-      render: (item) => {
-        const statKey = `stat-${cat.code}`;
-        if (item[statKey]) {
-          return <span>{item[statKey].rawValue}</span>;
-        }
-        return <span>-</span>;
-      }
-    }));
+    if (showOverallTopsFlashes) {
+      // When showing overall tops & flashes, add two columns for aggregated data
+      const overallColumns = [
+        {
+          key: 'overall-tops',
+          label: 'Overall Tops',
+          sortable: true,
+          render: (item) => {
+            if (!item.stats) return <span>-</span>;
 
-    return [...baseColumns, ...categoryColumns];
-  }, [focusCategories, isMobile, problemPhotos]);
+            const totalTops = Object.values(item.stats).reduce(
+              (sum, stat) => sum + (stat.tops || 0),
+              0
+            );
+
+            return <span>{showRawCounts ?
+              totalTops :
+              `${(totalTops / Object.keys(categories).length).toFixed(0)}%`}
+            </span>;
+          }
+        },
+        {
+          key: 'overall-flashes',
+          label: 'Overall Flashes',
+          sortable: true,
+          render: (item) => {
+            if (!item.stats) return <span>-</span>;
+
+            const totalFlashes = Object.values(item.stats).reduce(
+              (sum, stat) => sum + (stat.flashes || 0),
+              0
+            );
+
+            return <span>{showRawCounts ?
+              totalFlashes :
+              `${(totalFlashes / Object.keys(categories).length).toFixed(0)}%`}
+            </span>;
+          }
+        }
+      ];
+
+      return [...baseColumns, ...overallColumns];
+    } else {
+      // Add category columns when not showing overall tops & flashes
+      const categoryColumns = focusCategories.map(cat => ({
+        key: `stat-${cat.code}`,
+        label: cat.name || 'TBC',
+        sortable: true,
+        render: (item) => {
+          const statKey = `stat-${cat.code}`;
+          if (item[statKey]) {
+            return <span>{item[statKey].rawValue}</span>;
+          }
+          return <span>-</span>;
+        }
+      }));
+
+      return [...baseColumns, ...categoryColumns];
+    }
+  }, [focusCategories, isMobile, problemPhotos, showOverallTopsFlashes, showRawCounts, categories]);
 
   // Filter and prepare problems data
   const problemsData = useMemo(() => {
