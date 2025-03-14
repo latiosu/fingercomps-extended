@@ -304,7 +304,7 @@ function RecommendModal({ onClose, user }) {
             <SearchInput
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
-              placeholder='Search a colour here... (e.g. purple)'
+              placeholder='Search by number or colour... (e.g. 42 or purple)'
               component="RecommendModal"
               field="search_by_name_grade"
               resultsCount={recommendedProblems.length}

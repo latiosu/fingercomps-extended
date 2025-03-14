@@ -287,13 +287,22 @@ function ProblemsTable() {
           />
           Hide problems with no tops
         </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={showOverallTopsFlashes}
+            onChange={() => setShowOverallTopsFlashes(!showOverallTopsFlashes)}
+            disabled={loading && loadingProgress < 100}
+          />
+          Show overall tops & flashes
+        </label>
       </div>
 
       <div className="table-container">
         <SearchInput
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
-          placeholder="Search a colour here... (e.g. purple)"
+          placeholder="Search by number or colour... (e.g. 42 or purple)"
           component="ProblemsTable"
           field="search_by_name_grade"
           resultsCount={problemsData.length}
