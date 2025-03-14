@@ -11,7 +11,8 @@ function CategorySelector() {
     selectedCategory,
     setSelectedCategory,
     setSelectedCategoryCode,
-    selectedCompId
+    selectedCompId,
+    focusView,
   } = useApp();
 
   const { categories } = useCompetition();
@@ -33,7 +34,7 @@ function CategorySelector() {
 
   return (
     <div>
-      <label htmlFor="filterCategory">Show Category:</label>
+      <label htmlFor="filterCategory">{focusView === "problems" ? "Filter by category:" : "Show Category:"}</label>
       <select
         id="filterCategory"
         value={selectedCategory}
