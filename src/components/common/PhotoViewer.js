@@ -39,6 +39,17 @@ function PhotoViewer({ photos, onClose }) {
     }
   }, [photos, currentIndex, competitionId]);
 
+  // Prevent background scrolling when modal is open
+  React.useEffect(() => {
+    // Add class to body when component mounts
+    document.body.classList.add('modal-open');
+
+    // Remove class when component unmounts
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, []);
+
   if (!photos || photos.length === 0) {
     return null;
   }
