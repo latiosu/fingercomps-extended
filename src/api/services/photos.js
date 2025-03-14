@@ -47,9 +47,9 @@ export const generateImageVariants = (baseUrl) => {
  */
 export const uploadProblemPhoto = async (competitionId, climbNo, file) => {
   try {
-    // Validate file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-      throw new Error("File size exceeds 5MB limit");
+    // Validate file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+      throw new Error("File size exceeds 10MB limit");
     }
 
     // Validate file type
