@@ -1,18 +1,36 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useApp } from '../../contexts/AppContext';
-import { useCompetition } from '../../contexts/CompetitionContext';
-import useExpandableRows from '../../hooks/useExpandableRows';
-import { trackHideZeroTopsFilterChanged, trackRawCountsFilterChanged } from '../../utils/analytics';
-import { formatDateForHover, toTimeAgoString } from '../../utils/dateFormatters';
-import { getMainLocation, getOrganizedLocations } from '../../utils/scoreCalculators';
-import { filterBySearchTerm } from '../../utils/searchFilters';
-import LocationFilter from '../common/LocationFilter';
-import PhotoIndicator from '../common/PhotoIndicator';
-import PhotoUploader from '../common/PhotoUploader';
-import PhotoViewer from '../common/PhotoViewer';
-import SearchInput from '../common/SearchInput';
-import SendsSubTable from '../common/SendsSubTable';
-import SortableTable from '../common/SortableTable';
+import React, { useEffect, useMemo, useState } from "react";
+import { useApp } from "../../contexts/AppContext";
+import { useCompetition } from "../../contexts/CompetitionContext";
+import useExpandableRows from "../../hooks/useExpandableRows";
+import {
+  trackHideZeroTopsFilterChanged,
+  trackRawCountsFilterChanged,
+} from "../../utils/analytics";
+import {
+  formatDateForHover,
+  toTimeAgoString,
+} from "../../utils/dateFormatters";
+import {
+  getMainLocation,
+  getOrganizedLocations,
+} from "../../utils/scoreCalculators";
+import { filterBySearchTerm } from "../../utils/searchFilters";
+import LocationFilter from "../common/LocationFilter";
+import PhotoIndicator from "../common/PhotoIndicator";
+import PhotoUploader from "../common/PhotoUploader";
+import PhotoViewer from "../common/PhotoViewer";
+import SearchInput from "../common/SearchInput";
+import SendsSubTable from "../common/SendsSubTable";
+import SortableTable from "../common/SortableTable";
+
+export const TOP_COLUMN_KEY = "tops";
+export const FLASH_COLUMN_KEY = "flashes";
+export const CLIMB_NO_COLUMN_KEY = "climbNo";
+export const MARKING_COLUMN_KEY = "marking";
+export const SCORE_COLUMN_KEY = "score";
+export const CREATED_AT_COLUMN_KEY = "createdAt";
+
+export const SORT_VALUE_KEY = "sortValue";
 
 /**
  * Component to display the problems table
@@ -29,7 +47,7 @@ function ProblemsTable() {
     loadingProgress,
     partialDataAvailable,
     countCompetitors,
-    problemPhotos
+    problemPhotos,
   } = useCompetition();
 
   const { expandedRows, toggleRow } = useExpandableRows();
@@ -43,9 +61,9 @@ function ProblemsTable() {
   const [showOverallTopsFlashes, setShowOverallTopsFlashes] = useState(() => {
     try {
       const savedValue = localStorage.getItem(showOverallTopsFlashesStorageKey);
-      return savedValue !== null ? savedValue === 'true' : true; // Default to true if not found
+      return savedValue !== null ? savedValue === "true" : true; // Default to true if not found
     } catch (error) {
-      console.warn('Unable to access localStorage:', error);
+      console.warn("Unable to access localStorage:", error);
       return false;
     }
   });
@@ -53,9 +71,9 @@ function ProblemsTable() {
   const [showRawCounts, setShowRawCounts] = useState(() => {
     try {
       const savedValue = localStorage.getItem(rawCountsStorageKey);
-      return savedValue !== null ? savedValue === 'true' : true; // Default to true if not found
+      return savedValue !== null ? savedValue === "true" : true; // Default to true if not found
     } catch (error) {
-      console.warn('Unable to access localStorage:', error);
+      console.warn("Unable to access localStorage:", error);
       return true;
     }
   });
@@ -63,28 +81,28 @@ function ProblemsTable() {
   const [hideZeroTops, setHideZeroTops] = useState(() => {
     try {
       const savedValue = localStorage.getItem(hideZeroTopsStorageKey);
-      return savedValue !== null ? savedValue === 'true' : true; // Default to true if not found
+      return savedValue !== null ? savedValue === "true" : true; // Default to true if not found
     } catch (error) {
-      console.warn('Unable to access localStorage:', error);
+      console.warn("Unable to access localStorage:", error);
       return true;
     }
   });
 
   const [searchTerm, setSearchTerm] = useState(() => {
     try {
-      return localStorage.getItem(searchStorageKey) || '';
+      return localStorage.getItem(searchStorageKey) || "";
     } catch (error) {
-      console.warn('Unable to access localStorage:', error);
-      return '';
+      console.warn("Unable to access localStorage:", error);
+      return "";
     }
   });
 
   const [selectedLocation, setSelectedLocation] = useState(() => {
     try {
-      return localStorage.getItem(locationStorageKey) || '';
+      return localStorage.getItem(locationStorageKey) || "";
     } catch (error) {
-      console.warn('Unable to access localStorage:', error);
-      return '';
+      console.warn("Unable to access localStorage:", error);
+      return "";
     }
   });
 
@@ -96,7 +114,7 @@ function ProblemsTable() {
         localStorage.removeItem(locationStorageKey);
       }
     } catch (error) {
-      console.warn('Unable to save location to localStorage:', error);
+      console.warn("Unable to save location to localStorage:", error);
     }
   }, [selectedLocation, locationStorageKey]);
 
@@ -105,7 +123,10 @@ function ProblemsTable() {
       localStorage.setItem(rawCountsStorageKey, showRawCounts.toString());
       trackRawCountsFilterChanged(showRawCounts, competitionId);
     } catch (error) {
-      console.warn('Unable to save raw counts preference to localStorage:', error);
+      console.warn(
+        "Unable to save raw counts preference to localStorage:",
+        error
+      );
     }
   }, [showRawCounts, rawCountsStorageKey, competitionId]);
 
@@ -114,15 +135,24 @@ function ProblemsTable() {
       localStorage.setItem(hideZeroTopsStorageKey, hideZeroTops.toString());
       trackHideZeroTopsFilterChanged(hideZeroTops, competitionId);
     } catch (error) {
-      console.warn('Unable to save hide zero tops preference to localStorage:', error);
+      console.warn(
+        "Unable to save hide zero tops preference to localStorage:",
+        error
+      );
     }
   }, [hideZeroTops, hideZeroTopsStorageKey, competitionId]);
 
   useEffect(() => {
     try {
-      localStorage.setItem(showOverallTopsFlashesStorageKey, showOverallTopsFlashes.toString());
+      localStorage.setItem(
+        showOverallTopsFlashesStorageKey,
+        showOverallTopsFlashes.toString()
+      );
     } catch (error) {
-      console.warn('Unable to save overall tops & flashes preference to localStorage:', error);
+      console.warn(
+        "Unable to save overall tops & flashes preference to localStorage:",
+        error
+      );
     }
   }, [showOverallTopsFlashes, showOverallTopsFlashesStorageKey]);
 
@@ -134,7 +164,7 @@ function ProblemsTable() {
         localStorage.removeItem(searchStorageKey);
       }
     } catch (error) {
-      console.warn('Unable to save search term to localStorage:', error);
+      console.warn("Unable to save search term to localStorage:", error);
     }
   }, [searchTerm, searchStorageKey]);
 
@@ -148,10 +178,13 @@ function ProblemsTable() {
   }, [problems]);
 
   // Filter categories to show based on selected category
-  const focusCategories = useMemo(() =>
-    Object.values(categories)
-      .filter((cat) => categoryTops[cat.code]?.length > 0 &&
-        (selectedCategoryCode ? cat.code === selectedCategoryCode : true)),
+  const focusCategories = useMemo(
+    () =>
+      Object.values(categories).filter(
+        (cat) =>
+          categoryTops[cat.code]?.length > 0 &&
+          (selectedCategoryCode ? cat.code === selectedCategoryCode : true)
+      ),
     [categories, categoryTops, selectedCategoryCode]
   );
 
@@ -159,7 +192,7 @@ function ProblemsTable() {
   const columns = useMemo(() => {
     const baseColumns = [
       {
-        key: 'climbNo',
+        key: "climbNo",
         label: `Problem${!isMobile ? " No." : ""}`,
         sortable: true,
         render: (item) => (
@@ -176,77 +209,87 @@ function ProblemsTable() {
               showUploadButton={true}
             />
           </span>
-        )
+        ),
       },
       {
-        key: 'marking',
+        key: "marking",
         label: `Name${!isMobile ? "/Grade" : ""}`,
-        sortable: true
+        sortable: true,
       },
       {
-        key: 'score',
-        label: 'Points',
-        sortable: true
+        key: "score",
+        label: "Points",
+        sortable: true,
       },
       {
-        key: 'createdAt',
-        label: 'Date Set',
+        key: "createdAt",
+        label: "Date Set",
         sortable: true,
         render: (item) => (
           <span title={formatDateForHover(item.createdAt)}>
             {toTimeAgoString(item.createdAt)}
           </span>
-        )
-      }
+        ),
+      },
     ];
 
     if (showOverallTopsFlashes) {
       // When showing overall tops & flashes, add two columns for aggregated data
       const overallColumns = [
         {
-          key: 'overall-tops',
-          label: 'Overall Tops',
+          key: TOP_COLUMN_KEY,
+          label: "Overall Tops",
           sortable: true,
           render: (item) => {
-            if (!item.stats) return <span>-</span>;
+            if (!item[TOP_COLUMN_KEY]) return <span>-</span>;
 
-            const totalTops = Object.values(item.stats).reduce(
-              (sum, stat) => sum + (stat.tops || 0),
-              0
+            // const totalTops = Object.values(item.stats).reduce(
+            //   (sum, stat) => sum + (stat[TOP_COLUMN_KEY] || 0),
+            //   0
+            // );
+
+            return (
+              <span>
+                {showRawCounts
+                  ? item[TOP_COLUMN_KEY]
+                  : `${(
+                      item[TOP_COLUMN_KEY] / Object.keys(categories).length
+                    ).toFixed(0)}%`}
+              </span>
             );
-
-            return <span>{showRawCounts ?
-              totalTops :
-              `${(totalTops / Object.keys(categories).length).toFixed(0)}%`}
-            </span>;
-          }
+          },
         },
         {
-          key: 'overall-flashes',
-          label: 'Overall Flashes',
+          key: FLASH_COLUMN_KEY,
+          label: "Overall Flashes",
           sortable: true,
           render: (item) => {
-            if (!item.stats) return <span>-</span>;
+            if (!item[FLASH_COLUMN_KEY]) return <span>-</span>;
 
-            const totalFlashes = Object.values(item.stats).reduce(
-              (sum, stat) => sum + (stat.flashes || 0),
-              0
+            // const totalFlashes = Object.values(item.stats).reduce(
+            //   (sum, stat) => sum + (stat[FLASH_COLUMN_KEY] || 0),
+            //   0
+            // );
+
+            return (
+              <span>
+                {showRawCounts
+                  ? item[FLASH_COLUMN_KEY]
+                  : `${(
+                      item[FLASH_COLUMN_KEY] / Object.keys(categories).length
+                    ).toFixed(0)}%`}
+              </span>
             );
-
-            return <span>{showRawCounts ?
-              totalFlashes :
-              `${(totalFlashes / Object.keys(categories).length).toFixed(0)}%`}
-            </span>;
-          }
-        }
+          },
+        },
       ];
 
       return [...baseColumns, ...overallColumns];
     } else {
       // Add category columns when not showing overall tops & flashes
-      const categoryColumns = focusCategories.map(cat => ({
+      const categoryColumns = focusCategories.map((cat) => ({
         key: `stat-${cat.code}`,
-        label: cat.name || 'TBC',
+        label: cat.name || "TBC",
         sortable: true,
         render: (item) => {
           const statKey = `stat-${cat.code}`;
@@ -254,12 +297,20 @@ function ProblemsTable() {
             return <span>{item[statKey].rawValue}</span>;
           }
           return <span>-</span>;
-        }
+        },
       }));
 
       return [...baseColumns, ...categoryColumns];
     }
-  }, [focusCategories, isMobile, problemPhotos, showOverallTopsFlashes, showRawCounts, categories]);
+  }, [
+    focusCategories,
+    isMobile,
+    problemPhotos,
+    showOverallTopsFlashes,
+    showRawCounts,
+    categories,
+  ]);
+  console.log(selectedCategoryCode);
 
   // Filter and prepare problems data
   const problemsData = useMemo(() => {
@@ -267,52 +318,88 @@ function ProblemsTable() {
 
     // Filter problems with no tops if hideZeroTops is enabled
     if (hideZeroTops) {
-      filteredData = filteredData.filter(problem => {
+      filteredData = filteredData.filter((problem) => {
         if (!problem.stats) return false;
         return Object.entries(problem.stats)
-          .filter(([k, _]) => categoryTops[k]?.length > 0 &&
-            (selectedCategoryCode ? k === selectedCategoryCode : true))
-          .some(([_, v]) => v.tops > 0);
+          .filter(
+            ([k, _]) =>
+              categoryTops[k]?.length > 0 &&
+              (selectedCategoryCode ? k === selectedCategoryCode : true)
+          )
+          .some(([_, v]) => v[TOP_COLUMN_KEY] > 0);
       });
     }
 
     // Filter problems by location if a location is selected
     if (selectedLocation) {
-      filteredData = filteredData.filter(problem =>
-        getMainLocation(problem.station) === selectedLocation
+      filteredData = filteredData.filter(
+        (problem) => getMainLocation(problem.station) === selectedLocation
       );
     }
 
     // Filter problems by search term (name/grade/problem number)
     if (searchTerm) {
-      filteredData = filteredData.filter(problem => {
+      filteredData = filteredData.filter((problem) => {
         // Search in both problem number and marking (which contains name/grade)
         const climbNoMatch = String(problem.climbNo).includes(searchTerm);
-        const markingMatch = filterBySearchTerm(problem, searchTerm, 'marking');
+        const markingMatch = filterBySearchTerm(problem, searchTerm, "marking");
 
         return climbNoMatch || markingMatch;
       });
     }
 
-    return filteredData.map(problem => ({
-      ...problem,
-      ...focusCategories.reduce((acc, cat) => {
+    return filteredData.map((problem) => {
+      const categoryData = focusCategories.reduce((acc, cat) => {
         const statKey = `stat-${cat.code}`;
         const stats = problem.stats && problem.stats[cat.code];
-        acc[statKey] = stats ? {
-          tops: stats.tops,
-          flashes: stats.flashes,
-          rawValue: showRawCounts ?
-            `${stats.tops} (${stats.flashes})` :
-            `${(stats.tops / countCompetitors(cat.code)).toFixed(0)}% (${(stats.flashes / countCompetitors(cat.code)).toFixed(0)}%)`,
-          sortValue: showRawCounts ?
-            stats.tops :
-            stats.tops / countCompetitors(cat.code)
-        } : { rawValue: "-", sortValue: 0 };
+        acc[statKey] = stats
+          ? {
+              tops: stats[TOP_COLUMN_KEY],
+              flashes: stats[FLASH_COLUMN_KEY],
+              rawValue: showRawCounts
+                ? `${stats[TOP_COLUMN_KEY]} (${stats[FLASH_COLUMN_KEY]})`
+                : `${(
+                    stats[TOP_COLUMN_KEY] / countCompetitors(cat.code)
+                  ).toFixed(0)}% (${(
+                    stats[FLASH_COLUMN_KEY] / countCompetitors(cat.code)
+                  ).toFixed(0)}%)`,
+              // sortValue: showRawCounts
+              //   ? stats[TOP_COLUMN_KEY]
+              //   : stats[TOP_COLUMN_KEY] / countCompetitors(cat.code),
+            }
+          : { rawValue: "-", sortValue: 0 };
         return acc;
-      }, {})
-    }));
-  }, [problems, hideZeroTops, focusCategories, categoryTops, selectedCategoryCode, showRawCounts, countCompetitors, selectedLocation, searchTerm]);
+      }, {});
+
+      const sortData = Object.values(categoryData).reduce(
+        (pv, cv) => {
+          pv[TOP_COLUMN_KEY] = cv[TOP_COLUMN_KEY] + (pv[TOP_COLUMN_KEY] || 0);
+          pv[FLASH_COLUMN_KEY] =
+            (cv[FLASH_COLUMN_KEY] || 0) + (pv[FLASH_COLUMN_KEY] || 0);
+          return pv;
+        },
+        {
+          [TOP_COLUMN_KEY]: 0,
+          [FLASH_COLUMN_KEY]: 0,
+        }
+      );
+      return {
+        ...problem,
+        ...categoryData,
+        ...sortData,
+      };
+    });
+  }, [
+    problems,
+    hideZeroTops,
+    focusCategories,
+    categoryTops,
+    selectedCategoryCode,
+    showRawCounts,
+    countCompetitors,
+    selectedLocation,
+    searchTerm,
+  ]);
 
   // Render expanded content for a row
   const renderExpandedContent = (item) => (
@@ -325,7 +412,7 @@ function ProblemsTable() {
 
   return (
     <>
-      <div className="filters" style={{ maxWidth: '450px' }}>
+      <div className="filters" style={{ maxWidth: "450px" }}>
         <LocationFilter
           locationGroups={locationGroups}
           selectedLocation={selectedLocation}
@@ -369,14 +456,14 @@ function ProblemsTable() {
           component="ProblemsTable"
           field="search_by_name_grade"
           resultsCount={problemsData.length}
-          style={{ marginTop: '8px', marginBottom: '8px' }}
+          style={{ marginTop: "8px", marginBottom: "8px" }}
           view="routesetter"
           competitionId={competitionId}
         />
         <SortableTable
           columns={columns}
           data={problemsData}
-          initialSort={{ key: 'score', direction: 'desc' }}
+          initialSort={{ key: "score", direction: "desc" }}
           rowKey="climbNo"
           onRowClick={(id) => toggleRow(id)}
           renderExpandedContent={renderExpandedContent}
@@ -389,12 +476,13 @@ function ProblemsTable() {
       </div>
 
       {/* Photo Viewer Modal */}
-      {selectedPhotoClimbNo && problemPhotos[selectedPhotoClimbNo]?.length > 0 && (
-        <PhotoViewer
-          photos={problemPhotos[selectedPhotoClimbNo]}
-          onClose={() => setSelectedPhotoClimbNo(null)}
-        />
-      )}
+      {selectedPhotoClimbNo &&
+        problemPhotos[selectedPhotoClimbNo]?.length > 0 && (
+          <PhotoViewer
+            photos={problemPhotos[selectedPhotoClimbNo]}
+            onClose={() => setSelectedPhotoClimbNo(null)}
+          />
+        )}
 
       {/* Photo Uploader Modal */}
       {showPhotoUploader && selectedPhotoClimbNo && (

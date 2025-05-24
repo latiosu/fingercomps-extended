@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from "react";
 
 /**
  * Custom hook for sortable tables
@@ -8,7 +8,10 @@ import { useCallback, useMemo, useState } from 'react';
  * @param {string} initialConfig.direction - Sort direction ('asc' or 'desc')
  * @returns {Object} Sortable table state and functions
  */
-export default function useSortableTable(initialData = [], initialConfig = { key: null, direction: 'desc' }) {
+export default function useSortableTable(
+  initialData = [],
+  initialConfig = { key: null, direction: "desc" }
+) {
   const [sortConfig, setSortConfig] = useState(initialConfig);
   const [data, setData] = useState(initialData);
 
@@ -19,17 +22,22 @@ export default function useSortableTable(initialData = [], initialConfig = { key
     setData(initialData);
   }
 
+  console.log(initialData);
+
   /**
    * Request sorting by a specific key
    * @param {string} key - Key to sort by
    */
-  const requestSort = useCallback((key) => {
-    let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
-  }, [sortConfig]);
+  const requestSort = useCallback(
+    (key) => {
+      let direction = "asc";
+      if (sortConfig.key === key && sortConfig.direction === "asc") {
+        direction = "desc";
+      }
+      setSortConfig({ key, direction });
+    },
+    [sortConfig]
+  );
 
   /**
    * Sorted data based on current sort configuration
@@ -44,26 +52,28 @@ export default function useSortableTable(initialData = [], initialConfig = { key
 
       // Handle dates
       if (aValue instanceof Date && bValue instanceof Date) {
-        return sortConfig.direction === 'asc'
+        return sortConfig.direction === "asc"
           ? aValue.getTime() - bValue.getTime()
           : bValue.getTime() - aValue.getTime();
       }
 
       // Handle numbers
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        return sortConfig.direction === "asc"
+          ? aValue - bValue
+          : bValue - aValue;
       }
 
       // Handle strings
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortConfig.direction === 'asc'
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        return sortConfig.direction === "asc"
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
       }
 
       // Default comparison
-      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+      if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
       return 0;
     });
   }, [data, sortConfig.key, sortConfig.direction]);
@@ -80,6 +90,6 @@ export default function useSortableTable(initialData = [], initialConfig = { key
     items: sortedData,
     requestSort,
     sortConfig,
-    setData: updateData
+    setData: updateData,
   };
 }

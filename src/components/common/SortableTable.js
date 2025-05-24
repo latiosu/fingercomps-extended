@@ -1,6 +1,6 @@
-import React from 'react';
-import useSortableTable from '../../hooks/useSortableTable';
-import LoadingProgressBar from './LoadingProgressBar';
+import React from "react";
+import useSortableTable from "../../hooks/useSortableTable";
+import LoadingProgressBar from "./LoadingProgressBar";
 
 /**
  * Reusable sortable table component
@@ -21,17 +21,22 @@ import LoadingProgressBar from './LoadingProgressBar';
 function SortableTable({
   columns,
   data,
-  initialSort = { key: null, direction: 'desc' },
-  rowKey = 'id',
+  initialSort = { key: null, direction: "desc" },
+  rowKey = "id",
   onRowClick,
   renderExpandedContent,
   expandedRows = new Set(),
   loading = false,
   loadingProgress = 0,
   partialDataAvailable = false,
-  emptyMessage = 'No data available'
+  emptyMessage = "No data available",
 }) {
-  const { items, requestSort, sortConfig } = useSortableTable(data, initialSort);
+  const { items, requestSort, sortConfig } = useSortableTable(
+    data,
+    initialSort
+  );
+
+  console.log({ items });
 
   // Render loading states
   if (loading) {
@@ -43,16 +48,16 @@ function SortableTable({
           <thead className="tableHeader">
             <tr>
               {columns.map((column) => (
-                <th key={column.key}>
-                  {column.label}
-                </th>
+                <th key={column.key}>{column.label}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             <tr>
               <td colSpan={columns.length} className="loading-message">
-                <span className="loading-text">Loading data ({loadingProgress}%)</span>
+                <span className="loading-text">
+                  Loading data ({loadingProgress}%)
+                </span>
               </td>
             </tr>
           </tbody>
@@ -68,12 +73,16 @@ function SortableTable({
           {columns.map((column) => (
             <th
               key={column.key}
-              onClick={() => column.sortable !== false && requestSort(column.key)}
-              style={{ cursor: column.sortable !== false ? 'pointer' : 'default' }}
+              onClick={() =>
+                column.sortable !== false && requestSort(column.key)
+              }
+              style={{
+                cursor: column.sortable !== false ? "pointer" : "default",
+              }}
             >
               {column.label}
               {sortConfig.key === column.key && (
-                <span>{sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽'}</span>
+                <span>{sortConfig.direction === "asc" ? " 🔼" : " 🔽"}</span>
               )}
             </th>
           ))}
@@ -87,7 +96,7 @@ function SortableTable({
               <React.Fragment key={item[rowKey]}>
                 <tr
                   onClick={() => onRowClick && onRowClick(item[rowKey])}
-                  style={{ cursor: onRowClick ? 'pointer' : 'default' }}
+                  style={{ cursor: onRowClick ? "pointer" : "default" }}
                 >
                   {columns.map((column) => (
                     <td key={`${item[rowKey]}-${column.key}`}>
