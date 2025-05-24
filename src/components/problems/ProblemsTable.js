@@ -310,7 +310,6 @@ function ProblemsTable() {
     showRawCounts,
     categories,
   ]);
-  console.log(selectedCategoryCode);
 
   // Filter and prepare problems data
   const problemsData = useMemo(() => {

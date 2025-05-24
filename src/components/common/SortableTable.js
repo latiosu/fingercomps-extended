@@ -36,8 +36,6 @@ function SortableTable({
     initialSort
   );
 
-  console.log({ items });
-
   // Render loading states
   if (loading) {
     // Always show loading indicator with progress until data is fully loaded

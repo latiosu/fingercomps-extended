@@ -22,8 +22,6 @@ export default function useSortableTable(
     setData(initialData);
   }
 
-  console.log(initialData);
-
   /**
    * Request sorting by a specific key
    * @param {string} key - Key to sort by
