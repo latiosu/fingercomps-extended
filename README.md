@@ -1,6 +1,6 @@
-# FingerComps Extended
+# FingerComps+
 
-**FingerComps Extended** is a fan-made web application that lets climbing competitors see each others scores more deeply. The site is live at: [https://latiosu.github.io/fingercomps-extended](https://latiosu.github.io/fingercomps-extended)
+**FingerComps+** is a fan-made web application that lets climbing competitors see each others scores more deeply. The site is live at: [https://fingercomps.plus](https://fingercomps.plus)
 
 I built this app to complement the amazing [FingerComps](https://fingercomps.com/) product and enable learning and growth for all fellow competition climbers.
 

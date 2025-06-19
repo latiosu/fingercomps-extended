@@ -30,7 +30,7 @@ function AppContent() {
 
   return (
     <div className="app">
-      <h1>FingerComps Extended</h1>
+      <h1>FingerComps+</h1>
 
       <div className="filters">
         <ViewToggle />
