@@ -53,7 +53,7 @@ function ViewToggle() {
           onClick={() => handleClick('user')}
           disabled={loading}
         >
-          Competitor View
+          Competitor Stats
         </button>
         <button
           id="problems-button"
@@ -61,7 +61,7 @@ function ViewToggle() {
           onClick={() => handleClick('problems')}
           disabled={loading}
         >
-          Routesetter View
+          Problem Stats
         </button>
       </div>
     </div>
