@@ -33,6 +33,10 @@ export const AppProvider = ({ children }) => {
     return localStorage.getItem('lastSelectedComp') || "";
   });
   const [selectedCompId, setSelectedCompId] = useState(() => {
+    const compId = new URLSearchParams(window.location.search).get('compId');
+    if (compId) {
+      return compId;
+    }
     return localStorage.getItem('lastSelectedCompId') || "";
   });
   const [compNotFoundMessage, setCompNotFoundMessage] = useState("");
@@ -123,6 +127,14 @@ export const AppProvider = ({ children }) => {
     // Update competition selection
     setSelectedComp(newComp);
     setSelectedCompId(newCompId);
+    // Add compId to search params
+    const url = new URL(window.location);
+    if (newCompId) {
+      url.searchParams.set('compId', newCompId);
+    } else {
+      url.searchParams.delete('compId');
+    }
+    window.history.replaceState({}, '', url);
     localStorage.setItem('lastSelectedComp', newComp);
     localStorage.setItem('lastSelectedCompId', newCompId);
     setCompNotFoundMessage("");
