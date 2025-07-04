@@ -39,16 +39,27 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
   const { expandedRows, toggleRow } = useExpandableRows();
 
   const showFlashBonusStorageKey = `show_flash_bonus_${competitionId}`;
+  const showMinimumTopsStorageKey = `show_minimum_tops_${competitionId}`;
 
   const [showFlashBonus, setShowFlashBonus] = useState(() => {
-      try {
-        const savedValue = localStorage.getItem(showFlashBonusStorageKey);
-        return savedValue !== null ? savedValue === "true" : false; // Default to false if not found
-      } catch (error) {
-        console.warn("Unable to access localStorage:", error);
-        return false;
-      }
-    });
+    try {
+      const savedValue = localStorage.getItem(showFlashBonusStorageKey);
+      return savedValue !== null ? savedValue === "true" : false; // Default to false if not found
+    } catch (error) {
+      console.warn("Unable to access localStorage:", error);
+      return false;
+    }
+  });
+
+  const [showMinimumTops, setShowMinimumTops] = useState(() => {
+    try {
+      const savedValue = localStorage.getItem(showMinimumTopsStorageKey);
+      return savedValue !== null ? savedValue === "true" : false; // Default to false if not found
+    } catch (error) {
+      console.warn("Unable to access localStorage:", error);
+      return false;
+    }
+  });
 
   /**
    * Track when exactly two rows are expanded (triggering matching problems feature)
@@ -113,10 +124,19 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
         categoryIndex: index
       }));
 
+    // Second, filter for minimum tops
+    const minimumTopsData = categoryFilteredData
+      .filter(item => {
+        if (showMinimumTops && item.tops < categories[item.category]?.pumpfestTopScores) {
+          return false;
+        }
+        return true;
+      });
+
     // Then, apply search term filter while preserving the category-based indices
-    return categoryFilteredData
+    return minimumTopsData
       .filter(item => filterBySearchTerm(item, searchTerm));
-  }, [dataWithRankChanges, selectedCategory, searchTerm]);
+  }, [dataWithRankChanges, selectedCategory, searchTerm, showMinimumTops, categories]);
 
   // Define columns for the table
   const columns = [
@@ -226,6 +246,15 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
             disabled={loading && loadingProgress < 100}
           />
           Show bonus points from flashes
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={showMinimumTops}
+            onChange={() => setShowMinimumTops(!showMinimumTops)}
+            disabled={loading && loadingProgress < 100}
+          />
+          Show competitors with minimum tops
         </label>
       </div>
 
