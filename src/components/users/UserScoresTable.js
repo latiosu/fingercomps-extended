@@ -16,6 +16,7 @@ import SendsSubTable from '../common/SendsSubTable';
  * @param {number} props.categoryPumpfestTopScores - Number of top scores to count for the category
  * @param {number} props.flashExtraPoints - Extra points for flashing a problem
  * @param {boolean} props.isMobile - Whether the device is mobile
+ * @param {boolean} props.showFlashBonus - Whether to show bonus points from flashes
  * @returns {JSX.Element} UserScoresTable component
  */
 function UserScoresTable({
@@ -23,7 +24,8 @@ function UserScoresTable({
   limitScores = true,
   categoryPumpfestTopScores = 0,
   flashExtraPoints = 0,
-  isMobile = false
+  isMobile = false,
+  showFlashBonus = false,
 }) {
   // Use expandable rows hook
   const { toggleRow, isRowExpanded } = useExpandableRows();
@@ -96,7 +98,7 @@ function UserScoresTable({
                   <td>{score.flashed ? 'Y' : ''}</td>
                   <td>
                     {score.score}
-                    {score.flashed ? ` (+${flashExtraPoints})` : ''}
+                    {score.flashed && showFlashBonus ? ` (+${flashExtraPoints})` : ''}
                   </td>
                   <td title={formatDateForHover(score.createdAt)}>
                     {toTimeAgoString(score.createdAt)}

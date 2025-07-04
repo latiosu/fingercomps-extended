@@ -1,5 +1,5 @@
 import posthog from 'posthog-js';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { useCompetition } from '../../contexts/CompetitionContext';
 import { useRankHistory } from '../../contexts/RankHistoryContext';
@@ -29,6 +29,7 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
   const {
     userTableData,
     categories,
+    competitionId,
     loading,
     loadingProgress,
     partialDataAvailable
@@ -36,6 +37,18 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
   const { rankChanges} = useRankHistory();
 
   const { expandedRows, toggleRow } = useExpandableRows();
+
+  const showFlashBonusStorageKey = `show_flash_bonus_${competitionId}`;
+
+  const [showFlashBonus, setShowFlashBonus] = useState(() => {
+      try {
+        const savedValue = localStorage.getItem(showFlashBonusStorageKey);
+        return savedValue !== null ? savedValue === "true" : false; // Default to false if not found
+      } catch (error) {
+        console.warn("Unable to access localStorage:", error);
+        return false;
+      }
+    });
 
   /**
    * Track when exactly two rows are expanded (triggering matching problems feature)
@@ -154,11 +167,11 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
     },
     {
       key: 'total',
-      label: `Score${!isMobile ? '(+ Flash Bonus)' : ''}`,
+      label: `Score${!isMobile && showFlashBonus ? '(+ Flash Bonus)' : ''}`,
       sortable: true,
       render: (item) => (
         <span>
-          {item.total - item.bonus} {item.bonus > 0 ? `(+${item.bonus})` : ''}
+          {item.total} {showFlashBonus && item.bonus > 0 ? `(+${item.bonus})` : ''}
         </span>
       )
     }
@@ -173,6 +186,7 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
         categoryPumpfestTopScores={categories[item.category]?.pumpfestTopScores}
         flashExtraPoints={item.flashExtraPoints}
         isMobile={isMobile}
+        showFlashBonus={showFlashBonus}
       />
 
       <div className="recommendedBtnContainer">
@@ -204,6 +218,15 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
     <>
       <div className="filters">
         <RankChangePeriodSelector />
+        <label>
+          <input
+            type="checkbox"
+            checked={showFlashBonus}
+            onChange={() => setShowFlashBonus(!showFlashBonus)}
+            disabled={loading && loadingProgress < 100}
+          />
+          Show bonus points from flashes
+        </label>
       </div>
 
       <MoversAndShakers onRiserClick={setSearchTerm} searchTerm={searchTerm} />
