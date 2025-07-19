@@ -1,6 +1,7 @@
 {
   "short_name": "FingerComps+",
-  "name": "More data for your FingerComps scores",
+  "name": "FingerComps+",
+  "description": "More data for your FingerComps scores",
   "icons": [
     {
       "src": "favicon.ico",
