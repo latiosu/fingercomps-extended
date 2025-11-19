@@ -11,6 +11,7 @@ import './FinalsScoreboard.css';
  */
 function FinalsScoreboard({ category, allowedUsers }) {
   const {
+    categories,
     finalsScoreboardData,
     loading,
     refreshFinalsScores,
@@ -30,11 +31,7 @@ function FinalsScoreboard({ category, allowedUsers }) {
     return <>Loading</>;
   }
 
-  if (!Object.keys(finalsScoreboardData).includes(category)) {
-    return <>Category does not exist or have a finals round, please check the URL and try again</>
-  }
-
-  let data = finalsScoreboardData[category];
+  let data = finalsScoreboardData;
   if (allowedUsers && category) {
     const parsedUsers = allowedUsers.split(',').map(item => parseInt(item));
     data = data.filter((user) => parsedUsers ? parsedUsers.includes(user.competitorNo) : true);
@@ -83,9 +80,14 @@ function FinalsScoreboard({ category, allowedUsers }) {
     data = sortedData;
   }
 
-  console.info(data);
-
-  const categoryFullName = data[0]?.categoryFullName || category;
+  const categoryFullName = categories[category].name;
+  const toTitleCase = (s) => {
+    return s
+      .toLowerCase()
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
 
   return (
     <>
@@ -95,7 +97,7 @@ function FinalsScoreboard({ category, allowedUsers }) {
           {data.map((competitor) => (
             <div key={competitor.competitorNo} className="competitor-row">
               <div className="rank">{competitor.rank}</div>
-              <div className="name">{competitor.name}</div>
+              <div className="name">{toTitleCase(competitor.name)}</div>
               <div className="problems">
                 {competitor.topZoneStats.map((problem, index) => (
                   <div key={index} className="problem-box">

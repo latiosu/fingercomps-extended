@@ -210,7 +210,7 @@ export const computeFinalsScore = (finalistScores, boulderCount) => {
  * @returns {Array} Array of processed finals scoreboard data for display
  */
 export const computeFinalsScoreboardData = (categories, competitors, finalsScores) => {
-  const flatTable = Object.entries(competitors).map(([uid, user]) => {
+  return Object.entries(competitors).map(([uid, user]) => {
     const cat = categories[user.category];
 
     const { score, topZoneStats } = computeFinalsScore(
@@ -225,16 +225,4 @@ export const computeFinalsScoreboardData = (categories, competitors, finalsScore
       categoryFullName: cat?.name,
     };
   });
-
-  const categoryTable = {};
-  Object.values(categories).filter((c) => c.hasFinals).forEach((cat) => {
-    const catScores = flatTable.filter((finalist) => finalist.category === cat.code);
-    const sortedScores = catScores.sort((a, b) => b.score - a.score);
-    sortedScores.forEach((user, index) => {
-      user.rank = index += 1;
-    });
-    categoryTable[cat.code] = sortedScores;
-  });
-
-  return categoryTable;
 };

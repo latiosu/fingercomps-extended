@@ -62,6 +62,8 @@ function UserScoresTable({
     return cleanup;
   }, [displayedScores, registerProblems]);
 
+  console.debug(displayedScores);
+
   return (
     <>
       <table border="1" className="subTable" style={{ width: '100%' }}>
