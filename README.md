@@ -9,6 +9,7 @@ I built this app to complement the amazing [FingerComps](https://fingercomps.com
 - See problem statistics for a competition
 - See scores of other competitors
 - View finals scoreboard for a competition at `/finals?compId=<your_comp_id>&allowedUsers=<comma_separated_user_ids>&category=<category_code>`
+- Initial order of finalists is allowedUsers order
 
 ## Installation
 

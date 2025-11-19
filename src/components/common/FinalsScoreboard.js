@@ -53,6 +53,16 @@ function FinalsScoreboard({ category, allowedUsers }) {
       ...competitor,
       rank: "-"
     }));
+    
+    // Order by allowedUsers sequence if provided
+    if (allowedUsers) {
+      const parsedUsers = allowedUsers.split(',').map(item => parseInt(item));
+      data = data.sort((a, b) => {
+        const indexA = parsedUsers.indexOf(a.competitorNo);
+        const indexB = parsedUsers.indexOf(b.competitorNo);
+        return indexA - indexB;
+      });
+    }
   } else {
     // Sort by score descending to calculate proper ranks
     const sortedData = [...data].sort((a, b) => b.score - a.score);
