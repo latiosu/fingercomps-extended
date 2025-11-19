@@ -179,30 +179,27 @@ export const computeCategoryTops = (categories, scores) => {
  * @returns {Object} Object containing finalist score and array for top/zone per boulder
  */
 export const computeFinalsScore = (finalistScores, boulderCount) => {
-  let finalsScore = 0;
-  const topZoneStats = new Array(boulderCount).fill({
+  let score = 0;
+  const topZoneStats = Array.from({ length: boulderCount }, () => ({
     hasTop: false, hasZone: false, attemptsToTop: 0, attemptsToZone: 0,
-  });
+  }));
 
   if (finalistScores) {
     for (let i = 0; i < boulderCount; i++) {
       const currentBoulder = finalistScores["climb" + (i + 1)];
       if (currentBoulder.hasTop) {
-        finalsScore += 25 - (currentBoulder.attemptsToTop * 0.1);
-        topZoneStats[i].hasTop = true;
+        score += 25 - (currentBoulder.attemptsToTop * 0.1);
       } else if (currentBoulder.hasZone) {
-        finalsScore += 10 - (currentBoulder.attemptsToZone * 0.1);
-        topZoneStats[i].hasZone = true;
+        score += 10 - (currentBoulder.attemptsToZone * 0.1);
       }
+      topZoneStats[i].hasTop = currentBoulder.hasTop;
+      topZoneStats[i].hasZone = currentBoulder.hasZone;
       topZoneStats[i].attemptsToTop = currentBoulder.attemptsToTop;
       topZoneStats[i].attemptsToZone = currentBoulder.attemptsToZone;
     }
   }
 
-  // Automatically round to 1 decimal place
-  finalsScore = finalsScore.toFixed(1);
-
-  return { finalsScore, topZoneStats };
+  return { score, topZoneStats };
 };
 
 /**
@@ -216,14 +213,14 @@ export const computeFinalsScoreboardData = (categories, competitors, finalsScore
   const flatTable = Object.entries(competitors).map(([uid, user]) => {
     const cat = categories[user.category];
 
-    const { finalsScore, topZoneStats } = computeFinalsScore(
+    const { score, topZoneStats } = computeFinalsScore(
       finalsScores[uid],
       cat.finalsBoulderCount,
     );
 
     return {
       ...user,
-      finalsScore,
+      score,
       topZoneStats,
       categoryFullName: cat?.name,
     };
@@ -232,7 +229,7 @@ export const computeFinalsScoreboardData = (categories, competitors, finalsScore
   const categoryTable = {};
   Object.values(categories).filter((c) => c.hasFinals).forEach((cat) => {
     const catScores = flatTable.filter((finalist) => finalist.category === cat.code);
-    const sortedScores = catScores.sort((a, b) => a.finalsScore > b.finalsScore);
+    const sortedScores = catScores.sort((a, b) => b.score - a.score);
     sortedScores.forEach((user, index) => {
       user.rank = index += 1;
     });

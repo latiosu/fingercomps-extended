@@ -243,6 +243,33 @@ export const CompetitionProvider = ({ children, competitionId }) => {
     }
   }, [competitionId]);
 
+  // Function to refresh finals scores only
+  const refreshFinalsScores = useCallback(async () => {
+    if (!competitionId) return;
+
+    try {
+      setLoadingState(prev => ({
+        ...prev,
+        finalsScores: { ...prev.finalsScores, loading: true, progress: 10 }
+      }));
+
+      const scoresData = await getFinalsScores(competitionId);
+
+      setLoadingState(prev => ({
+        ...prev,
+        finalsScores: { loading: false, progress: 100, complete: true, error: null }
+      }));
+
+      setFinalsScores(scoresData);
+    } catch (err) {
+      setLoadingState(prev => ({
+        ...prev,
+        finalsScores: { loading: false, progress: 0, complete: false, error: err.message }
+      }));
+      console.error("Error refreshing finals scores:", err);
+    }
+  }, [competitionId]);
+
   // Function to fetch problem photos
   const fetchCompetitionPhotos = useCallback(async () => {
     if (!competitionId) return;
@@ -446,7 +473,9 @@ export const CompetitionProvider = ({ children, competitionId }) => {
     problemPhotos,
     photoOperationState,
     uploadProblemPhoto: handleUploadPhoto,
-    refreshPhotos: fetchCompetitionPhotos
+    refreshPhotos: fetchCompetitionPhotos,
+    // Finals scores refresh
+    refreshFinalsScores
   };
 
   return (

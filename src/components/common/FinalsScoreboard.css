@@ -1,1 +1,143 @@
-/* TODO */
+.finals-scoreboard {
+  max-width: 80%;
+  margin: 0 auto;
+  padding-top: 1.5rem;
+  font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+.scoreboard-title {
+  font-size: 3rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #111;
+}
+
+.scoreboard-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  background-color: #e0e0e0;
+}
+
+.competitor-row {
+  display: flex;
+  align-items: center;
+  background-color: white;
+  padding: 1.5rem 15rem;
+}
+
+.rank {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #111;
+  margin-right: 3rem;
+  text-align: center;
+}
+
+.name {
+  font-size: 1.7rem;
+  font-weight: 600;
+  color: #111;
+  min-width: 17.5rem;
+  max-width: 17.5rem;
+  flex-shrink: 1;
+}
+
+.problems {
+  padding-top: 1rem;
+  display: flex;
+  gap: 0.75rem;
+  flex: 1;
+  flex-shrink: 0;
+  justify-content: center;
+}
+
+.problem-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.problem-indicator {
+  width: 2rem;
+  height: 3.5rem;
+  border: 0.05rem solid #111;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+  position: relative;
+}
+
+.problem-indicator.has-top {
+  background-color: #111;
+  color: white;
+}
+
+.problem-indicator.has-zone {
+  background-color: white;
+  color: #111;
+}
+
+.problem-indicator.no-achievement {
+  background-color: #eeeeee;
+  color: #cccccc;
+}
+
+.problem-indicator.no-achievement::before {
+  content: "";
+  position: relative;
+  left: 142%;
+  top: 0%;
+  width: 195%;
+  height: 0.025rem; /* Thickness of the line */
+  background-color: #111;
+  transform: translateY(-250%) rotate(118.5deg); /* Center vertically and rotate */
+  transform-origin: left center; /* Rotate from the left center point */
+}
+
+.attempts-top {
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.attempts-zone {
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.problem-indicator.has-zone::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background-color: #111;
+}
+
+.problem-indicator.has-zone .attempts-zone {
+  position: relative;
+  z-index: 1;
+  color: white;
+}
+
+.problem-number {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #666;
+}
+
+.score {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #111;
+  min-width: 10rem;
+  text-align: right;
+}
