@@ -4,6 +4,12 @@
 
 I built this app to complement the amazing [FingerComps](https://fingercomps.com/) product and enable learning and growth for all fellow competition climbers.
 
+**Features**
+- See recommended pumpfest problems per user
+- See problem statistics for a competition
+- See scores of other competitors
+- View finals scoreboard for a competition at `/finals?compId=<your_comp_id>&allowedUsers=<comma_separated_user_ids>&category=<category_code>`
+
 ## Installation
 
 To set up this project locally, follow these steps:

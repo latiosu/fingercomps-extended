@@ -1,13 +1,20 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { BrowserRouter, Routes, Route } from "react-router";
 import App from "./App";
+import FinalsScoreboardApp from "./FinalsScoreboardApp";
 import "./index.css";
 import reportWebVitals from "./utils/reportWebVitals";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter>
+      <Routes>
+        <Route index element={<App />} />
+        <Route path="/finals" element={<FinalsScoreboardApp />} />
+      </Routes>
+    </BrowserRouter>
   </React.StrictMode>
 );
 

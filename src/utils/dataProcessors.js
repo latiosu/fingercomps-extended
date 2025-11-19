@@ -172,3 +172,72 @@ export const computeCategoryTops = (categories, scores) => {
   });
   return categoryTops;
 };
+
+/**
+ * Computes finalist score based on tops, zones and attempts with IFSC 25/10/-0.1 scoring method
+ * @param {Array} scores - Object containing finals score data for a finalist
+ * @returns {Object} Object containing finalist score and array for top/zone per boulder
+ */
+export const computeFinalsScore = (finalistScores, boulderCount) => {
+  let finalsScore = 0;
+  const topZoneStats = new Array(boulderCount).fill({
+    hasTop: false, hasZone: false, attemptsToTop: 0, attemptsToZone: 0,
+  });
+
+  if (finalistScores) {
+    for (let i = 0; i < boulderCount; i++) {
+      const currentBoulder = finalistScores["climb" + (i + 1)];
+      if (currentBoulder.hasTop) {
+        finalsScore += 25 - (currentBoulder.attemptsToTop * 0.1);
+        topZoneStats[i].hasTop = true;
+      } else if (currentBoulder.hasZone) {
+        finalsScore += 10 - (currentBoulder.attemptsToZone * 0.1);
+        topZoneStats[i].hasZone = true;
+      }
+      topZoneStats[i].attemptsToTop = currentBoulder.attemptsToTop;
+      topZoneStats[i].attemptsToZone = currentBoulder.attemptsToZone;
+    }
+  }
+
+  // Automatically round to 1 decimal place
+  finalsScore = finalsScore.toFixed(1);
+
+  return { finalsScore, topZoneStats };
+};
+
+/**
+ * Computes finals scoreboard data from raw competition data
+ * @param {Object} categories - Categories data
+ * @param {Object} competitors - Competitors data
+ * @param {Object} finalsScores - Finals Score data
+ * @returns {Array} Array of processed finals scoreboard data for display
+ */
+export const computeFinalsScoreboardData = (categories, competitors, finalsScores) => {
+  const flatTable = Object.entries(competitors).map(([uid, user]) => {
+    const cat = categories[user.category];
+
+    const { finalsScore, topZoneStats } = computeFinalsScore(
+      finalsScores[uid],
+      cat.finalsBoulderCount,
+    );
+
+    return {
+      ...user,
+      finalsScore,
+      topZoneStats,
+      categoryFullName: cat?.name,
+    };
+  });
+
+  const categoryTable = {};
+  Object.values(categories).filter((c) => c.hasFinals).forEach((cat) => {
+    const catScores = flatTable.filter((finalist) => finalist.category === cat.code);
+    const sortedScores = catScores.sort((a, b) => a.finalsScore > b.finalsScore);
+    sortedScores.forEach((user, index) => {
+      user.rank = index += 1;
+    });
+    categoryTable[cat.code] = sortedScores;
+  });
+
+  return categoryTable;
+};

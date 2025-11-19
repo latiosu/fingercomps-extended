@@ -1,8 +1,9 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { getCategories, getCompetitors, getProblems, getQualificationScores } from '../api/services/competitions';
+import { getCategories, getCompetitors, getProblems, getQualificationScores, getFinalsScores } from '../api/services/competitions';
 import { getAllProblemPhotos, uploadProblemPhoto as uploadPhoto } from '../api/services/photos';
 import {
   computeCategoryTops,
+  computeFinalsScoreboardData,
   computeProblemStats,
   computeUserTableData
 } from '../utils/dataProcessors';
@@ -57,14 +58,16 @@ export const CompetitionProvider = ({ children, competitionId }) => {
     categories: { loading: false, progress: 0, complete: false, error: null },
     competitors: { loading: false, progress: 0, complete: false, error: null },
     qualificationScores: { loading: false, progress: 0, complete: false, error: null },
+    finalsScores: { loading: false, progress: 0, complete: false, error: null },
     problems: { loading: false, progress: 0, complete: false, error: null },
     photos: { loading: false, progress: 0, complete: false, error: null }
   });
 
+  // TODO: Separate finals scores loading from general scoreboard loading
   // Calculate overall loading progress (0-100)
   const loadingProgress = useMemo(() => {
-    const { categories, competitors, qualificationScores, problems } = loadingState;
-    const totalProgress = categories.progress + competitors.progress + qualificationScores.progress + problems.progress;
+    const { categories, competitors, qualificationScores, finalsScores, problems } = loadingState;
+    const totalProgress = categories.progress + competitors.progress + qualificationScores.progress + finalsScores.progress + problems.progress;
     const progress = Math.round(totalProgress / 4);
 
     // Set loading to false when progress reaches 100%
@@ -100,6 +103,7 @@ export const CompetitionProvider = ({ children, competitionId }) => {
       categories: { loading: true, progress: 0, complete: false, error: null },
       competitors: { loading: true, progress: 0, complete: false, error: null },
       qualificationScores: { loading: true, progress: 0, complete: false, error: null },
+      finalsScores: { loading: true, progress: 0, complete: false, error: null },
       problems: { loading: true, progress: 0, complete: false, error: null }
     });
 
@@ -150,7 +154,7 @@ export const CompetitionProvider = ({ children, competitionId }) => {
         console.error("Error fetching competitors:", err);
       }
 
-      // Fetch scores
+      // Fetch qualification scores
       try {
         setLoadingState(prev => ({
           ...prev,
@@ -169,6 +173,29 @@ export const CompetitionProvider = ({ children, competitionId }) => {
         setLoadingState(prev => ({
           ...prev,
           qualificationScores: { loading: false, progress: 0, complete: false, error: err.message }
+        }));
+        console.error("Error fetching scores:", err);
+      }
+
+      // Fetch finals scores
+      try {
+        setLoadingState(prev => ({
+          ...prev,
+          finalsScores: { ...prev.finalsScores, progress: 10 }
+        }));
+
+        const scoresData = await getFinalsScores(competitionId);
+
+        setLoadingState(prev => ({
+          ...prev,
+          finalsScores: { loading: false, progress: 100, complete: true, error: null }
+        }));
+
+        setFinalsScores(scoresData);
+      } catch (err) {
+        setLoadingState(prev => ({
+          ...prev,
+          finalsScores: { loading: false, progress: 0, complete: false, error: err.message }
         }));
         console.error("Error fetching scores:", err);
       }
@@ -357,6 +384,11 @@ export const CompetitionProvider = ({ children, competitionId }) => {
     return [];
   }, [categories, competitors, problems, qualificationScores]);
 
+  // TODO: Consider splitting this to reduce load
+  const finalsScoreboardData = useMemo(() => {
+    return computeFinalsScoreboardData(categories, competitors, finalsScores);
+  }, [categories, competitors, finalsScores]);
+
   // No need for an effect to update derived state
 
   // Calculate category tops
@@ -396,8 +428,10 @@ export const CompetitionProvider = ({ children, competitionId }) => {
     categories,
     competitors,
     qualificationScores,
+    finalsScores,
     problems,
     userTableData: processedData, // Use computed value directly
+    finalsScoreboardData,
     categoryTops,
     loading,
     loadingProgress,
