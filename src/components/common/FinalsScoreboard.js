@@ -43,6 +43,36 @@ function FinalsScoreboard({ category, allowedUsers }) {
   if (!data || data.length === 0) {
     return <>No data available for this category</>;
   }
+
+  // Recalculate ranks after filtering
+  const allScoresZero = data.every(competitor => competitor.score === 0);
+
+  if (allScoresZero) {
+    // If all scores are zero, set rank to "-"
+    data = data.map(competitor => ({
+      ...competitor,
+      rank: "-"
+    }));
+  } else {
+    // Sort by score descending to calculate proper ranks
+    const sortedData = [...data].sort((a, b) => b.score - a.score);
+
+    // Assign ranks with tie handling
+    let currentRank = 1;
+    for (let i = 0; i < sortedData.length; i++) {
+      if (i > 0 && sortedData[i].score === sortedData[i - 1].score) {
+        // Same score as previous, use same rank
+        sortedData[i].rank = sortedData[i - 1].rank;
+      } else {
+        // Different score, use current position + 1
+        sortedData[i].rank = currentRank;
+      }
+      currentRank++;
+    }
+
+    data = sortedData;
+  }
+
   console.info(data);
 
   const categoryFullName = data[0]?.categoryFullName || category;
