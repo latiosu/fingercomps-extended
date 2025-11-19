@@ -83,17 +83,17 @@ export const getCompetitions = async () => {
  */
 export const getCompetitionData = async (compId) => {
   try {
-    const [categories, competitors, scores, problems] = await Promise.all([
+    const [categories, competitors, qualificationScores, problems] = await Promise.all([
       getCategories(compId),
       getCompetitors(compId),
-      getScores(compId),
+      getQualificationScores(compId),
       getProblems(compId),
     ]);
 
     return {
       categories,
       competitors,
-      scores,
+      qualificationScores,
       problems
     };
   } catch (error) {
@@ -160,7 +160,7 @@ export const getCompetitors = async (compId) => {
  * @param {string} compId - Competition ID
  * @returns {Promise<Object>} Object containing score data
  */
-export const getScores = async (compId) => {
+export const getQualificationScores = async (compId) => {
   try {
     const collectionPath = `competitions/${compId}/qualificationScores`;
     const documents = await fetchAllData(collectionPath);
@@ -175,11 +175,42 @@ export const getScores = async (compId) => {
         topped: item.topped,
         competitorNo: competitorNo,
         createdAt: timestampToISOString(item.created),
+        ...item
       });
       return acc;
     }, {});
   } catch (error) {
-    console.error("Error fetching scores:", error);
+    console.error("Error fetching qualification scores:", error);
+    throw error;
+  }
+};
+
+/**
+ * Fetches scores for a specific competition
+ * @param {string} compId - Competition ID
+ * @returns {Promise<Object>} Object containing score data
+ */
+export const getFinalsScores = async (compId) => {
+  try {
+    const collectionPath = `competitions/${compId}/finalsScores`;
+    const documents = await fetchAllData(collectionPath);
+
+    return documents.reduce((acc, item) => {
+      const competitorNo = item.competitorNo;
+      acc[competitorNo] = acc[competitorNo] || [];
+      acc[competitorNo].push({
+        // climbNo: item.climbNo,
+        // category: item.category,
+        // flashed: item.flash,
+        // topped: item.topped,
+        // competitorNo: competitorNo,
+        // createdAt: timestampToISOString(item.created),
+        ...item
+      });
+      return acc;
+    }, {});
+  } catch (error) {
+    console.error("Error fetching finals scores:", error);
     throw error;
   }
 };

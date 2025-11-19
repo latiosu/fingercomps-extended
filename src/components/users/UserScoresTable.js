@@ -11,7 +11,7 @@ import SendsSubTable from '../common/SendsSubTable';
 /**
  * Component to display a user's scores
  * @param {Object} props - Component props
- * @param {Array} props.scores - Array of user scores
+ * @param {Array} props.qualificationScores - Array of user scores
  * @param {boolean} props.limitScores - Whether to limit scores to those that affect the total
  * @param {number} props.categoryPumpfestTopScores - Number of top scores to count for the category
  * @param {number} props.flashExtraPoints - Extra points for flashing a problem
@@ -20,7 +20,7 @@ import SendsSubTable from '../common/SendsSubTable';
  * @returns {JSX.Element} UserScoresTable component
  */
 function UserScoresTable({
-  scores = [],
+  qualificationScores = [],
   limitScores = true,
   categoryPumpfestTopScores = 0,
   flashExtraPoints = 0,
@@ -40,15 +40,15 @@ function UserScoresTable({
   const { registerProblems, shouldHighlight } = useHighlightedProblems();
 
   // Get the current user's competitor number from the first score
-  const currentUserCompetitorNo = scores[0]?.competitorNo;
+  const currentUserCompetitorNo = qualificationScores[0]?.competitorNo;
 
   // Limit the number of scores based on the checkbox state
   // Memoize to prevent creating a new array on every render
   const displayedScores = useMemo(() => {
     return limitScores
-      ? scores.slice(0, categoryPumpfestTopScores)
-      : scores;
-  }, [scores, limitScores, categoryPumpfestTopScores]);
+      ? qualificationScores.slice(0, categoryPumpfestTopScores)
+      : qualificationScores;
+  }, [qualificationScores, limitScores, categoryPumpfestTopScores]);
 
   // Register problems with the context when component mounts or scores change
   useEffect(() => {

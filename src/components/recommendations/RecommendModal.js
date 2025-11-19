@@ -25,7 +25,7 @@ function RecommendModal({ onClose, user }) {
   const { isMobile } = useApp();
   const {
     problems,
-    scores,
+    qualificationScores,
     categories,
     userTableData,
     problemPhotos
@@ -40,7 +40,7 @@ function RecommendModal({ onClose, user }) {
   // Check if there are any problems that increase rank
   const hasRankIncreasingProblems = useMemo(() => {
     // Get user's scores
-    const userScores = scores[user.competitorNo] || [];
+    const userScores = qualificationScores[user.competitorNo] || [];
 
     // Get category data
     const category = categories[user.category];
@@ -59,7 +59,7 @@ function RecommendModal({ onClose, user }) {
 
     // Check if any problem increases rank
     return allRecommendedProblems.some(problem => problem.rankImprovement > 0);
-  }, [problems, scores, user, categoryUsers, categories]);
+  }, [problems, qualificationScores, user, categoryUsers, categories]);
 
   const [showNonRankingProblems, setShowNonRankingProblems] = useState(() => {
     try {
@@ -144,7 +144,7 @@ function RecommendModal({ onClose, user }) {
   const [showPhotoUploader, setShowPhotoUploader] = useState(false);
 
   // Get user's scores
-  const userScores = scores[user.competitorNo] || [];
+  const userScores = qualificationScores[user.competitorNo] || [];
 
   // Get category data
   const category = categories[user.category];

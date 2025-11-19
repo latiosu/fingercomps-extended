@@ -201,7 +201,7 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
   const renderExpandedContent = (item) => (
     <>
       <UserScoresTable
-        scores={item.scores}
+        qualificationScores={item.scores}
         limitScores={limitScores}
         categoryPumpfestTopScores={categories[item.category]?.pumpfestTopScores}
         flashExtraPoints={item.flashExtraPoints}

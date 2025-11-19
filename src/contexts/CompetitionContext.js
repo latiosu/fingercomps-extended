@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { getCategories, getCompetitors, getProblems, getScores } from '../api/services/competitions';
+import { getCategories, getCompetitors, getProblems, getQualificationScores } from '../api/services/competitions';
 import { getAllProblemPhotos, uploadProblemPhoto as uploadPhoto } from '../api/services/photos';
 import {
   computeCategoryTops,
@@ -37,7 +37,8 @@ export const CompetitionProvider = ({ children, competitionId }) => {
   // State for competition data
   const [categories, setCategories] = useState({});
   const [competitors, setCompetitors] = useState({});
-  const [scores, setScores] = useState({});
+  const [qualificationScores, setQualificationScores] = useState({});
+  const [finalsScores, setFinalsScores] = useState({});
   const [problems, setProblems] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -55,15 +56,15 @@ export const CompetitionProvider = ({ children, competitionId }) => {
   const [loadingState, setLoadingState] = useState({
     categories: { loading: false, progress: 0, complete: false, error: null },
     competitors: { loading: false, progress: 0, complete: false, error: null },
-    scores: { loading: false, progress: 0, complete: false, error: null },
+    qualificationScores: { loading: false, progress: 0, complete: false, error: null },
     problems: { loading: false, progress: 0, complete: false, error: null },
     photos: { loading: false, progress: 0, complete: false, error: null }
   });
 
   // Calculate overall loading progress (0-100)
   const loadingProgress = useMemo(() => {
-    const { categories, competitors, scores, problems } = loadingState;
-    const totalProgress = categories.progress + competitors.progress + scores.progress + problems.progress;
+    const { categories, competitors, qualificationScores, problems } = loadingState;
+    const totalProgress = categories.progress + competitors.progress + qualificationScores.progress + problems.progress;
     const progress = Math.round(totalProgress / 4);
 
     // Set loading to false when progress reaches 100%
@@ -87,7 +88,8 @@ export const CompetitionProvider = ({ children, competitionId }) => {
     // Clear state to avoid mixing data between competitions
     setCategories({});
     setCompetitors({});
-    setScores({});
+    setQualificationScores({});
+    setFinalsScores({});
     setProblems({});
 
     setLoading(true);
@@ -97,7 +99,7 @@ export const CompetitionProvider = ({ children, competitionId }) => {
     setLoadingState({
       categories: { loading: true, progress: 0, complete: false, error: null },
       competitors: { loading: true, progress: 0, complete: false, error: null },
-      scores: { loading: true, progress: 0, complete: false, error: null },
+      qualificationScores: { loading: true, progress: 0, complete: false, error: null },
       problems: { loading: true, progress: 0, complete: false, error: null }
     });
 
@@ -152,21 +154,21 @@ export const CompetitionProvider = ({ children, competitionId }) => {
       try {
         setLoadingState(prev => ({
           ...prev,
-          scores: { ...prev.scores, progress: 10 }
+          qualificationScores: { ...prev.qualificationScores, progress: 10 }
         }));
 
-        const scoresData = await getScores(competitionId);
+        const scoresData = await getQualificationScores(competitionId);
 
         setLoadingState(prev => ({
           ...prev,
-          scores: { loading: false, progress: 100, complete: true, error: null }
+          qualificationScores: { loading: false, progress: 100, complete: true, error: null }
         }));
 
-        setScores(scoresData);
+        setQualificationScores(scoresData);
       } catch (err) {
         setLoadingState(prev => ({
           ...prev,
-          scores: { loading: false, progress: 0, complete: false, error: err.message }
+          qualificationScores: { loading: false, progress: 0, complete: false, error: err.message }
         }));
         console.error("Error fetching scores:", err);
       }
@@ -348,19 +350,19 @@ export const CompetitionProvider = ({ children, competitionId }) => {
   // Calculate processed data when raw data changes
   const processedData = useMemo(() => {
     if (Object.keys(categories).length && Object.keys(competitors).length) {
-      const userData = computeUserTableData(categories, competitors, problems, scores);
-      computeProblemStats(scores, problems, categories, competitors);
+      const userData = computeUserTableData(categories, competitors, problems, qualificationScores);
+      computeProblemStats(qualificationScores, problems, categories, competitors);
       return userData;
     }
     return [];
-  }, [categories, competitors, problems, scores]);
+  }, [categories, competitors, problems, qualificationScores]);
 
   // No need for an effect to update derived state
 
   // Calculate category tops
   const categoryTops = useMemo(() =>
-    computeCategoryTops(categories, scores),
-    [categories, scores]
+    computeCategoryTops(categories, qualificationScores),
+    [categories, qualificationScores]
   );
 
   // Function to count competitors in a category
@@ -381,19 +383,19 @@ export const CompetitionProvider = ({ children, competitionId }) => {
 
   // Compute last score based on selected category
   const lastSubmittedScore = useMemo(() => {
-    const filteredScores = Object.values(scores).flat()
+    const filteredScores = Object.values(qualificationScores).flat()
       .filter(score => selectedCategoryCode ? (competitors[score.competitorNo]?.category === selectedCategoryCode) : true)
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sort in descending order
 
     return filteredScores.length > 0 ? filteredScores[0] : null;
-  }, [selectedCategoryCode, scores, competitors]);
+  }, [selectedCategoryCode, qualificationScores, competitors]);
 
   // Context value
   const value = {
     competitionId, // Expose competitionId in the context
     categories,
     competitors,
-    scores,
+    qualificationScores,
     problems,
     userTableData: processedData, // Use computed value directly
     categoryTops,

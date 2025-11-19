@@ -92,14 +92,14 @@ export const computeUserTableData = (categories, competitors, problems, scores) 
 
 /**
  * Computes problem statistics from scores data
- * @param {Object} scores - Scores data
+ * @param {Object} qualificationScores - Scores data
  * @param {Object} problems - Problems data
  * @param {Object} categories - Categories data
  * @param {Object} competitors - Competitors data
  */
-export const computeProblemStats = (scores, problems, categories, competitors) => {
+export const computeProblemStats = (qualificationScores, problems, categories, competitors) => {
   const seen = new Set();
-  Object.entries(scores).forEach(([cptNo, cptScores]) => {
+  Object.entries(qualificationScores).forEach(([cptNo, cptScores]) => {
     cptScores.forEach((score) => {
       const tmpId = `${cptNo},${score.climbNo}`;
       // Skip duplicates

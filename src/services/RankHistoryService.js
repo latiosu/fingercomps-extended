@@ -9,14 +9,14 @@ class RankHistoryService {
    * @param {Object} categories - Categories data
    * @param {Object} competitors - Competitors data
    * @param {Object} problems - Problems data
-   * @param {Object} scores - Scores data
+   * @param {Object} qualificationScores - Scores data
    * @param {string} competitionId - Competition ID
    */
-  constructor(categories, competitors, problems, scores, competitionId) {
+  constructor(categories, competitors, problems, qualificationScores, competitionId) {
     this.categories = categories;
     this.competitors = competitors;
     this.problems = problems;
-    this.scores = scores;
+    this.qualificationScores = qualificationScores;
     this.competitionId = competitionId;
 
     // Create a timeline of all score events
@@ -34,7 +34,7 @@ class RankHistoryService {
   _buildTimeline() {
     const events = [];
 
-    Object.entries(this.scores).forEach(([competitorNo, competitorScores]) => {
+    Object.entries(this.qualificationScores).forEach(([competitorNo, competitorScores]) => {
       competitorScores.forEach(score => {
         events.push({
           timestamp: new Date(score.createdAt),
@@ -65,7 +65,7 @@ class RankHistoryService {
     // Calculate rankings on demand
     const filteredScores = {};
 
-    Object.entries(this.scores).forEach(([competitorNo, competitorScores]) => {
+    Object.entries(this.qualificationScores).forEach(([competitorNo, competitorScores]) => {
       // Only include competitors in the selected category if a filter is applied
       if (categoryFilter && this.competitors[competitorNo]?.category !== categoryFilter) {
         return;

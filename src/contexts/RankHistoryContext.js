@@ -25,7 +25,7 @@ export const useRankHistory = () => {
  * @returns {JSX.Element} Provider component
  */
 export const RankHistoryProvider = ({ children }) => {
-  const { categories, competitors, problems, scores } = useCompetition();
+  const { categories, competitors, problems, qualificationScores } = useCompetition();
   const { selectedCompId, selectedCategory, loading: appLoading } = useApp();
   
   // Initialize with a default value
@@ -66,12 +66,12 @@ export const RankHistoryProvider = ({ children }) => {
         categories,
         competitors,
         problems,
-        scores,
+        qualificationScores,
         selectedCompId
       );
     }
     return null;
-  }, [categories, competitors, problems, scores, selectedCompId]);
+  }, [categories, competitors, problems, qualificationScores, selectedCompId]);
 
   // Calculate current and previous timepoints based on selected timeframe
   const timepoints = useMemo(() => {
