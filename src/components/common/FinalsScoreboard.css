@@ -160,12 +160,30 @@
 
   .name {
     font-size: 1rem;
-    min-width: 4rem;
+    min-width: 6rem;
     max-width: 6rem;
   }
 
   .problems {
     scale: 0.6
+  }
+
+  .score {
+    font-size: 1rem;
+    min-width: 2rem;
+  }
+}
+
+@media screen and (max-width: 360px) {
+  .rank {
+    font-size: 1rem;
+    margin-right: 0.5rem;
+  }
+
+  .name {
+    font-size: 0.8rem;
+    min-width: 4rem;
+    max-width: 4rem;
   }
 
   .score {
