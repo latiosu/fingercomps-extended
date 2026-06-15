@@ -3,10 +3,15 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { useCompetition } from '../../contexts/CompetitionContext';
 import { useRankHistory } from '../../contexts/RankHistoryContext';
+import { useSandbox } from '../../contexts/SandboxContext';
 import useExpandableRows from '../../hooks/useExpandableRows';
+import { computeCategoryPositions } from '../../utils/sandboxUtils';
 import { filterBySearchTerm } from '../../utils/searchFilters';
 import SearchInput from '../common/SearchInput';
 import SortableTable from '../common/SortableTable';
+import SandboxBanner from '../sandbox/SandboxBanner';
+import SandboxModal from '../sandbox/SandboxModal';
+import '../sandbox/Sandbox.css';
 import MoversAndShakers from './MoversAndShakers';
 import RankChangeIndicator from './RankChangeIndicator';
 import RankChangePeriodSelector from './RankChangePeriodSelector';
@@ -25,16 +30,28 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
     selectedCategory,
     limitScores,
     isMobile,
+    setWhatIfModalUser,
   } = useApp();
   const {
     userTableData,
     categories,
     competitionId,
     loading,
+    backgroundLoading,
+    fullDataLoaded,
     loadingProgress,
     partialDataAvailable
   } = useCompetition();
   const { rankChanges} = useRankHistory();
+  const {
+    sandboxMode,
+    enterSandbox,
+    theoreticalScores,
+    theoreticalTopsCount,
+    removeTheoreticalTop,
+    sandboxUserTableData,
+  } = useSandbox();
+  const [showSandboxModal, setShowSandboxModal] = useState(false);
 
   const { expandedRows, toggleRow } = useExpandableRows();
 
@@ -92,11 +109,38 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
     }
   }, [expandedRows, userTableData]);
 
+  // In sandbox mode, rankings come from the theoretical overlay instead
+  const baseData = sandboxMode ? sandboxUserTableData : userTableData;
+
   // Combine user table data with rank changes
   const dataWithRankChanges = useMemo(() => {
-    if (!rankChanges.length) return userTableData;
+    // In sandbox mode, show movement relative to the real rankings rather
+    // than historical rank changes
+    if (sandboxMode && theoreticalTopsCount > 0) {
+      const realPositions = computeCategoryPositions(userTableData);
+      const sandboxPositions = computeCategoryPositions(baseData);
+      const realTotals = new Map(userTableData.map(user => [user.competitorNo, user.total]));
 
-    return userTableData.map(user => {
+      return baseData.map(user => ({
+        ...user,
+        rankChange: (realPositions[user.competitorNo] || 0) - (sandboxPositions[user.competitorNo] || 0),
+        previousRank: realPositions[user.competitorNo] || user.rank,
+        scoreChange: user.total - (realTotals.get(user.competitorNo) ?? user.total)
+      }));
+    }
+
+    if (!fullDataLoaded && !sandboxMode) {
+      return baseData.map(user => ({
+        ...user,
+        rankChange: null,
+        previousRank: null,
+        scoreChange: null
+      }));
+    }
+
+    if (!rankChanges.length) return baseData;
+
+    return baseData.map(user => {
       const rankChange = rankChanges.find(rc => rc.competitorNo === user.competitorNo);
       return {
         ...user,
@@ -105,7 +149,14 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
         scoreChange: rankChange ? rankChange.scoreChange : 0
       };
     });
-  }, [userTableData, rankChanges]);
+  }, [
+    baseData,
+    userTableData,
+    rankChanges,
+    sandboxMode,
+    theoreticalTopsCount,
+    fullDataLoaded,
+  ]);
 
   // Memoize filtered data to avoid recalculation on every render
   const filteredData = useMemo(() => {
@@ -173,7 +224,24 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
     {
       key: 'name',
       label: 'Name',
-      sortable: true
+      sortable: true,
+      render: (item) => {
+        const theoreticalCount = sandboxMode
+          ? (theoreticalScores[item.competitorNo]?.length || 0)
+          : 0;
+        if (!theoreticalCount) return item.name;
+        return (
+          <span>
+            {item.name}
+            <span
+              className="sandbox-badge"
+              title={`${theoreticalCount} theoretical top${theoreticalCount !== 1 ? 's' : ''}`}
+            >
+              🧪+{theoreticalCount}
+            </span>
+          </span>
+        );
+      }
     },
     {
       key: 'tops',
@@ -192,6 +260,9 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
       render: (item) => (
         <span>
           {item.total} {showFlashBonus && item.bonus > 0 ? `(+${item.bonus})` : ''}
+          {sandboxMode && item.scoreChange > 0 && (
+            <span className="sandbox-score-delta"> (+{item.scoreChange})</span>
+          )}
         </span>
       )
     }
@@ -207,6 +278,9 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
         flashExtraPoints={item.flashExtraPoints}
         isMobile={isMobile}
         showFlashBonus={showFlashBonus}
+        onRemoveTheoretical={sandboxMode
+          ? (climbNo) => removeTheoreticalTop(item.competitorNo, climbNo)
+          : undefined}
       />
 
       <div className="recommendedBtnContainer">
@@ -229,6 +303,28 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
           }}
         >
           Recommended Problems ✨
+        </button>
+        <button
+          id="whatif-btn"
+          title="Add theoretical sends and see how rankings would change"
+          onClick={(e) => {
+            e.stopPropagation();
+
+            // Track what-if sandbox button click with PostHog
+            if (process.env.NODE_ENV !== "development") {
+              posthog.capture('what_if_sandbox_clicked', {
+                component: 'UserTable',
+                user_category: item.category,
+                user_name: item.name,
+                user_rank: item.rank,
+              });
+            }
+
+            enterSandbox();
+            setWhatIfModalUser(item);
+          }}
+        >
+          🧪 What-if Sends
         </button>
       </div>
     </>
@@ -258,6 +354,8 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
         </label>
       </div>
 
+      <SandboxBanner onAddTops={() => setShowSandboxModal(true)} />
+
       <MoversAndShakers onRiserClick={setSearchTerm} searchTerm={searchTerm} />
 
       <SearchInput
@@ -269,7 +367,7 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
         resultsCount={filteredData.length}
         debounceTime={800}
       />
-      <div className="table-container">
+      <div className={`table-container${sandboxMode ? ' sandbox-table' : ''}`}>
         <SortableTable
           columns={columns}
           data={filteredData}
@@ -278,12 +376,22 @@ function UserTable({ onRecommendClick, searchTerm, setSearchTerm }) {
           onRowClick={(id) => toggleRow(id)}
           renderExpandedContent={renderExpandedContent}
           expandedRows={expandedRows}
-          loading={loading}
+          rowClassName={(item) => (
+            sandboxMode && theoreticalScores[item.competitorNo]?.length
+              ? 'sandbox-modified-row'
+              : undefined
+          )}
+          loading={loading || backgroundLoading}
           loadingProgress={loadingProgress}
           partialDataAvailable={partialDataAvailable}
           emptyMessage={selectedCategory ? "No users in this category" : "No users available"}
         />
       </div>
+
+      {/* Sandbox add-tops modal */}
+      {showSandboxModal && (
+        <SandboxModal onClose={() => setShowSandboxModal(false)} />
+      )}
     </>
   );
 }

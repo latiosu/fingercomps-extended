@@ -136,12 +136,14 @@ export const getCategories = async (compId) => {
 /**
  * Fetches competitors for a specific competition
  * @param {string} compId - Competition ID
+ * @param {string} [categoryCode] - Optional category code to filter by
  * @returns {Promise<Object>} Object containing competitor data
  */
-export const getCompetitors = async (compId) => {
+export const getCompetitors = async (compId, categoryCode = "") => {
   try {
     const collectionPath = `competitions/${compId}/competitors`;
-    const documents = await fetchAllData(collectionPath);
+    const constraints = categoryCode ? [where("category", "==", categoryCode)] : [];
+    const documents = await fetchAllData(collectionPath, constraints);
 
     return documents.reduce((acc, item) => {
       // Convert the document to the format expected by the rest of the app
@@ -161,12 +163,14 @@ export const getCompetitors = async (compId) => {
 /**
  * Fetches scores for a specific competition
  * @param {string} compId - Competition ID
+ * @param {string} [categoryCode] - Optional category code to filter by
  * @returns {Promise<Object>} Object containing score data
  */
-export const getQualificationScores = async (compId) => {
+export const getQualificationScores = async (compId, categoryCode = "") => {
   try {
     const collectionPath = `competitions/${compId}/qualificationScores`;
-    const documents = await fetchAllData(collectionPath);
+    const constraints = categoryCode ? [where("category", "==", categoryCode)] : [];
+    const documents = await fetchAllData(collectionPath, constraints);
 
     return documents.reduce((acc, item) => {
       const competitorNo = item.competitorNo;
@@ -191,12 +195,14 @@ export const getQualificationScores = async (compId) => {
 /**
  * Fetches scores for a specific competition
  * @param {string} compId - Competition ID
+ * @param {string} [categoryCode] - Optional category code to filter by
  * @returns {Promise<Object>} Object containing score data
  */
-export const getFinalsScores = async (compId) => {
+export const getFinalsScores = async (compId, categoryCode = "") => {
   try {
     const collectionPath = `competitions/${compId}/finalScores`;
-    const documents = await fetchAllData(collectionPath);
+    const constraints = categoryCode ? [where("category", "==", categoryCode)] : [];
+    const documents = await fetchAllData(collectionPath, constraints);
 
     // TODO: Handle variable number of finals problems
     return documents.reduce((acc, item) => {

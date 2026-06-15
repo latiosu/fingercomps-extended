@@ -25,8 +25,19 @@ export const useRankHistory = () => {
  * @returns {JSX.Element} Provider component
  */
 export const RankHistoryProvider = ({ children }) => {
-  const { categories, competitors, problems, qualificationScores } = useCompetition();
-  const { selectedCompId, selectedCategory, loading: appLoading } = useApp();
+  const {
+    categories,
+    competitors,
+    problems,
+    qualificationScores,
+    fullDataLoaded,
+    backgroundLoading,
+  } = useCompetition();
+  const {
+    selectedCompId,
+    selectedCategoryCode,
+    loading: appLoading,
+  } = useApp();
   
   // Initialize with a default value
   const [timeframe, setTimeframeState] = useState('daily');
@@ -61,7 +72,12 @@ export const RankHistoryProvider = ({ children }) => {
 
   // Create the rank history service
   const rankHistoryService = useMemo(() => {
-    if (Object.keys(categories).length && Object.keys(competitors).length && selectedCompId) {
+    if (
+      fullDataLoaded &&
+      Object.keys(categories).length &&
+      Object.keys(competitors).length &&
+      selectedCompId
+    ) {
       return new RankHistoryService(
         categories,
         competitors,
@@ -71,7 +87,14 @@ export const RankHistoryProvider = ({ children }) => {
       );
     }
     return null;
-  }, [categories, competitors, problems, qualificationScores, selectedCompId]);
+  }, [
+    categories,
+    competitors,
+    fullDataLoaded,
+    problems,
+    qualificationScores,
+    selectedCompId,
+  ]);
 
   // Calculate current and previous timepoints based on selected timeframe
   const timepoints = useMemo(() => {
@@ -110,7 +133,12 @@ export const RankHistoryProvider = ({ children }) => {
   // Update rank changes when timeframe, service, or selected category changes
   useEffect(() => {
     const updateRankChanges = async () => {
-      if (!rankHistoryService) return;
+      if (!rankHistoryService) {
+        setRankChanges([]);
+        setSignificantChanges({ risers: [], fallers: [] });
+        setLoading(backgroundLoading);
+        return;
+      }
 
       setLoading(true);
 
@@ -119,7 +147,7 @@ export const RankHistoryProvider = ({ children }) => {
         const changes = await rankHistoryService.getRankChanges(
           timepoints.current,
           timepoints.previous,
-          selectedCategory
+          selectedCategoryCode
         );
 
         setRankChanges(changes);
@@ -129,7 +157,7 @@ export const RankHistoryProvider = ({ children }) => {
           timepoints.current,
           timepoints.previous,
           0, // Threshold
-          selectedCategory
+          selectedCategoryCode
         );
 
         setSignificantChanges(significant);
@@ -141,7 +169,13 @@ export const RankHistoryProvider = ({ children }) => {
     };
 
     updateRankChanges();
-  }, [rankHistoryService, timepoints, timeframe, selectedCategory]);
+  }, [
+    rankHistoryService,
+    timepoints,
+    timeframe,
+    selectedCategoryCode,
+    backgroundLoading,
+  ]);
 
   // Clear in-memory cache when competition changes
   useEffect(() => {
@@ -161,7 +195,7 @@ export const RankHistoryProvider = ({ children }) => {
       return await rankHistoryService.getCompetitorRankHistory(
         competitorNo,
         timeframe,
-        selectedCategory
+        selectedCategoryCode
       );
     } catch (error) {
       console.error('Error getting competitor rank history:', error);

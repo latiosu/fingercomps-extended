@@ -2,26 +2,34 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useApp } from "../../contexts/AppContext";
 import { useCompetition } from "../../contexts/CompetitionContext";
 import useExpandableRows from "../../hooks/useExpandableRows";
-import {
-  trackHideZeroTopsFilterChanged,
-  trackRawCountsFilterChanged,
-} from "../../utils/analytics";
+import { trackHideZeroTopsFilterChanged } from "../../utils/analytics";
 import {
   formatDateForHover,
   toTimeAgoString,
 } from "../../utils/dateFormatters";
 import {
+  DATE_SET_FILTER_DEFAULT,
+  PHOTOS_FILTER_DEFAULT,
+  TOPS_FILTER_DEFAULT,
+  isPointRangeValid,
+  matchesDateSetFilter,
+  matchesPhotosFilter,
+  matchesPointRangeFilter,
+  matchesTopsFilter,
+  parseNumberRangeBound,
+} from "../../utils/problemFilters";
+import {
   getMainLocation,
   getOrganizedLocations,
 } from "../../utils/scoreCalculators";
 import { filterBySearchTerm } from "../../utils/searchFilters";
-import LocationFilter from "../common/LocationFilter";
 import PhotoIndicator from "../common/PhotoIndicator";
 import PhotoUploader from "../common/PhotoUploader";
 import PhotoViewer from "../common/PhotoViewer";
 import SearchInput from "../common/SearchInput";
 import SendsSubTable from "../common/SendsSubTable";
 import SortableTable from "../common/SortableTable";
+import ProblemsFilterBar from "./ProblemsFilterBar";
 
 export const TOP_COLUMN_KEY = "tops";
 export const FLASH_COLUMN_KEY = "flashes";
@@ -32,18 +40,75 @@ export const CREATED_AT_COLUMN_KEY = "createdAt";
 
 export const SORT_VALUE_KEY = "sortValue";
 
+const TOPS_FILTER_VALUES = ["all", "hasTops", "noTops"];
+const PHOTOS_FILTER_VALUES = ["all", "hasPhotos", "noPhotos"];
+const DATE_SET_FILTER_VALUES = [
+  "all",
+  "last7Days",
+  "last30Days",
+  "olderThan30Days",
+];
+
+const getSavedValue = (storageKey, defaultValue) => {
+  try {
+    return localStorage.getItem(storageKey) || defaultValue;
+  } catch (error) {
+    console.warn("Unable to access localStorage:", error);
+    return defaultValue;
+  }
+};
+
+const getSavedEnumValue = (storageKey, defaultValue, allowedValues) => {
+  const savedValue = getSavedValue(storageKey, defaultValue);
+  return allowedValues.includes(savedValue) ? savedValue : defaultValue;
+};
+
+const getSavedTopsFilter = (storageKey, legacyStorageKey) => {
+  const savedValue = getSavedEnumValue(
+    storageKey,
+    "",
+    TOPS_FILTER_VALUES
+  );
+
+  if (savedValue) {
+    return savedValue;
+  }
+
+  try {
+    const legacyValue = localStorage.getItem(legacyStorageKey);
+    if (legacyValue !== null) {
+      return legacyValue === "true" ? "hasTops" : "all";
+    }
+  } catch (error) {
+    console.warn("Unable to access localStorage:", error);
+  }
+
+  return TOPS_FILTER_DEFAULT;
+};
+
+const hasPointRangeFilter = (pointsMin, pointsMax) =>
+  parseNumberRangeBound(pointsMin) !== null ||
+  parseNumberRangeBound(pointsMax) !== null;
+
 /**
  * Component to display the problems table
  * @returns {JSX.Element} ProblemsTable component
  */
 function ProblemsTable() {
-  const { isMobile, selectedCategoryCode } = useApp();
+  const {
+    isMobile,
+    selectedCategoryCode,
+    showRawCounts,
+    showOverallTopsFlashes,
+  } = useApp();
   const {
     competitionId,
     categories,
     categoryTops,
     problems,
     loading,
+    backgroundLoading,
+    fullDataLoaded,
     loadingProgress,
     partialDataAvailable,
     countCompetitors,
@@ -53,40 +118,13 @@ function ProblemsTable() {
   const { expandedRows, toggleRow } = useExpandableRows();
 
   const locationStorageKey = `location_filter_${competitionId}`;
-  const rawCountsStorageKey = `raw_counts_filter_${competitionId}`;
+  const pointsMinStorageKey = `points_min_filter_${competitionId}`;
+  const pointsMaxStorageKey = `points_max_filter_${competitionId}`;
+  const topsFilterStorageKey = `tops_filter_${competitionId}`;
+  const photosFilterStorageKey = `photos_filter_${competitionId}`;
+  const dateSetFilterStorageKey = `date_set_filter_${competitionId}`;
   const hideZeroTopsStorageKey = `hide_zero_tops_filter_${competitionId}`;
   const searchStorageKey = `problems_search_filter_${competitionId}`;
-  const showOverallTopsFlashesStorageKey = `show_overall_tops_flashes_${competitionId}`;
-
-  const [showOverallTopsFlashes, setShowOverallTopsFlashes] = useState(() => {
-    try {
-      const savedValue = localStorage.getItem(showOverallTopsFlashesStorageKey);
-      return savedValue !== null ? savedValue === "true" : true; // Default to true if not found
-    } catch (error) {
-      console.warn("Unable to access localStorage:", error);
-      return false;
-    }
-  });
-
-  const [showRawCounts, setShowRawCounts] = useState(() => {
-    try {
-      const savedValue = localStorage.getItem(rawCountsStorageKey);
-      return savedValue !== null ? savedValue === "true" : true; // Default to true if not found
-    } catch (error) {
-      console.warn("Unable to access localStorage:", error);
-      return true;
-    }
-  });
-
-  const [hideZeroTops, setHideZeroTops] = useState(() => {
-    try {
-      const savedValue = localStorage.getItem(hideZeroTopsStorageKey);
-      return savedValue !== null ? savedValue === "true" : true; // Default to true if not found
-    } catch (error) {
-      console.warn("Unable to access localStorage:", error);
-      return true;
-    }
-  });
 
   const [searchTerm, setSearchTerm] = useState(() => {
     try {
@@ -106,6 +144,30 @@ function ProblemsTable() {
     }
   });
 
+  const [pointsMin, setPointsMin] = useState(() =>
+    getSavedValue(pointsMinStorageKey, "")
+  );
+  const [pointsMax, setPointsMax] = useState(() =>
+    getSavedValue(pointsMaxStorageKey, "")
+  );
+  const [topsFilter, setTopsFilter] = useState(() =>
+    getSavedTopsFilter(topsFilterStorageKey, hideZeroTopsStorageKey)
+  );
+  const [photosFilter, setPhotosFilter] = useState(() =>
+    getSavedEnumValue(
+      photosFilterStorageKey,
+      PHOTOS_FILTER_DEFAULT,
+      PHOTOS_FILTER_VALUES
+    )
+  );
+  const [dateSetFilter, setDateSetFilter] = useState(() =>
+    getSavedEnumValue(
+      dateSetFilterStorageKey,
+      DATE_SET_FILTER_DEFAULT,
+      DATE_SET_FILTER_VALUES
+    )
+  );
+
   useEffect(() => {
     try {
       if (selectedLocation) {
@@ -120,41 +182,56 @@ function ProblemsTable() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(rawCountsStorageKey, showRawCounts.toString());
-      trackRawCountsFilterChanged(showRawCounts, competitionId);
+      if (pointsMin) {
+        localStorage.setItem(pointsMinStorageKey, pointsMin);
+      } else {
+        localStorage.removeItem(pointsMinStorageKey);
+      }
     } catch (error) {
-      console.warn(
-        "Unable to save raw counts preference to localStorage:",
-        error
-      );
+      console.warn("Unable to save minimum points filter:", error);
     }
-  }, [showRawCounts, rawCountsStorageKey, competitionId]);
+  }, [pointsMin, pointsMinStorageKey]);
 
   useEffect(() => {
     try {
-      localStorage.setItem(hideZeroTopsStorageKey, hideZeroTops.toString());
-      trackHideZeroTopsFilterChanged(hideZeroTops, competitionId);
+      if (pointsMax) {
+        localStorage.setItem(pointsMaxStorageKey, pointsMax);
+      } else {
+        localStorage.removeItem(pointsMaxStorageKey);
+      }
     } catch (error) {
-      console.warn(
-        "Unable to save hide zero tops preference to localStorage:",
-        error
-      );
+      console.warn("Unable to save maximum points filter:", error);
     }
-  }, [hideZeroTops, hideZeroTopsStorageKey, competitionId]);
+  }, [pointsMax, pointsMaxStorageKey]);
 
   useEffect(() => {
     try {
+      localStorage.setItem(topsFilterStorageKey, topsFilter);
       localStorage.setItem(
-        showOverallTopsFlashesStorageKey,
-        showOverallTopsFlashes.toString()
+        hideZeroTopsStorageKey,
+        (topsFilter === "hasTops").toString()
       );
+      trackHideZeroTopsFilterChanged(topsFilter === "hasTops", competitionId);
     } catch (error) {
-      console.warn(
-        "Unable to save overall tops & flashes preference to localStorage:",
-        error
-      );
+      console.warn("Unable to save tops filter:", error);
     }
-  }, [showOverallTopsFlashes, showOverallTopsFlashesStorageKey]);
+  }, [topsFilter, topsFilterStorageKey, hideZeroTopsStorageKey, competitionId]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(photosFilterStorageKey, photosFilter);
+    } catch (error) {
+      console.warn("Unable to save photos filter:", error);
+    }
+  }, [photosFilter, photosFilterStorageKey]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(dateSetFilterStorageKey, dateSetFilter);
+    } catch (error) {
+      console.warn("Unable to save date set filter:", error);
+    }
+  }, [dateSetFilter, dateSetFilterStorageKey]);
 
   useEffect(() => {
     try {
@@ -217,6 +294,12 @@ function ProblemsTable() {
         sortable: true,
       },
       {
+        key: "station",
+        label: "Location",
+        sortable: true,
+        render: (item) => item.station || "-",
+      },
+      {
         key: "score",
         label: "Points",
         sortable: true,
@@ -241,6 +324,10 @@ function ProblemsTable() {
           label: "Overall Tops",
           sortable: true,
           render: (item) => {
+            if (!fullDataLoaded) {
+              return <span title="Overall stats loading">-</span>;
+            }
+
             if (!item[TOP_COLUMN_KEY]) return <span>-</span>;
 
             // const totalTops = Object.values(item.stats).reduce(
@@ -264,6 +351,10 @@ function ProblemsTable() {
           label: "Overall Flashes",
           sortable: true,
           render: (item) => {
+            if (!fullDataLoaded) {
+              return <span title="Overall stats loading">-</span>;
+            }
+
             if (!item[FLASH_COLUMN_KEY]) return <span>-</span>;
 
             // const totalFlashes = Object.values(item.stats).reduce(
@@ -309,24 +400,19 @@ function ProblemsTable() {
     showOverallTopsFlashes,
     showRawCounts,
     categories,
+    fullDataLoaded,
   ]);
 
   // Filter and prepare problems data
   const problemsData = useMemo(() => {
     let filteredData = [...Object.values(problems)];
+    const hasValidPointRange = isPointRangeValid(pointsMin, pointsMax);
 
-    // Filter problems with no tops if hideZeroTops is enabled
-    if (hideZeroTops) {
-      filteredData = filteredData.filter((problem) => {
-        if (!problem.stats) return false;
-        return Object.entries(problem.stats)
-          .filter(
-            ([k, _]) =>
-              categoryTops[k]?.length > 0 &&
-              (selectedCategoryCode ? k === selectedCategoryCode : true)
-          )
-          .some(([_, v]) => v[TOP_COLUMN_KEY] > 0);
-      });
+    // Filter problems by points if a valid range is selected
+    if (hasPointRangeFilter(pointsMin, pointsMax) && hasValidPointRange) {
+      filteredData = filteredData.filter((problem) =>
+        matchesPointRangeFilter(problem, pointsMin, pointsMax)
+      );
     }
 
     // Filter problems by location if a location is selected
@@ -335,6 +421,21 @@ function ProblemsTable() {
         (problem) => getMainLocation(problem.station) === selectedLocation
       );
     }
+
+    // Filter problems by tops in the active category scope
+    filteredData = filteredData.filter((problem) =>
+      matchesTopsFilter(problem, topsFilter, focusCategories)
+    );
+
+    // Filter problems by photo availability
+    filteredData = filteredData.filter((problem) =>
+      matchesPhotosFilter(problem, photosFilter, problemPhotos)
+    );
+
+    // Filter problems by date set
+    filteredData = filteredData.filter((problem) =>
+      matchesDateSetFilter(problem, dateSetFilter)
+    );
 
     // Filter problems by search term (name/grade/problem number)
     if (searchTerm) {
@@ -390,13 +491,16 @@ function ProblemsTable() {
     });
   }, [
     problems,
-    hideZeroTops,
+    pointsMin,
+    pointsMax,
     focusCategories,
-    categoryTops,
-    selectedCategoryCode,
     showRawCounts,
     countCompetitors,
     selectedLocation,
+    topsFilter,
+    photosFilter,
+    problemPhotos,
+    dateSetFilter,
     searchTerm,
   ]);
 
@@ -409,56 +513,58 @@ function ProblemsTable() {
     />
   );
 
+  const filtersDisabled = loading && loadingProgress < 100;
+  const hasActiveFilters = Boolean(
+    selectedLocation ||
+      hasPointRangeFilter(pointsMin, pointsMax) ||
+      topsFilter !== TOPS_FILTER_DEFAULT ||
+      photosFilter !== PHOTOS_FILTER_DEFAULT ||
+      dateSetFilter !== DATE_SET_FILTER_DEFAULT
+  );
+
+  const resetFilters = () => {
+    setSelectedLocation("");
+    setPointsMin("");
+    setPointsMax("");
+    setTopsFilter(TOPS_FILTER_DEFAULT);
+    setPhotosFilter(PHOTOS_FILTER_DEFAULT);
+    setDateSetFilter(DATE_SET_FILTER_DEFAULT);
+  };
+
   return (
     <>
-      <div className="filters" style={{ maxWidth: "450px" }}>
-        <LocationFilter
-          locationGroups={locationGroups}
-          selectedLocation={selectedLocation}
-          onLocationChange={setSelectedLocation}
-          id="problems-location-filter"
-        />
-        <label>
-          <input
-            type="checkbox"
-            checked={showRawCounts}
-            onChange={() => setShowRawCounts(!showRawCounts)}
-            disabled={loading && loadingProgress < 100}
-          />
-          Show raw counts for tops and flashes
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={hideZeroTops}
-            onChange={() => setHideZeroTops(!hideZeroTops)}
-            disabled={loading && loadingProgress < 100}
-          />
-          Hide problems with no tops
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={showOverallTopsFlashes}
-            onChange={() => setShowOverallTopsFlashes(!showOverallTopsFlashes)}
-            disabled={loading && loadingProgress < 100}
-          />
-          Show overall tops & flashes
-        </label>
-      </div>
+      <SearchInput
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        placeholder="Search by number or colour... (e.g. 42 or purple)"
+        component="ProblemsTable"
+        field="search_by_name_grade"
+        resultsCount={problemsData.length}
+        style={{ marginTop: "8px", marginBottom: "8px" }}
+        view="routesetter"
+        competitionId={competitionId}
+      />
+
+      <ProblemsFilterBar
+        locationGroups={locationGroups}
+        selectedLocation={selectedLocation}
+        onLocationChange={setSelectedLocation}
+        pointsMin={pointsMin}
+        pointsMax={pointsMax}
+        onPointsMinChange={setPointsMin}
+        onPointsMaxChange={setPointsMax}
+        topsFilter={topsFilter}
+        onTopsFilterChange={setTopsFilter}
+        photosFilter={photosFilter}
+        onPhotosFilterChange={setPhotosFilter}
+        dateSetFilter={dateSetFilter}
+        onDateSetFilterChange={setDateSetFilter}
+        onResetFilters={resetFilters}
+        hasActiveFilters={hasActiveFilters}
+        disabled={filtersDisabled}
+      />
 
       <div className="table-container">
-        <SearchInput
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          placeholder="Search by number or colour... (e.g. 42 or purple)"
-          component="ProblemsTable"
-          field="search_by_name_grade"
-          resultsCount={problemsData.length}
-          style={{ marginTop: "8px", marginBottom: "8px" }}
-          view="routesetter"
-          competitionId={competitionId}
-        />
         <SortableTable
           columns={columns}
           data={problemsData}
@@ -467,7 +573,7 @@ function ProblemsTable() {
           onRowClick={(id) => toggleRow(id)}
           renderExpandedContent={renderExpandedContent}
           expandedRows={expandedRows}
-          loading={loading}
+          loading={loading || backgroundLoading}
           loadingProgress={loadingProgress}
           partialDataAvailable={partialDataAvailable}
           emptyMessage="No problems available"

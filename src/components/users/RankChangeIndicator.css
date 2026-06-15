@@ -44,6 +44,10 @@
   background-color: #17a2b8;
 }
 
+.rank-change-placeholder {
+  color: #777;
+}
+
 .rank-change-icon {
   margin-right: 2px;
 }

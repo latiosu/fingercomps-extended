@@ -9,6 +9,14 @@ import './RankChangeIndicator.css';
  * @returns {JSX.Element} RankChangeIndicator component
  */
 function RankChangeIndicator({ change, threshold = 4 }) {
+  if (change === null || change === undefined) {
+    return (
+      <span className="rank-change-placeholder" title="Rank changes loading">
+        -
+      </span>
+    );
+  }
+
   // Handle new competitors
   if (change === 'new') {
     return (

@@ -1,16 +1,43 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { getCategories, getCompetitors, getProblems, getQualificationScores, getFinalsScores } from '../api/services/competitions';
 import { getAllProblemPhotos, uploadProblemPhoto as uploadPhoto } from '../api/services/photos';
 import {
   computeCategoryTops,
   computeFinalsScoreboardData,
-  computeProblemStats,
+  computeProblemsWithStats,
   computeUserTableData
 } from '../utils/dataProcessors';
 import { useApp } from './AppContext';
 
 // Create context
 const CompetitionContext = createContext();
+
+const DATA_LOADING_KEYS = [
+  'categories',
+  'competitors',
+  'qualificationScores',
+  'finalsScores',
+  'problems',
+];
+
+const createLoadingEntry = (overrides = {}) => ({
+  loading: false,
+  progress: 0,
+  complete: false,
+  error: null,
+  ...overrides,
+});
+
+const createLoadingState = (overrides = {}) => ({
+  categories: createLoadingEntry(overrides.categories),
+  competitors: createLoadingEntry(overrides.competitors),
+  qualificationScores: createLoadingEntry(overrides.qualificationScores),
+  finalsScores: createLoadingEntry(overrides.finalsScores),
+  problems: createLoadingEntry(overrides.problems),
+  photos: createLoadingEntry(overrides.photos),
+});
+
+const getErrorMessage = (error) => error?.message || String(error);
 
 /**
  * Custom hook to use the competition context
@@ -29,11 +56,27 @@ export const useCompetition = () => {
  * @param {Object} props - Component props
  * @param {React.ReactNode} props.children - Child components
  * @param {string} props.competitionId - Competition ID
+ * @param {string} [props.priorityCategoryCode] - Optional category code to load first
  * @returns {JSX.Element} Provider component
  */
-export const CompetitionProvider = ({ children, competitionId }) => {
+export const CompetitionProvider = ({ children, competitionId, priorityCategoryCode }) => {
   // Get selectedCategoryCode from AppContext
-  const { selectedCategoryCode } = useApp();
+  const { selectedCategoryCode, loading: appLoading } = useApp();
+
+  const savedCategoryCode = useMemo(() => {
+    if (!competitionId || priorityCategoryCode !== undefined) return "";
+
+    try {
+      return localStorage.getItem(`categoryCode_${competitionId}`) || "";
+    } catch (error) {
+      console.warn("Unable to access localStorage:", error);
+      return "";
+    }
+  }, [competitionId, priorityCategoryCode]);
+
+  const activeCategoryCode = priorityCategoryCode !== undefined
+    ? (priorityCategoryCode || "")
+    : ((!selectedCategoryCode && appLoading) ? savedCategoryCode : (selectedCategoryCode || ""));
 
   // State for competition data
   const [categories, setCategories] = useState({});
@@ -42,7 +85,19 @@ export const CompetitionProvider = ({ children, competitionId }) => {
   const [finalsScores, setFinalsScores] = useState({});
   const [problems, setProblems] = useState({});
   const [loading, setLoading] = useState(false);
+  const [backgroundLoading, setBackgroundLoading] = useState(false);
+  const [baseDataLoaded, setBaseDataLoaded] = useState(false);
+  const [fullDataLoaded, setFullDataLoaded] = useState(false);
+  const [loadedCategoryCodes, setLoadedCategoryCodes] = useState(() => new Set());
   const [error, setError] = useState(null);
+
+  const loadRequestRef = useRef(0);
+  const currentCompetitionRef = useRef(null);
+  const activeCategoryCodeRef = useRef(activeCategoryCode);
+  const baseDataLoadedRef = useRef(false);
+  const fullDataLoadedRef = useRef(false);
+  const fullLoadStartedRef = useRef(false);
+  const loadedCategoryCodesRef = useRef(new Set());
 
   // State for problem photos
   const [problemPhotos, setProblemPhotos] = useState({});
@@ -54,221 +109,241 @@ export const CompetitionProvider = ({ children, competitionId }) => {
   });
 
   // New loading state with progress tracking
-  const [loadingState, setLoadingState] = useState({
-    categories: { loading: false, progress: 0, complete: false, error: null },
-    competitors: { loading: false, progress: 0, complete: false, error: null },
-    qualificationScores: { loading: false, progress: 0, complete: false, error: null },
-    finalsScores: { loading: false, progress: 0, complete: false, error: null },
-    problems: { loading: false, progress: 0, complete: false, error: null },
-    photos: { loading: false, progress: 0, complete: false, error: null }
-  });
+  const [loadingState, setLoadingState] = useState(() => createLoadingState());
 
   // TODO: Separate finals scores loading from general scoreboard loading
   // Calculate overall loading progress (0-100)
   const loadingProgress = useMemo(() => {
-    const { categories, competitors, qualificationScores, finalsScores, problems } = loadingState;
-    const totalProgress = categories.progress + competitors.progress + qualificationScores.progress + finalsScores.progress + problems.progress;
-    const progress = Math.round(totalProgress / 4);
-
-    // Set loading to false when progress reaches 100%
-    if (progress >= 100 && loading) {
-      // Use setTimeout to avoid state update during render
-      setTimeout(() => setLoading(false), 0);
-    }
-
-    return progress;
-  }, [loadingState, loading]);
+    const totalProgress = DATA_LOADING_KEYS.reduce(
+      (sum, key) => sum + (loadingState[key]?.progress || 0),
+      0
+    );
+    return Math.round(totalProgress / DATA_LOADING_KEYS.length);
+  }, [loadingState]);
 
   // Determine if any data is available for display
   const partialDataAvailable = useMemo(() => {
-    return Object.keys(categories).length > 0 || Object.keys(competitors).length > 0;
-  }, [categories, competitors]);
+    if (!Object.keys(categories).length || !Object.keys(problems).length) {
+      return false;
+    }
 
-  // Function to fetch competition data with progress tracking
-  const fetchCompetitionData = useCallback(async () => {
-    if (!competitionId) return;
+    if (!activeCategoryCode) {
+      return fullDataLoaded;
+    }
 
-    // Clear state to avoid mixing data between competitions
-    setCategories({});
-    setCompetitors({});
-    setQualificationScores({});
-    setFinalsScores({});
-    setProblems({});
+    return fullDataLoaded || loadedCategoryCodes.has(activeCategoryCode);
+  }, [
+    activeCategoryCode,
+    categories,
+    fullDataLoaded,
+    loadedCategoryCodes,
+    problems,
+  ]);
+
+  const isCurrentRequest = useCallback((requestId) => (
+    loadRequestRef.current === requestId &&
+    currentCompetitionRef.current === competitionId
+  ), [competitionId]);
+
+  const updateLoadingEntry = useCallback((key, patch) => {
+    setLoadingState(prev => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        ...patch,
+      },
+    }));
+  }, []);
+
+  const addLoadedCategoryCode = useCallback((categoryCode) => {
+    loadedCategoryCodesRef.current = new Set([
+      ...loadedCategoryCodesRef.current,
+      categoryCode,
+    ]);
+    setLoadedCategoryCodes(new Set(loadedCategoryCodesRef.current));
+  }, []);
+
+  const loadCategorySlice = useCallback(async (requestId, categoryCode) => {
+    if (!competitionId || !categoryCode || loadedCategoryCodesRef.current.has(categoryCode)) {
+      if (
+        categoryCode &&
+        loadedCategoryCodesRef.current.has(categoryCode) &&
+        baseDataLoadedRef.current &&
+        activeCategoryCodeRef.current === categoryCode
+      ) {
+        setLoading(false);
+      }
+      return;
+    }
 
     setLoading(true);
     setError(null);
-
-    // Initialize loading state for all data types
-    setLoadingState({
-      categories: { loading: true, progress: 0, complete: false, error: null },
-      competitors: { loading: true, progress: 0, complete: false, error: null },
-      qualificationScores: { loading: true, progress: 0, complete: false, error: null },
-      finalsScores: { loading: true, progress: 0, complete: false, error: null },
-      problems: { loading: true, progress: 0, complete: false, error: null }
+    ['competitors', 'qualificationScores', 'finalsScores'].forEach((key) => {
+      updateLoadingEntry(key, {
+        loading: true,
+        progress: 10,
+        complete: false,
+        error: null,
+      });
     });
 
     try {
-      // Fetch categories
-      try {
-        setLoadingState(prev => ({
-          ...prev,
-          categories: { ...prev.categories, progress: 10 }
-        }));
+      const [competitorsData, scoresData, finalsScoresData] = await Promise.all([
+        getCompetitors(competitionId, categoryCode),
+        getQualificationScores(competitionId, categoryCode),
+        getFinalsScores(competitionId, categoryCode),
+      ]);
 
-        const categoriesData = await getCategories(competitionId);
+      if (!isCurrentRequest(requestId)) return;
 
-        setLoadingState(prev => ({
-          ...prev,
-          categories: { loading: false, progress: 100, complete: true, error: null }
-        }));
+      setCompetitors(prev => ({
+        ...prev,
+        ...competitorsData,
+      }));
+      setQualificationScores(prev => ({
+        ...prev,
+        ...scoresData,
+      }));
+      setFinalsScores(prev => ({
+        ...prev,
+        ...finalsScoresData,
+      }));
 
-        setCategories(categoriesData);
-      } catch (err) {
-        setLoadingState(prev => ({
-          ...prev,
-          categories: { loading: false, progress: 0, complete: false, error: err.message }
-        }));
-        console.error("Error fetching categories:", err);
-      }
+      addLoadedCategoryCode(categoryCode);
 
-      // Fetch competitors
-      try {
-        setLoadingState(prev => ({
-          ...prev,
-          competitors: { ...prev.competitors, progress: 10 }
-        }));
-
-        const competitorsData = await getCompetitors(competitionId);
-
-        setLoadingState(prev => ({
-          ...prev,
-          competitors: { loading: false, progress: 100, complete: true, error: null }
-        }));
-
-        setCompetitors(competitorsData);
-      } catch (err) {
-        setLoadingState(prev => ({
-          ...prev,
-          competitors: { loading: false, progress: 0, complete: false, error: err.message }
-        }));
-        console.error("Error fetching competitors:", err);
-      }
-
-      // Fetch qualification scores
-      try {
-        setLoadingState(prev => ({
-          ...prev,
-          qualificationScores: { ...prev.qualificationScores, progress: 10 }
-        }));
-
-        const scoresData = await getQualificationScores(competitionId);
-
-        setLoadingState(prev => ({
-          ...prev,
-          qualificationScores: { loading: false, progress: 100, complete: true, error: null }
-        }));
-
-        setQualificationScores(scoresData);
-      } catch (err) {
-        setLoadingState(prev => ({
-          ...prev,
-          qualificationScores: { loading: false, progress: 0, complete: false, error: err.message }
-        }));
-        console.error("Error fetching scores:", err);
-      }
-
-      // Fetch finals scores
-      try {
-        setLoadingState(prev => ({
-          ...prev,
-          finalsScores: { ...prev.finalsScores, progress: 10 }
-        }));
-
-        const scoresData = await getFinalsScores(competitionId);
-
-        setLoadingState(prev => ({
-          ...prev,
-          finalsScores: { loading: false, progress: 100, complete: true, error: null }
-        }));
-
-        setFinalsScores(scoresData);
-      } catch (err) {
-        setLoadingState(prev => ({
-          ...prev,
-          finalsScores: { loading: false, progress: 0, complete: false, error: err.message }
-        }));
-        console.error("Error fetching scores:", err);
-      }
-
-      // Fetch problems
-      try {
-        setLoadingState(prev => ({
-          ...prev,
-          problems: { ...prev.problems, progress: 10 }
-        }));
-
-        const problemsData = await getProblems(competitionId);
-
-        setLoadingState(prev => ({
-          ...prev,
-          problems: { loading: false, progress: 100, complete: true, error: null }
-        }));
-
-        setProblems(problemsData);
-      } catch (err) {
-        setLoadingState(prev => ({
-          ...prev,
-          problems: { loading: false, progress: 0, complete: false, error: err.message }
-        }));
-        console.error("Error fetching problems:", err);
-      }
-
-    } catch (err) {
-      setError(err.message);
-      console.error("Error fetching competition data:", err);
-    } finally {
-      // Set loading to false when all data types are complete or have errors
-      setLoadingState(prevState => {
-        const allComplete = Object.values(prevState).every(
-          state => state.complete || state.error
-        );
-
-        if (allComplete) {
-          // Use setTimeout to avoid state update during render
-          setTimeout(() => setLoading(false), 0);
-        }
-
-        return prevState;
+      const stillHydrating = fullLoadStartedRef.current && !fullDataLoadedRef.current;
+      ['competitors', 'qualificationScores', 'finalsScores'].forEach((key) => {
+        updateLoadingEntry(key, {
+          loading: stillHydrating,
+          progress: stillHydrating ? 50 : 100,
+          complete: !stillHydrating,
+          error: null,
+        });
       });
+
+      if (baseDataLoadedRef.current && activeCategoryCodeRef.current === categoryCode) {
+        setLoading(false);
+      }
+    } catch (err) {
+      if (!isCurrentRequest(requestId)) return;
+
+      const message = getErrorMessage(err);
+      ['competitors', 'qualificationScores', 'finalsScores'].forEach((key) => {
+        updateLoadingEntry(key, {
+          loading: false,
+          progress: 0,
+          complete: false,
+          error: message,
+        });
+      });
+      setError(message);
+      setLoading(false);
+      console.error(`Error fetching category data for ${categoryCode}:`, err);
     }
-  }, [competitionId]);
+  }, [
+    addLoadedCategoryCode,
+    competitionId,
+    isCurrentRequest,
+    updateLoadingEntry,
+  ]);
+
+  const startFullHydration = useCallback(async (requestId) => {
+    if (!competitionId || fullLoadStartedRef.current) return;
+
+    fullLoadStartedRef.current = true;
+    setBackgroundLoading(true);
+    ['competitors', 'qualificationScores', 'finalsScores'].forEach((key) => {
+      updateLoadingEntry(key, {
+        loading: true,
+        progress: 10,
+        complete: false,
+        error: null,
+      });
+    });
+
+    try {
+      const [competitorsData, scoresData, finalsScoresData] = await Promise.all([
+        getCompetitors(competitionId),
+        getQualificationScores(competitionId),
+        getFinalsScores(competitionId),
+      ]);
+
+      if (!isCurrentRequest(requestId)) return;
+
+      setCompetitors(competitorsData);
+      setQualificationScores(scoresData);
+      setFinalsScores(finalsScoresData);
+      setFullDataLoaded(true);
+      fullDataLoadedRef.current = true;
+      setBackgroundLoading(false);
+
+      ['competitors', 'qualificationScores', 'finalsScores'].forEach((key) => {
+        updateLoadingEntry(key, {
+          loading: false,
+          progress: 100,
+          complete: true,
+          error: null,
+        });
+      });
+
+      if (baseDataLoadedRef.current) {
+        setLoading(false);
+      }
+    } catch (err) {
+      if (!isCurrentRequest(requestId)) return;
+
+      const message = getErrorMessage(err);
+      setBackgroundLoading(false);
+      setError(message);
+      ['competitors', 'qualificationScores', 'finalsScores'].forEach((key) => {
+        updateLoadingEntry(key, {
+          loading: false,
+          progress: 0,
+          complete: false,
+          error: message,
+        });
+      });
+      setLoading(false);
+      console.error("Error hydrating full competition data:", err);
+    }
+  }, [
+    competitionId,
+    isCurrentRequest,
+    updateLoadingEntry,
+  ]);
 
   // Function to refresh finals scores only
   const refreshFinalsScores = useCallback(async () => {
     if (!competitionId) return;
 
     try {
+      const categoryCode = priorityCategoryCode !== undefined ? activeCategoryCode : "";
+
       setLoadingState(prev => ({
         ...prev,
         finalsScores: { ...prev.finalsScores, loading: true, progress: 10 }
       }));
 
-      const scoresData = await getFinalsScores(competitionId);
+      const scoresData = await getFinalsScores(competitionId, categoryCode);
 
       setLoadingState(prev => ({
         ...prev,
         finalsScores: { loading: false, progress: 100, complete: true, error: null }
       }));
 
-      setFinalsScores(scoresData);
+      setFinalsScores(prev => (
+        categoryCode
+          ? { ...prev, ...scoresData }
+          : scoresData
+      ));
     } catch (err) {
       setLoadingState(prev => ({
         ...prev,
-        finalsScores: { loading: false, progress: 0, complete: false, error: err.message }
+        finalsScores: { loading: false, progress: 0, complete: false, error: getErrorMessage(err) }
       }));
       console.error("Error refreshing finals scores:", err);
     }
-  }, [competitionId]);
+  }, [activeCategoryCode, competitionId, priorityCategoryCode]);
 
   // Function to fetch problem photos
   const fetchCompetitionPhotos = useCallback(async () => {
@@ -391,10 +466,136 @@ export const CompetitionProvider = ({ children, competitionId }) => {
     }
   };
 
-  // Fetch competition data when competitionId changes
   useEffect(() => {
-    fetchCompetitionData();
-  }, [fetchCompetitionData]);
+    activeCategoryCodeRef.current = activeCategoryCode;
+  }, [activeCategoryCode]);
+
+  useEffect(() => {
+    baseDataLoadedRef.current = baseDataLoaded;
+  }, [baseDataLoaded]);
+
+  useEffect(() => {
+    fullDataLoadedRef.current = fullDataLoaded;
+  }, [fullDataLoaded]);
+
+  // Fetch base competition data when competitionId changes.
+  useEffect(() => {
+    if (!competitionId) return;
+
+    const requestId = loadRequestRef.current + 1;
+    loadRequestRef.current = requestId;
+    currentCompetitionRef.current = competitionId;
+    baseDataLoadedRef.current = false;
+    fullDataLoadedRef.current = false;
+    fullLoadStartedRef.current = false;
+    loadedCategoryCodesRef.current = new Set();
+
+    setCategories({});
+    setCompetitors({});
+    setQualificationScores({});
+    setFinalsScores({});
+    setProblems({});
+    setLoadedCategoryCodes(new Set());
+    setBaseDataLoaded(false);
+    setFullDataLoaded(false);
+    setBackgroundLoading(false);
+    setLoading(true);
+    setError(null);
+    setLoadingState(createLoadingState({
+      categories: { loading: true, progress: 10, complete: false, error: null },
+      problems: { loading: true, progress: 10, complete: false, error: null },
+    }));
+
+    const loadBaseData = async () => {
+      try {
+        const [categoriesData, problemsData] = await Promise.all([
+          getCategories(competitionId),
+          getProblems(competitionId),
+        ]);
+
+        if (!isCurrentRequest(requestId)) return;
+
+        setCategories(categoriesData);
+        setProblems(problemsData);
+        setBaseDataLoaded(true);
+        baseDataLoadedRef.current = true;
+        setLoadingState(prev => ({
+          ...prev,
+          categories: { loading: false, progress: 100, complete: true, error: null },
+          problems: { loading: false, progress: 100, complete: true, error: null },
+        }));
+
+        const currentCategoryCode = activeCategoryCodeRef.current;
+        const categoryReady = currentCategoryCode
+          ? loadedCategoryCodesRef.current.has(currentCategoryCode)
+          : fullDataLoadedRef.current;
+
+        if (categoryReady) {
+          setLoading(false);
+        }
+      } catch (err) {
+        if (!isCurrentRequest(requestId)) return;
+
+        const message = getErrorMessage(err);
+        setError(message);
+        setLoading(false);
+        setLoadingState(prev => ({
+          ...prev,
+          categories: {
+            ...prev.categories,
+            loading: false,
+            progress: 0,
+            complete: false,
+            error: message,
+          },
+          problems: {
+            ...prev.problems,
+            loading: false,
+            progress: 0,
+            complete: false,
+            error: message,
+          },
+        }));
+        console.error("Error fetching base competition data:", err);
+      }
+    };
+
+    loadBaseData();
+  }, [competitionId, isCurrentRequest]);
+
+  // Fetch the visible category first, then hydrate the full competition data.
+  useEffect(() => {
+    if (!competitionId || currentCompetitionRef.current !== competitionId) return;
+
+    const requestId = loadRequestRef.current;
+    activeCategoryCodeRef.current = activeCategoryCode;
+
+    if (fullDataLoadedRef.current) {
+      setLoading(false);
+      return;
+    }
+
+    if (activeCategoryCode) {
+      if (loadedCategoryCodesRef.current.has(activeCategoryCode)) {
+        if (baseDataLoadedRef.current) {
+          setLoading(false);
+        }
+      } else {
+        loadCategorySlice(requestId, activeCategoryCode);
+      }
+
+      startFullHydration(requestId);
+      return;
+    }
+
+    setLoading(true);
+    startFullHydration(requestId);
+  }, [
+    activeCategoryCode,
+    competitionId,
+    loadCategorySlice,
+    startFullHydration,
+  ]);
 
   // Fetch photos when competition ID changes
   useEffect(() => {
@@ -405,11 +606,31 @@ export const CompetitionProvider = ({ children, competitionId }) => {
   const processedData = useMemo(() => {
     if (Object.keys(categories).length && Object.keys(competitors).length) {
       const userData = computeUserTableData(categories, competitors, problems, qualificationScores);
-      computeProblemStats(qualificationScores, problems, categories, competitors);
       return userData;
     }
     return [];
   }, [categories, competitors, problems, qualificationScores]);
+
+  const problemsWithStats = useMemo(() => {
+    if (
+      Object.keys(categories).length &&
+      Object.keys(problems).length
+    ) {
+      return computeProblemsWithStats(
+        qualificationScores,
+        problems,
+        categories,
+        competitors
+      );
+    }
+
+    return problems;
+  }, [
+    categories,
+    competitors,
+    problems,
+    qualificationScores,
+  ]);
 
   // TODO: Consider splitting this to reduce load
   const finalsScoreboardData = useMemo(() => {
@@ -456,11 +677,13 @@ export const CompetitionProvider = ({ children, competitionId }) => {
     competitors,
     qualificationScores,
     finalsScores,
-    problems,
+    problems: problemsWithStats,
     userTableData: processedData, // Use computed value directly
     finalsScoreboardData,
     categoryTops,
     loading,
+    backgroundLoading,
+    fullDataLoaded,
     loadingProgress,
     loadingState,
     partialDataAvailable,

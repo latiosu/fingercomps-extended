@@ -90,14 +90,32 @@ export const computeUserTableData = (categories, competitors, problems, scores) 
   return table;
 };
 
+const createEmptyProblemStats = (categories) =>
+  Object.keys(categories).reduce((acc, category) => {
+    acc[category] = {
+      tops: 0,
+      flashes: 0,
+    };
+    return acc;
+  }, {});
+
 /**
- * Computes problem statistics from scores data
+ * Computes a fresh problems map with score statistics attached.
  * @param {Object} qualificationScores - Scores data
  * @param {Object} problems - Problems data
  * @param {Object} categories - Categories data
  * @param {Object} competitors - Competitors data
+ * @returns {Object} Problems data with derived stats and sends
  */
-export const computeProblemStats = (qualificationScores, problems, categories, competitors) => {
+export const computeProblemsWithStats = (qualificationScores, problems, categories, competitors) => {
+  const problemsWithStats = Object.entries(problems).reduce((acc, [climbNo, problem]) => {
+    const baseProblem = { ...problem };
+    delete baseProblem.stats;
+    delete baseProblem.sends;
+    acc[climbNo] = baseProblem;
+    return acc;
+  }, {});
+
   const seen = new Set();
   Object.entries(qualificationScores).forEach(([cptNo, cptScores]) => {
     cptScores.forEach((score) => {
@@ -109,22 +127,16 @@ export const computeProblemStats = (qualificationScores, problems, categories, c
       } else {
         seen.add(tmpId);
       }
-      const climb = problems[score.climbNo];
+      const climb = problemsWithStats[score.climbNo];
       if (!climb) {
         // Skip processing if data is missing
         return;
       }
       if (!climb.stats) {
-        climb['stats'] = {};
-        Object.keys(categories).forEach((category) => {
-          climb.stats[category] = {
-            'tops': 0,
-            'flashes': 0,
-          }
-        });
+        climb.stats = createEmptyProblemStats(categories);
       }
       if (!climb.sends) {
-        climb['sends'] = [];
+        climb.sends = [];
       }
       if (score.flashed) {
         if (!climb.stats.hasOwnProperty(score.category)) {
@@ -151,7 +163,15 @@ export const computeProblemStats = (qualificationScores, problems, categories, c
       }
     });
   });
+
+  return problemsWithStats;
 };
+
+/**
+ * Computes problem statistics from scores data.
+ * @deprecated Use computeProblemsWithStats to avoid mutating raw problem data.
+ */
+export const computeProblemStats = computeProblemsWithStats;
 
 /**
  * Computes category tops from scores data
@@ -215,7 +235,7 @@ export const computeFinalsScoreboardData = (categories, competitors, finalsScore
 
     const { score, topZoneStats } = computeFinalsScore(
       finalsScores[uid],
-      cat.finalsBoulderCount,
+      cat?.finalsBoulderCount || 4,
     );
 
     return {

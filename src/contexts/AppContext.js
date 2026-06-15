@@ -1,8 +1,45 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { getCompetitions } from '../api/services/competitions';
+import { trackRawCountsFilterChanged } from '../utils/analytics';
 
 // Create context
 const AppContext = createContext();
+const DISPLAY_SETTING_DEFAULT = true;
+
+const getDisplayStorageKeys = (competitionId) => ({
+  rawCounts: `raw_counts_filter_${competitionId}`,
+  showOverallTopsFlashes: `show_overall_tops_flashes_${competitionId}`,
+});
+
+const getSavedDisplayBoolean = (storageKey) => {
+  try {
+    const savedValue = localStorage.getItem(storageKey);
+    return savedValue !== null ? savedValue === "true" : DISPLAY_SETTING_DEFAULT;
+  } catch (error) {
+    console.warn("Unable to access localStorage:", error);
+    return DISPLAY_SETTING_DEFAULT;
+  }
+};
+
+const loadSavedDisplaySettings = (competitionId) => {
+  if (!competitionId) {
+    return {
+      competitionId: "",
+      showRawCounts: DISPLAY_SETTING_DEFAULT,
+      showOverallTopsFlashes: DISPLAY_SETTING_DEFAULT,
+    };
+  }
+
+  const storageKeys = getDisplayStorageKeys(competitionId);
+
+  return {
+    competitionId,
+    showRawCounts: getSavedDisplayBoolean(storageKeys.rawCounts),
+    showOverallTopsFlashes: getSavedDisplayBoolean(
+      storageKeys.showOverallTopsFlashes
+    ),
+  };
+};
 
 /**
  * Custom hook to use the app context
@@ -67,9 +104,93 @@ export const AppProvider = ({ children }) => {
     if (!compId) return 'user';
     return localStorage.getItem(`focusView_${compId}`) || 'user';
   });
+  const [displaySettings, setDisplaySettings] = useState(() =>
+    loadSavedDisplaySettings(selectedCompId)
+  );
   const [limitScores, setLimitScores] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [recommendModalUser, setRecommendModalUser] = useState(null);
+  const [whatIfModalUser, setWhatIfModalUser] = useState(null);
+
+  useEffect(() => {
+    if (focusView !== 'problems') return;
+
+    setDisplaySettings(loadSavedDisplaySettings(selectedCompId));
+  }, [focusView, selectedCompId]);
+
+  useEffect(() => {
+    if (
+      focusView !== 'problems' ||
+      !selectedCompId ||
+      displaySettings.competitionId !== selectedCompId
+    ) {
+      return;
+    }
+
+    const { rawCounts } = getDisplayStorageKeys(selectedCompId);
+
+    try {
+      localStorage.setItem(rawCounts, displaySettings.showRawCounts.toString());
+      trackRawCountsFilterChanged(displaySettings.showRawCounts, selectedCompId);
+    } catch (error) {
+      console.warn(
+        "Unable to save raw counts preference to localStorage:",
+        error
+      );
+    }
+  }, [
+    displaySettings.competitionId,
+    displaySettings.showRawCounts,
+    focusView,
+    selectedCompId,
+  ]);
+
+  useEffect(() => {
+    if (
+      focusView !== 'problems' ||
+      !selectedCompId ||
+      displaySettings.competitionId !== selectedCompId
+    ) {
+      return;
+    }
+
+    const { showOverallTopsFlashes } = getDisplayStorageKeys(selectedCompId);
+
+    try {
+      localStorage.setItem(
+        showOverallTopsFlashes,
+        displaySettings.showOverallTopsFlashes.toString()
+      );
+    } catch (error) {
+      console.warn(
+        "Unable to save overall tops & flashes preference to localStorage:",
+        error
+      );
+    }
+  }, [
+    displaySettings.competitionId,
+    displaySettings.showOverallTopsFlashes,
+    focusView,
+    selectedCompId,
+  ]);
+
+  const setShowRawCounts = useCallback((showRawCounts) => {
+    setDisplaySettings((currentSettings) => ({
+      ...(selectedCompId && currentSettings.competitionId !== selectedCompId
+        ? loadSavedDisplaySettings(selectedCompId)
+        : currentSettings),
+      showRawCounts,
+    }));
+  }, [selectedCompId]);
+
+  const setShowOverallTopsFlashes = useCallback((showOverallTopsFlashes) => {
+    setDisplaySettings((currentSettings) => ({
+      ...(selectedCompId && currentSettings.competitionId !== selectedCompId
+        ? loadSavedDisplaySettings(selectedCompId)
+        : currentSettings),
+      showOverallTopsFlashes,
+    }));
+  }, [selectedCompId]);
 
   // Handle window resize
   useEffect(() => {
@@ -163,9 +284,12 @@ export const AppProvider = ({ children }) => {
     selectedCategory,
     selectedCategoryCode,
     focusView,
+    showRawCounts: displaySettings.showRawCounts,
+    showOverallTopsFlashes: displaySettings.showOverallTopsFlashes,
     limitScores,
     isMobile,
     recommendModalUser,
+    whatIfModalUser,
     loading,
     error,
 
@@ -173,8 +297,11 @@ export const AppProvider = ({ children }) => {
     setSelectedCategory,
     setSelectedCategoryCode,
     setFocusView,
+    setShowRawCounts,
+    setShowOverallTopsFlashes,
     setLimitScores,
     setRecommendModalUser,
+    setWhatIfModalUser,
     handleCompetitionChange,
   };
 

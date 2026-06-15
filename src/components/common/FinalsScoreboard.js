@@ -32,7 +32,11 @@ function FinalsScoreboard({ category, allowedUsers }) {
   }
 
   let data = finalsScoreboardData;
-  if (allowedUsers && category) {
+  if (category) {
+    data = data.filter((user) => user.category === category);
+  }
+
+  if (allowedUsers) {
     const parsedUsers = allowedUsers.split(',').map(item => parseInt(item));
     data = data.filter((user) => parsedUsers ? parsedUsers.includes(user.competitorNo) : true);
   }
@@ -80,7 +84,7 @@ function FinalsScoreboard({ category, allowedUsers }) {
     data = sortedData;
   }
 
-  const categoryFullName = categories[category].name;
+  const categoryFullName = categories[category]?.name || category || 'Finals';
   const toTitleCase = (s) => {
     return s
       .toLowerCase()

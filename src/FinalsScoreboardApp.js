@@ -17,7 +17,10 @@ function AppContent() {
 
   return (
     <>
-      <CompetitionProvider competitionId={selectedCompId}>
+      <CompetitionProvider
+        competitionId={selectedCompId}
+        priorityCategoryCode={category}
+      >
         <FinalsScoreboard
           category={category}
           allowedUsers={allowedUsers}

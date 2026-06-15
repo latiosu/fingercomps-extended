@@ -1,5 +1,6 @@
 import React from "react";
 import CategorySelector from './components/common/CategorySelector';
+import DisplayControls from "./components/common/DisplayControls";
 import ViewToggle from "./components/common/ViewToggle";
 import CompetitionSelector from "./components/competitions/CompetitionSelector";
 import RecommendModal from "./components/recommendations/RecommendModal";
@@ -7,6 +8,7 @@ import { AppProvider, useApp } from "./contexts/AppContext";
 import { CompetitionProvider } from "./contexts/CompetitionContext";
 import { HighlightedProblemsProvider } from "./contexts/HighlightedProblemsContext";
 import { RankHistoryProvider } from "./contexts/RankHistoryContext";
+import { SandboxProvider } from "./contexts/SandboxContext";
 import ProblemsPage from "./pages/ProblemsPage";
 import UsersPage from "./pages/UsersPage";
 import loadPosthog from "./utils/analytics";
@@ -25,7 +27,9 @@ function AppContent() {
     compNotFoundMessage,
     focusView,
     recommendModalUser,
-    setRecommendModalUser
+    setRecommendModalUser,
+    whatIfModalUser,
+    setWhatIfModalUser
   } = useApp();
 
   return (
@@ -49,27 +53,39 @@ function AppContent() {
 
       {selectedCompId && (
         <CompetitionProvider competitionId={selectedCompId}>
-          <RankHistoryProvider>
-            <HighlightedProblemsProvider>
-              <div className="filters">
-                <CategorySelector />
-              </div>
+          <SandboxProvider>
+            <RankHistoryProvider>
+              <HighlightedProblemsProvider>
+                <div className="filters">
+                  <CategorySelector />
+                  {focusView === 'problems' && <DisplayControls />}
+                </div>
 
-              {focusView === 'user' ? (
-                <UsersPage />
-              ) : (
-                <ProblemsPage />
-              )}
+                {focusView === 'user' ? (
+                  <UsersPage />
+                ) : (
+                  <ProblemsPage />
+                )}
 
-              {/* Recommendation modal */}
-              {recommendModalUser && (
-                <RecommendModal
-                  onClose={() => setRecommendModalUser(null)}
-                  user={recommendModalUser}
-                />
-              )}
-            </HighlightedProblemsProvider>
-          </RankHistoryProvider>
+                {/* Recommendation modal */}
+                {recommendModalUser && (
+                  <RecommendModal
+                    onClose={() => setRecommendModalUser(null)}
+                    user={recommendModalUser}
+                  />
+                )}
+
+                {/* What-if sandbox modal (recommendations with add-a-send) */}
+                {whatIfModalUser && (
+                  <RecommendModal
+                    sandboxMode
+                    onClose={() => setWhatIfModalUser(null)}
+                    user={whatIfModalUser}
+                  />
+                )}
+              </HighlightedProblemsProvider>
+            </RankHistoryProvider>
+          </SandboxProvider>
         </CompetitionProvider>
       )}
 

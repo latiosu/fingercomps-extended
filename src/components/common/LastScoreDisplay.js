@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useCompetition } from '../../contexts/CompetitionContext';
 import { useRankHistory } from '../../contexts/RankHistoryContext';
 import { toTimeAgoString } from '../../utils/dateFormatters';
@@ -16,10 +16,11 @@ function LastScoreDisplay({ onCompetitorClick, searchTerm }) {
   const {
     lastSubmittedScore,
     competitors,
+    userTableData,
     loading,
     selectedCategoryCode,
   } = useCompetition();
-  const { rankChanges, significantChanges } = useRankHistory();
+  const { rankChanges } = useRankHistory();
   const [selectedCompetitor, setSelectedCompetitor] = useState(null);
 
   // Clear selected competitor when search term changes or is cleared
@@ -28,6 +29,43 @@ function LastScoreDisplay({ onCompetitorClick, searchTerm }) {
       setSelectedCompetitor(null);
     }
   }, [searchTerm, selectedCompetitor]);
+
+  const submittedCompetitorNo = lastSubmittedScore?.competitorNo;
+  const competitor = submittedCompetitorNo
+    ? competitors[submittedCompetitorNo] || { name: 'Unknown', category: null, rank: null }
+    : null;
+  const competitorName = competitor?.name;
+  const rankChange = rankChanges.find(rc => rc.competitorNo === submittedCompetitorNo);
+  const currentRank = useMemo(() => {
+    if (!submittedCompetitorNo) {
+      return null;
+    }
+
+    if (selectedCategoryCode) {
+      let rank = 0;
+      let lastTotal = null;
+
+      const categoryRows = userTableData
+        .filter(user => user.category === selectedCategoryCode)
+        .sort((a, b) => b.total - a.total);
+
+      for (let index = 0; index < categoryRows.length; index += 1) {
+        const user = categoryRows[index];
+
+        if (lastTotal === null || user.total !== lastTotal) {
+          rank = index + 1;
+          lastTotal = user.total;
+        }
+
+        if (user.competitorNo === submittedCompetitorNo) {
+          return rank;
+        }
+      }
+    }
+
+    const userRow = userTableData.find(user => user.competitorNo === submittedCompetitorNo);
+    return userRow?.rank || competitor?.rank || null;
+  }, [competitor?.rank, submittedCompetitorNo, selectedCategoryCode, userTableData]);
 
   if (loading) {
     return <></>;
@@ -39,26 +77,6 @@ function LastScoreDisplay({ onCompetitorClick, searchTerm }) {
         <p className="last-score-text">No scores available for the selected category.</p>
       </div>
     );
-  }
-
-  const competitor = competitors[lastSubmittedScore.competitorNo] || { name: 'Unknown', category: null, rank: null };
-  const competitorName = competitor.name;
-
-  // Find rank change for this competitor if available
-  const rankChange = rankChanges.find(rc => rc.competitorNo === lastSubmittedScore.competitorNo);
-
-  // Get the most up-to-date rank from significantChanges if available
-  let currentRank = competitor.rank;
-
-  // Check if this competitor is in the risers or fallers list to get the most up-to-date rank
-  const { risers, fallers } = significantChanges;
-  const matchingRiser = risers.find(r => r.competitorNo === lastSubmittedScore.competitorNo);
-  const matchingFaller = fallers.find(f => f.competitorNo === lastSubmittedScore.competitorNo);
-
-  if (matchingRiser) {
-    currentRank = matchingRiser.rank;
-  } else if (matchingFaller) {
-    currentRank = matchingFaller.rank;
   }
 
   // Prepare the clickable competitor

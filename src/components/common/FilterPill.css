@@ -1,0 +1,62 @@
+.filter-pill {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.filter-pill-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid #FFD68A;
+  border-radius: 999px;
+  background-color: white;
+  color: #333;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.filter-pill-button:hover:not(:disabled),
+.filter-pill-open .filter-pill-button {
+  background-color: rgb(254, 254, 224);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.filter-pill-active .filter-pill-button {
+  background-color: #FFE79B;
+  border-color: #FFD68A;
+}
+
+.filter-pill-button:focus-visible {
+  outline: 2px solid #118eff;
+  outline-offset: 2px;
+}
+
+.filter-pill-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.filter-pill-label {
+  white-space: nowrap;
+}
+
+.filter-pill-chevron {
+  font-size: 16px;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.filter-pill-open .filter-pill-chevron {
+  transform: rotate(180deg);
+}
+
+.filter-pill-dropdown {
+  position: fixed;
+  z-index: 1000;
+  max-height: min(70vh, 360px);
+  overflow-y: auto;
+}

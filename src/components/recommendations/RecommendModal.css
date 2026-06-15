@@ -53,10 +53,57 @@
   margin-bottom: 20px;
 }
 
+.recommend-problem-col {
+  width: 76px;
+}
+
+.recommend-name-col {
+  max-width: 150px;
+}
+
+.recommend-location-col {
+  max-width: 120px;
+}
+
+.recommend-points-col {
+  width: 96px;
+  white-space: nowrap;
+}
+
+.recommend-rank-col {
+  width: 92px;
+}
+
+.recommend-tops-col {
+  width: 96px;
+}
+
+.recommend-whatif-col {
+  width: 92px;
+}
+
+.recommend-name-col,
+.recommend-location-col {
+  overflow-wrap: anywhere;
+}
+
+.recommend-points-cell {
+  display: inline-block;
+  line-height: 1.2;
+}
+
+.recommend-additional-points {
+  color: #666;
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
 .recommendedBtnContainer {
   margin-top: 10px;
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 #recommended-btn {
@@ -82,5 +129,37 @@
   
   .modal-header h2 {
     font-size: 1.2rem;
+  }
+
+  .recommend-problem-col {
+    width: 54px;
+  }
+
+  .recommend-name-col {
+    max-width: 82px;
+  }
+
+  .recommend-location-col {
+    max-width: 72px;
+  }
+
+  .recommend-points-col {
+    width: 72px;
+  }
+
+  .recommend-rank-col {
+    width: 68px;
+  }
+
+  .recommend-tops-col {
+    width: 62px;
+  }
+
+  .recommend-whatif-col {
+    width: 76px;
+  }
+
+  .recommend-additional-points {
+    display: block;
   }
 }

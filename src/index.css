@@ -103,6 +103,185 @@ h1 {
   margin: 0;
 }
 
+.filter-pill-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  max-width: 100%;
+  padding: 4px 0;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+
+.filter-pill-button {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border: 1px solid #FFD68A;
+  border-radius: 999px;
+  background: white;
+  color: #333;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease,
+    box-shadow 0.2s ease, color 0.2s ease;
+}
+
+.filter-pill-button:hover:not(:disabled):not(.disabled) {
+  background: #ffe6b5;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.filter-pill-button:focus-visible,
+.filter-reset-button:focus-visible,
+.filter-dropdown-option:focus-visible {
+  outline: 2px solid #FFD68A;
+  outline-offset: 2px;
+}
+
+.filter-pill-button.active,
+.filter-pill-button[aria-pressed="true"] {
+  background: #FFE79B;
+  border-color: #FFD68A;
+  color: #2f2415;
+  font-weight: 600;
+}
+
+.filter-pill-button:disabled,
+.filter-pill-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.filter-dropdown-panel {
+  min-width: 220px;
+  max-width: min(320px, calc(100vw - 24px));
+  padding: 10px;
+  background: white;
+  border: 1px solid #FFD68A;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+  box-sizing: border-box;
+}
+
+.filter-dropdown-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #333;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.filter-dropdown-option:hover,
+.filter-dropdown-option.active,
+.filter-dropdown-option[aria-pressed="true"],
+.filter-dropdown-option[aria-selected="true"] {
+  background: #ffe6b5;
+}
+
+.filter-dropdown-option:disabled,
+.filter-dropdown-option.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.filter-range-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 7px 8px;
+  border: 1px solid #FFD68A;
+  border-radius: 4px;
+  background: white;
+  accent-color: #FFD68A;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.filter-range-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.filter-range-fields {
+  display: flex;
+  gap: 8px;
+}
+
+.filter-range-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 90px;
+  color: #333;
+  font-size: 13px;
+}
+
+.filter-range-error {
+  margin-top: 8px;
+  color: #b00020;
+  font-size: 12px;
+  white-space: normal;
+}
+
+.filter-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  border-radius: 6px;
+  color: #333;
+  cursor: pointer;
+}
+
+.filter-checkbox-row:hover {
+  background: #ffe6b5;
+}
+
+.filter-checkbox-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: #FFD68A;
+}
+
+.filter-reset-button {
+  padding: 7px 10px;
+  border: 1px solid #FFD68A;
+  border-radius: 6px;
+  background: white;
+  color: #333;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.filter-reset-button:hover:not(:disabled) {
+  background: #fff4df;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.filter-reset-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 select {
   padding: 6px 12px;
   border: 1px solid #FFD68A;
@@ -137,6 +316,18 @@ select {
   /* Recommend button */
   #recommended-btn {
     font-size: 12px;
+  }
+
+  .filter-pill-row {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    white-space: normal;
+  }
+
+  .filter-pill-button,
+  .filter-dropdown-option,
+  .filter-reset-button {
+    font-size: 13px;
   }
 }
 

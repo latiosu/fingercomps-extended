@@ -106,6 +106,7 @@ export const getOrganizedLocations = (problems) => {
  * @param {boolean} sortByOverallTops - Whether to sort by overall tops
  * @param {boolean} showNonRankingProblems - Whether to show problems that don't change rank
  * @param {string} location - Filter by problem location
+ * @param {boolean} includeAllProblems - Whether to include problems worth less than the lowest counting score
  * @returns {Array} Array of recommended problems
  */
 export const getRecommendedProblems = (
@@ -116,7 +117,8 @@ export const getRecommendedProblems = (
   category,
   sortByOverallTops = false,
   showNonRankingProblems = false,
-  location = ''
+  location = '',
+  includeAllProblems = false
 ) => {
   const flashPoints = category?.flashExtraPoints || 0;
   const pumpfestTopScores = category?.pumpfestTopScores || 0;
@@ -160,7 +162,7 @@ export const getRecommendedProblems = (
       if (hasTopped) return false;
 
       // Check if worth more points than user's lowest counting top
-      if (problem.score <= lowestCountingScore) return false;
+      if (!includeAllProblems && problem.score <= lowestCountingScore) return false;
 
       // Disable filtering of recommended problems (to encourage use over routesetter view)
       // If not at rank 1, check if problem provides at least 10% of points needed

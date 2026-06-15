@@ -7,6 +7,7 @@ import PhotoUploader from '../common/PhotoUploader';
 import PhotoViewer from '../common/PhotoViewer';
 import PhotoIndicator from '../common/PhotoIndicator';
 import SendsSubTable from '../common/SendsSubTable';
+import '../sandbox/Sandbox.css';
 
 /**
  * Component to display a user's scores
@@ -17,6 +18,7 @@ import SendsSubTable from '../common/SendsSubTable';
  * @param {number} props.flashExtraPoints - Extra points for flashing a problem
  * @param {boolean} props.isMobile - Whether the device is mobile
  * @param {boolean} props.showFlashBonus - Whether to show bonus points from flashes
+ * @param {Function} props.onRemoveTheoretical - Optional function to remove a theoretical (sandbox) top by climbNo
  * @returns {JSX.Element} UserScoresTable component
  */
 function UserScoresTable({
@@ -26,6 +28,7 @@ function UserScoresTable({
   flashExtraPoints = 0,
   isMobile = false,
   showFlashBonus = false,
+  onRemoveTheoretical,
 }) {
   // Use expandable rows hook
   const { toggleRow, isRowExpanded } = useExpandableRows();
@@ -83,10 +86,14 @@ function UserScoresTable({
                 <tr
                   className="pointer"
                   onClick={() => toggleRow(score.climbNo)}
-                  style={shouldHighlight(score.climbNo) ? { backgroundColor: '#E9FFDB'  } : {backgroundColor: '#F9F9F9' }}
+                  style={score.theoretical
+                    ? { backgroundColor: '#F3E8FF' }
+                    : shouldHighlight(score.climbNo)
+                      ? { backgroundColor: '#E9FFDB' }
+                      : { backgroundColor: '#F9F9F9' }}
                 >
                   <td>
-                    {shouldHighlight(score.climbNo) ? '✅ ' : ''}
+                    {score.theoretical ? '🧪 ' : shouldHighlight(score.climbNo) ? '✅ ' : ''}
                     {score.climbNo}
                     <PhotoIndicator
                       climbNo={score.climbNo}
@@ -102,9 +109,27 @@ function UserScoresTable({
                     {score.score}
                     {score.flashed && showFlashBonus ? ` (+${flashExtraPoints})` : ''}
                   </td>
-                  <td title={formatDateForHover(score.createdAt)}>
-                    {toTimeAgoString(score.createdAt)}
-                  </td>
+                  {score.theoretical ? (
+                    <td>
+                      <em>What-if</em>
+                      {onRemoveTheoretical && (
+                        <button
+                          className="sandbox-remove-btn"
+                          title="Remove this theoretical top"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemoveTheoretical(score.climbNo);
+                          }}
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </td>
+                  ) : (
+                    <td title={formatDateForHover(score.createdAt)}>
+                      {toTimeAgoString(score.createdAt)}
+                    </td>
+                  )}
                 </tr>
                 {isRowExpanded(score.climbNo) && problems[score.climbNo]?.sends && (
                   <tr>
